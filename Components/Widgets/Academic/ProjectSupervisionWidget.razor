@@ -1,0 +1,101 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Models
+@inject SupabaseService Supabase
+
+<MudPaper Class="pa-6 proj-supervision-widget d-flex flex-column" Elevation="4" Style="height: 100%;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-bold">Project Supervision</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary opacity-70">Active Mentees & Progress</MudText>
+        </div>
+        <MudTooltip Text="Detailed View">
+            <MudIconButton Icon="@Icons.Material.Filled.AccountTree" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small"/>
+        </MudTooltip>
+    </div>
+
+    <!-- Stats row -->
+    <div class="d-flex justify-space-between mb-6 pt-2">
+        <div class="text-center">
+            <MudText Typo="Typo.h5" Class="fw-black text-primary">@GroupsCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase">GROUPS</MudText>
+        </div>
+        <div class="text-center">
+            <MudText Typo="Typo.h5" Class="fw-black text-warning">@ActionReqCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase">ACTION REQ</MudText>
+        </div>
+        <div class="text-center">
+            <MudText Typo="Typo.h5" Class="fw-black text-success">@OnTrackCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase">ON TRACK</MudText>
+        </div>
+    </div>
+
+    <MudText Typo="Typo.subtitle2" Class="fw-bold mb-2">Attention Needed</MudText>
+    
+    <MudList T="string" Dense="true" Class="px-0 flex-grow-1" Style="overflow-y: auto;">
+        <MudListItem Class="px-0">
+            <div class="d-flex align-center w-100">
+                <MudAvatar Color="Color.Error" Size="Size.Small" Variant="Variant.Filled" Class="mr-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small"/>
+                </MudAvatar>
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.body2" Class="fw-bold">Group Alpha - Phase 2</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Missed weekly deadline</MudText>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowForwardIos" Size="Size.Small" />
+            </div>
+        </MudListItem>
+        <MudListItem Class="px-0">
+            <div class="d-flex align-center w-100">
+                <MudAvatar Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" Class="mr-3">
+                    <MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Small"/>
+                </MudAvatar>
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.body2" Class="fw-bold">Group Delta - Proposal</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Awaiting Mentor Approval</MudText>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowForwardIos" Size="Size.Small" />
+            </div>
+        </MudListItem>
+    </MudList>
+
+    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Add" Class="mt-auto fw-bold" FullWidth="true" Href="/admin/projects">
+        Schedule Meetings
+    </MudButton>
+</MudPaper>
+
+@code {
+    private int GroupsCount = 0;
+    private int ActionReqCount = 0;
+    private int OnTrackCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var projects = await Supabase.GetAll<Project>();
+            GroupsCount = projects.Count;
+            ActionReqCount = projects.Count(p => p.SubmissionStatus == "pending" || p.ProposalStatus == "draft");
+            OnTrackCount = GroupsCount - ActionReqCount;
+        }
+        catch { }
+    }
+}
+
+<style>
+    .proj-supervision-widget {
+        border-radius: 16px;
+        background: #ffffff;
+        border-right: 4px solid #1976D2;
+        transition: transform 0.2s;
+    }
+    .proj-supervision-widget:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+    }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-warning { color: #FF9800; }
+    .text-success { color: #4CAF50; }
+</style>

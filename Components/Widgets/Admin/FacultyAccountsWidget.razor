@@ -1,0 +1,89 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Models
+@inject SupabaseService Supabase
+
+<MudPaper Class="pa-6 faculty-widget h-100 rounded-xl" Elevation="4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-black text-primary">Faculty Management</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary opacity-80">Personnel analytics overview</MudText>
+        </div>
+        <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Color="Color.Primary" Size="Size.Medium" />
+    </div>
+
+    <MudGrid Spacing="2" Class="mb-6">
+        <MudItem xs="6">
+            <MudPaper Elevation="0" Class="pa-3 text-center border-solid border-1 mud-border-lines-default bg-light-primary rounded-lg h-100 d-flex flex-column justify-center align-center hover-scale">
+                <MudText Typo="Typo.h4" Class="fw-black text-primary">@TotalFaculty</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase mt-1">Total Faculty</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6">
+            <MudPaper Elevation="0" Class="pa-3 text-center border-solid border-1 mud-border-lines-default bg-light-success rounded-lg h-100 d-flex flex-column justify-center align-center hover-scale">
+                <MudText Typo="Typo.h4" Class="fw-black text-success">@ActiveMentors</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase mt-1">Mentors</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6">
+            <MudPaper Elevation="0" Class="pa-3 text-center border-solid border-1 mud-border-lines-default bg-light-warning rounded-lg h-100 d-flex flex-column justify-center align-center hover-scale">
+                <MudText Typo="Typo.h4" Class="fw-black text-warning">@Evaluators</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase mt-1">Evaluators</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6">
+            <MudPaper Elevation="0" Class="pa-3 text-center border-solid border-1 mud-border-lines-default bg-light-error rounded-lg h-100 d-flex flex-column justify-center align-center hover-scale">
+                <MudText Typo="Typo.h4" Class="fw-black text-error">@PendingInvites</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary text-uppercase mt-1">Invites Pending</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-6 py-2 fw-bold" EndIcon="@Icons.Material.Filled.ArrowForward" Href="/admin/faculty">
+            Manage Faculty
+        </MudButton>
+</MudPaper>
+
+@code {
+    [Parameter] public int TotalFaculty { get; set; } = 0;
+    [Parameter] public int ActiveMentors { get; set; } = 0;
+    [Parameter] public int Evaluators { get; set; } = 0;
+    [Parameter] public int PendingInvites { get; set; } = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            var profiles = await Supabase.GetWhere<Profile>("role", "faculty");
+            TotalFaculty = profiles.Count;
+            ActiveMentors = profiles.Count(p => p.IsVerified);
+            PendingInvites = profiles.Count(p => !p.IsVerified);
+
+            var roles = await Supabase.GetAll<FacultyRole>();
+            Evaluators = roles.Count(r => r.Role == "evaluator");
+        }
+        catch { /* Fallback to 0 */ }
+    }
+}
+
+<style>
+    .faculty-widget {
+        background: #ffffff;
+    }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    
+    .bg-light-primary { background: rgba(25, 118, 210, 0.05); border-color: rgba(25, 118, 210, 0.2) !important; }
+    .bg-light-success { background: rgba(76, 175, 80, 0.05); border-color: rgba(76, 175, 80, 0.2) !important; }
+    .bg-light-warning { background: rgba(255, 152, 0, 0.05); border-color: rgba(255, 152, 0, 0.2) !important; }
+    .bg-light-error { background: rgba(244, 67, 54, 0.05); border-color: rgba(244, 67, 54, 0.2) !important; }
+    
+    .text-primary { color: #1976D2; }
+    .text-success { color: #4CAF50; }
+    .text-warning { color: #FF9800; }
+    .text-error { color: #F44336; }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.05); cursor: pointer; }
+</style>

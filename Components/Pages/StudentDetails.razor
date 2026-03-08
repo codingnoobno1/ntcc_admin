@@ -1,0 +1,100 @@
+@page "/student/{StudentId}"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Components.Shared
+@using Microsoft.AspNetCore.Authorization
+@inject IActivityLogService ActivityLogService
+@inject IStudentAppService StudentService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Student Details - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-12">
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else if (student == null)
+    {
+        <MudAlert Severity="Severity.Error">Student not found.</MudAlert>
+    }
+    else
+    {
+        <div class="d-flex align-center justify-space-between mb-6">
+            <div class="d-flex align-center gap-4">
+                <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
+                    <MudText Typo="Typo.h5" Class="fw-bold text-white">@student.FullName.FirstOrDefault()</MudText>
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h4" Class="fw-black text-primary">@student.FullName</MudText>
+                    <MudText Typo="Typo.body1" Class="mud-text-secondary">@student.RollNumber | Sem @student.CurrentSemester</MudText>
+                </div>
+            </div>
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Filled">Active</MudChip>
+        </div>
+
+        <MudGrid>
+            <!-- Timeline (Phase 5) -->
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-6" Elevation="2" Style="border-radius: 16px;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Activity Timeline</MudText>
+                    <StudentTimeline Logs="activityLogs" />
+                </MudPaper>
+            </MudItem>
+
+            <!-- Progress Tracking (Phase 5) -->
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-6" Elevation="2" Style="border-radius: 16px;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Academic Progress</MudText>
+                    <MudAlert Severity="Severity.Info" Class="mb-4">
+                        Progress trackers will dynamically connect to the Workflow Engine in the next update.
+                    </MudAlert>
+                    <MudProgressLinear Color="Color.Success" Value="40" Class="my-2" Size="Size.Large">
+                        <MudText Typo="Typo.subtitle1" Color="Color.Dark">
+                            <b>40%</b> Completed (Phase 5 Tracking)
+                        </MudText>
+                    </MudProgressLinear>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string StudentId { get; set; } = string.Empty;
+
+    bool isLoading = true;
+    StudentEntity? student;
+    List<StudentActivityLogEntity> activityLogs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Note: Replace with GetStudentById when it exists in StudentService
+            var allStudents = await StudentService.GetStudentsByBatch("default");
+            student = allStudents.FirstOrDefault(s => s.Id == StudentId);
+
+            if (student != null)
+            {
+                activityLogs = await ActivityLogService.GetStudentTimelineAsync(StudentId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[STUDENT DETAILS] Error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+</style>

@@ -1,0 +1,96 @@
+@using ntcc_admin_blazor.Domain.Entities
+@using System.Text.Json
+
+<MudTimeline TimelinePosition="TimelinePosition.Start" Class="mt-4">
+    @if (Logs == null || !Logs.Any())
+    {
+        <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info" Class="mt-2">
+            No activities recorded yet.
+        </MudAlert>
+    }
+    else
+    {
+        @foreach (var log in Logs)
+        {
+            var iconData = GetIconForAction(log.Action);
+            var parsedMeta = ParseMetadata(log.Metadata);
+
+            <MudTimelineItem Color="@iconData.Color" Size="Size.Small">
+                <ItemContent>
+                    <MudText Typo="Typo.body2" Class="fw-bold">@FormatAction(log.Action)</MudText>
+                    @if (!string.IsNullOrEmpty(parsedMeta))
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@parsedMeta</MudText>
+                    }
+                    <MudText Typo="Typo.caption" Style="@($"color: {GetColorHex(iconData.Color)}")">
+                        @GetRelativeTime(log.CreatedAt)
+                    </MudText>
+                </ItemContent>
+            </MudTimelineItem>
+        }
+    }
+</MudTimeline>
+
+@code {
+    [Parameter]
+    public List<StudentActivityLogEntity> Logs { get; set; } = new();
+
+    private (Color Color, string Icon) GetIconForAction(string action)
+    {
+        return action.ToLower() switch
+        {
+            var a when a.Contains("upload") => (Color.Info, Icons.Material.Filled.Upload),
+            var a when a.Contains("evaluat") => (Color.Success, Icons.Material.Filled.Grading),
+            var a when a.Contains("regist") => (Color.Secondary, Icons.Material.Filled.PersonAdd),
+            var a when a.Contains("warn") => (Color.Warning, Icons.Material.Filled.Warning),
+            var a when a.Contains("error") => (Color.Error, Icons.Material.Filled.Error),
+            _ => (Color.Primary, Icons.Material.Filled.CheckCircle)
+        };
+    }
+
+    private string FormatAction(string action)
+    {
+        return string.Join(" ", action.Split('_').Select(word => char.ToUpper(word[0]) + word.Substring(1)));
+    }
+
+    private string ParseMetadata(string json)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(json) || json == "{}") return "";
+            var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("details", out var details))
+            {
+                return details.GetString() ?? "";
+            }
+            return json; // Fallback
+        }
+        catch { return ""; }
+    }
+
+    private string GetRelativeTime(DateTime time)
+    {
+        var ts = DateTime.UtcNow - time;
+        if (ts.TotalMinutes < 60) return $"{(int)ts.TotalMinutes} mins ago";
+        if (ts.TotalHours < 24) return $"{(int)ts.TotalHours} hours ago";
+        if (ts.TotalDays < 7) return $"{(int)ts.TotalDays} days ago";
+        return time.ToString("MMM dd, yyyy");
+    }
+
+    private string GetColorHex(Color color)
+    {
+        return color switch
+        {
+            Color.Info => "#1976D2",
+            Color.Success => "#4CAF50",
+            Color.Warning => "#FF9800",
+            Color.Error => "#F44336",
+            Color.Secondary => "#9C27B0",
+            _ => "#424242"
+        };
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+</style>

@@ -162,7 +162,7 @@
     string currentUserId = "";
 
     List<NtccStage> myStages = new();
-    List<Student> students = new();
+    List<ntcc_admin_blazor.Models.Student> students = new();
     List<Internship> internships = new();
     List<Profile> profiles = new();
 
@@ -194,7 +194,7 @@
             var allStages = await Supabase.GetAll<NtccStage>();
             myStages = allStages.ToList(); // Show all for now, or filter by coordinator if we had that link
 
-            students = await Supabase.GetAll<Student>();
+            students = await Supabase.GetAll<ntcc_admin_blazor.Models.Student>();
             profiles = await Supabase.GetAll<Profile>();
 
             try { internships = await Supabase.GetAll<Internship>(); }

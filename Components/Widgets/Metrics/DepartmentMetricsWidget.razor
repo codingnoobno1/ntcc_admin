@@ -1,0 +1,61 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6 dev-metrics-widget" Elevation="4">
+    <div class="d-flex justify-space-between align-start mb-6">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-black glow-text">Department Analytics</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">CSE - Academic Year 2023-24</MudText>
+        </div>
+        <MudChip T="string" Color="Color.Tertiary" Size="Size.Small" Variant="Variant.Filled">LIVE</MudChip>
+    </div>
+
+    <!-- Chart Placeholder -->
+    <div class="d-flex align-center justify-center p-4 rounded-xl stat-box mt-4 mb-6">
+        <div class="w-100 px-4">
+            <div class="d-flex justify-space-between mb-2">
+                <MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Research Submissions</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold text-tertiary">0%</MudText>
+            </div>
+            <MudProgressLinear Color="Color.Tertiary" Value="85" Rounded="true" Size="Size.Medium" Class="mb-4"/>
+
+            <div class="d-flex justify-space-between mb-2">
+                <MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Internship Placements</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold text-success">0%</MudText>
+            </div>
+            <MudProgressLinear Color="Color.Success" Value="92" Rounded="true" Size="Size.Medium" Class="mb-4"/>
+            
+            <div class="d-flex justify-space-between mb-2">
+                <MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Evaluation Completion</MudText>
+                <MudText Typo="Typo.caption" Class="fw-bold text-warning">0%</MudText>
+            </div>
+            <MudProgressLinear Color="Color.Warning" Value="45" Rounded="true" Size="Size.Medium"/>
+        </div>
+    </div>
+
+    <div class="d-flex w-100 gap-4 mt-auto">
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="flex-grow-1 rounded-lg">Export CSV</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="flex-grow-1 rounded-lg">Full Report</MudButton>
+    </div>
+</MudPaper>
+
+<style>
+    .dev-metrics-widget {
+        border-radius: 20px;
+        background-color: #121212;
+        color: #ffffff;
+        background-image: radial-gradient(circle at 100% 0%, rgba(156, 39, 176, 0.15) 0%, transparent 50%),
+                          radial-gradient(circle at 0% 100%, rgba(25, 118, 210, 0.15) 0%, transparent 50%);
+    }
+    .dev-metrics-widget .mud-text-secondary {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .stat-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px 0;
+    }
+    .text-tertiary { color: #9C27B0; }
+    .glow-text {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+</style>

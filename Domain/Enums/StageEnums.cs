@@ -15,6 +15,7 @@ namespace ntcc_admin_blazor.Domain.Enums
         Visualization,
         Academic,
         Evaluation,
-        Productivity
+        Productivity,
+        Admin
     }
 }

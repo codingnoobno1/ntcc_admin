@@ -1,0 +1,90 @@
+@using MudBlazor
+@using System.ComponentModel.DataAnnotations
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Primary" Class="mr-2" />
+            <MudText Typo="Typo.h6" Class="fw-bold">Onboard New Faculty</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+            A confirmation email will automatically be sent via Supabase Auth containing account activation instructions.
+        </MudText>
+        
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudGrid>
+                <MudItem xs="12">
+                     <MudTextField @bind-Value="Faculty.FullName" T="string" Label="Full Name" Variant="Variant.Outlined" Required="true" RequiredError="Name is required!" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                     <MudTextField @bind-Value="Faculty.Email" T="string" Label="Official Email" Variant="Variant.Outlined" Required="true" RequiredError="Email is required!" Validation="@(new EmailAddressAttribute() {ErrorMessage = "Invalid email address"})" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                     <MudTextField @bind-Value="Faculty.Phone" T="string" Label="Contact Number" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                     <MudSelect T="string" Label="Department" @bind-Value="Faculty.Department" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+                         <MudSelectItem Value="@("CSE")">CSE</MudSelectItem>
+                         <MudSelectItem Value="@("IT")">IT</MudSelectItem>
+                         <MudSelectItem Value="@("ECE")">ECE</MudSelectItem>
+                         <MudSelectItem Value="@("MECH")">MECH</MudSelectItem>
+                     </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                     <MudSelect T="string" Label="Primary Role" @bind-Value="Faculty.Role" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+                         <MudSelectItem Value="@("mentor")">Mentor</MudSelectItem>
+                         <MudSelectItem Value="@("evaluator")">Evaluator</MudSelectItem>
+                         <MudSelectItem Value="@("coordinator")">Coordinator</MudSelectItem>
+                         <MudSelectItem Value="@("host")">Host</MudSelectItem>
+                         <MudSelectItem Value="@("dean")">Dean / HOD</MudSelectItem>
+                     </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel" Class="px-4">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateFaculty" Disabled="@(!success)" Class="px-6 rounded-lg shadow-sm fw-bold">Send Invited Link</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    private MudForm form = null!;
+    private bool success;
+
+    class FacultyModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+    }
+
+    private FacultyModel Faculty = new();
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task CreateFaculty()
+    {
+        await form.ValidateAsync();
+        if (form.IsValid)
+        {
+            // Simulate API Call to Supabase Auth -> CreateUser
+            Console.WriteLine($"[Auth] Creating faculty: {Faculty.Email} with Role: {Faculty.Role}");
+            MudDialog.Close(DialogResult.Ok(Faculty));
+        }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .shadow-sm { box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2); }
+</style>

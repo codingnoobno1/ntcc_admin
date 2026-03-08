@@ -14,12 +14,13 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<StageDashboardDto> GetStageDashboardAsync(string studentId, long stageId)
+        public async Task<StageDashboardDto?> GetStageDashboardAsync(string studentId, long stageId)
         {
             var dto = new StageDashboardDto();
             
             // 1. Get Stage Info
-            var stage = await _supabase.GetById<WorkflowStageEntity>(stageId);
+            var stages = await _supabase.GetWhere<WorkflowStageEntity>("id", stageId);
+            var stage = stages.FirstOrDefault();
             if (stage == null) return null;
             
             dto.StageId = stage.Id;

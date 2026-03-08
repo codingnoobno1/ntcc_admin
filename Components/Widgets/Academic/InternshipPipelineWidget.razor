@@ -1,0 +1,113 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Models
+@inject SupabaseService Supabase
+
+<MudPaper Class="pa-6 pipeline-widget" Elevation="4" Style="height: 100%;">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-bold">Internship Pipeline</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary opacity-70">Company matching & offers</MudText>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.FilterList" Size="Size.Small" />
+    </div>
+
+    <div class="d-flex w-100 justify-space-between mb-8">
+        <div class="pipeline-node text-center">
+            <div class="node-circle bg-light-primary text-primary mx-auto mb-2 shadow-sm">
+                <MudIcon Icon="@Icons.Material.Filled.Description" />
+            </div>
+            <MudText Typo="Typo.h6" Class="fw-black">@AppliedCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary">APPLIED</MudText>
+        </div>
+        
+        <div class="pipeline-connector mx-2 align-self-start mt-5"></div>
+        
+        <div class="pipeline-node text-center">
+            <div class="node-circle bg-light-warning text-warning mx-auto mb-2 shadow-sm">
+                <MudIcon Icon="@Icons.Material.Filled.Handshake" />
+            </div>
+            <MudText Typo="Typo.h6" Class="fw-black">@InterviewingCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary">INTERVIEWING</MudText>
+        </div>
+        
+        <div class="pipeline-connector mx-2 align-self-start mt-5"></div>
+        
+        <div class="pipeline-node text-center">
+            <div class="node-circle bg-light-success text-success mx-auto mb-2 shadow-pulse-success">
+                <MudIcon Icon="@Icons.Material.Filled.LocalOffer" />
+            </div>
+            <MudText Typo="Typo.h6" Class="fw-black">@OffersCount</MudText>
+            <MudText Typo="Typo.caption" Class="fw-bold mud-text-secondary">OFFERS</MudText>
+        </div>
+    </div>
+
+    <MudText Typo="Typo.subtitle2" Class="fw-bold mb-3">Top Recruiting Partners</MudText>
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">Google (5)</MudChip>
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">Microsoft (4)</MudChip>
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">Amazon (3)</MudChip>
+        <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">+12 more</MudChip>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" EndIcon="@Icons.Material.Filled.ArrowForward" Class="fw-bold rounded-lg mt-auto" Href="/admin/internship">View Placements</MudButton>
+</MudPaper>
+
+@code {
+    private int AppliedCount = 0;
+    private int InterviewingCount = 0;
+    private int OffersCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var internships = await Supabase.GetAll<Internship>();
+            AppliedCount = internships.Count;
+            
+            // Assuming random logic/state mappings since full statuses aren't enumerated
+            InterviewingCount = internships.Count(i => i.Status == "ongoing");
+            OffersCount = internships.Count(i => i.Status == "completed");
+        }
+        catch { }
+    }
+}
+
+<style>
+    .pipeline-widget {
+        border-radius: 16px;
+        background: #ffffff;
+    }
+    .node-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .bg-light-primary { background: rgba(25, 118, 210, 0.1); }
+    .bg-light-warning { background: rgba(255, 152, 0, 0.1); }
+    .bg-light-success { background: rgba(76, 175, 80, 0.1); }
+    
+    .text-primary { color: #1976D2; }
+    .text-warning { color: #FF9800; }
+    .text-success { color: #4CAF50; }
+    
+    .pipeline-connector {
+        flex-grow: 1;
+        height: 2px;
+        background: repeating-linear-gradient(90deg, #e0e0e0, #e0e0e0 4px, transparent 4px, transparent 8px);
+    }
+    .shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .shadow-pulse-success {
+        box-shadow: 0 0 0 rgba(76, 175, 80, 0.4);
+        animation: pulse-success 2s infinite;
+    }
+    @@keyframes pulse-success {
+        0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+    }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+</style>

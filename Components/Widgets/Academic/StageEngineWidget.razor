@@ -1,0 +1,61 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Application.DTOs
+
+<MudPaper Class="pa-6 stage-engine-widget" Elevation="4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-bold gradient-text">Stage Engine Activity</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Real-time workflow progression</MudText>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" Size="Size.Small" />
+    </div>
+
+    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+        <MudTimelineItem Color="Color.Success" Size="Size.Small">
+            <ItemContent>
+                <MudText Typo="Typo.subtitle2" Class="fw-bold">Proposal Submission</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Completed by 92% of Batch 2023</MudText>
+            </ItemContent>
+        </MudTimelineItem>
+        <MudTimelineItem Color="Color.Warning" Size="Size.Small">
+            <ItemOpposite>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Current Stage</MudText>
+            </ItemOpposite>
+            <ItemContent>
+                <MudText Typo="Typo.subtitle2" Class="fw-bold text-warning">Project Allocation</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Pending approval from HOD</MudText>
+                <MudProgressLinear Color="Color.Warning" Value="65" Class="mt-2" />
+            </ItemContent>
+        </MudTimelineItem>
+        <MudTimelineItem Color="Color.Default" Size="Size.Small">
+            <ItemContent>
+                <MudText Typo="Typo.subtitle2" Class="mud-text-disabled">Mid-Term Evaluation</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-disabled">Starts in 14 Days</MudText>
+            </ItemContent>
+        </MudTimelineItem>
+    </MudTimeline>
+
+    <div class="mt-4 pt-4 border-t-1 border-solid mud-border-lines-default">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" EndIcon="@Icons.Material.Filled.ArrowForward" Href="/admin/configuration">Manage Stages</MudButton>
+    </div>
+</MudPaper>
+
+<style>
+    .stage-engine-widget {
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,250,252,1) 100%);
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    .stage-engine-widget:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important;
+        transform: translateY(-2px);
+    }
+    .gradient-text {
+        background: linear-gradient(90deg, #1976D2 0%, #2196F3 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .fw-bold { font-weight: 700; }
+    .text-warning { color: #FF9800; }
+</style>

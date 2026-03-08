@@ -1,0 +1,130 @@
+@page "/students/documents/missing"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Missing Documents - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <div class="d-flex align-center">
+                 <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Warning" Size="Size.Large" Class="mr-3" />
+                 <MudText Typo="Typo.h3" Class="fw-black text-dark">Missing Documents Tracker</MudText>
+            </div>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mt-1">Identify students with pending operational uploads</MudText>
+        </div>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" EndIcon="@Icons.Material.Filled.NotificationAdd" Class="bg-white hover-shadow fw-bold">Send Reminders</MudButton>
+    </div>
+
+    <MudPaper Elevation="2" Class="pa-0 rounded-xl overflow-hidden mt-6">
+        <MudTable Items="@missingDocs" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@isLoading" Bordered="false" Striped="true">
+            <ToolBarContent>
+                <div class="d-flex gap-4 px-4 pt-4 w-100 align-end mb-2">
+                    <MudSelect T="string" Label="Document Type" @bind-Value="docFilter" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1 max-w-[250px]">
+                        <MudSelectItem Value='"All Documents"' />
+                        <MudSelectItem Value='"Offer Letter"' />
+                        <MudSelectItem Value='"NOC Application"' />
+                        <MudSelectItem Value='"Mid-Term Report"' />
+                        <MudSelectItem Value='"Project Proposal"' />
+                    </MudSelect>
+                    
+                    <MudSelect T="string" Label="Batch Timeline" @bind-Value="batchFilter" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1 max-w-[250px]">
+                        <MudSelectItem Value='"Batch 2023"' />
+                        <MudSelectItem Value='"Batch 2022"' />
+                    </MudSelect>
+                    
+                    <MudSpacer />
+                    
+                    <MudTextField @bind-Value="searchString" Placeholder="Search ID or Name" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Margin="Margin.Dense"></MudTextField>
+                </div>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Student Name</MudTh>
+                <MudTh>Enrollment</MudTh>
+                <MudTh>Missing Document</MudTh>
+                <MudTh>Due Date</MudTh>
+                <MudTh>Urgency</MudTh>
+                <MudTh Style="text-align:right">Action</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Student Name">
+                    <div class="d-flex align-center">
+                        <MudAvatar Size="Size.Small" Color="Color.Secondary" Class="mr-2">@(context.Name.Substring(0,1))</MudAvatar>
+                        <MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Enrollment">@context.EnrollmentNo</MudTd>
+                <MudTd DataLabel="Missing Document">
+                    <MudText Typo="Typo.body2" Class="fw-bold text-dark">@context.DocType</MudText>
+                </MudTd>
+                <MudTd DataLabel="Due Date">
+                    <MudText Typo="Typo.caption" Class="@GetDueClass(context.DaysOverdue)">@context.DueDate (Overdue by @context.DaysOverdue days)</MudText>
+                </MudTd>
+                <MudTd DataLabel="Urgency">
+                    <MudChip T="string" Size="Size.Small" Color="@GetUrgencyColor(context.DaysOverdue)" Variant="Variant.Filled">
+                        @(context.DaysOverdue > 7 ? "High" : context.DaysOverdue > 3 ? "Medium" : "Low")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Action" Style="text-align:right">
+                    <MudTooltip Text="Send Email Reminder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Email" Color="Color.Primary" Size="Size.Small" />
+                    </MudTooltip>
+                    <MudTooltip Text="Exempt Document">
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" Size="Size.Small" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool isLoading = true;
+    private string searchString = "";
+    private string docFilter = "All Documents";
+    private string batchFilter = "Batch 2023";
+
+    class MissingDocRecord
+    {
+        public string Name { get; set; } = string.Empty;
+        public string EnrollmentNo { get; set; } = string.Empty;
+        public string DocType { get; set; } = string.Empty;
+        public string DueDate { get; set; } = string.Empty;
+        public int DaysOverdue { get; set; }
+    }
+
+    private List<MissingDocRecord> missingDocs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+        missingDocs = new List<MissingDocRecord>
+        {
+            new MissingDocRecord { Name = "Rahul Singh", EnrollmentNo = "2023-CSE-091", DocType = "Offer Letter", DueDate = "10 Aug 2023", DaysOverdue = 14 },
+            new MissingDocRecord { Name = "Sneha Patel", EnrollmentNo = "2023-CSE-142", DocType = "NOC Application", DueDate = "15 Aug 2023", DaysOverdue = 9 },
+            new MissingDocRecord { Name = "Vikram Reddy", EnrollmentNo = "2023-CSE-205", DocType = "Mid-Term Report", DueDate = "22 Aug 2023", DaysOverdue = 2 },
+            new MissingDocRecord { Name = "Anjali Mehta", EnrollmentNo = "2023-CSE-218", DocType = "Project Proposal", DueDate = "20 Aug 2023", DaysOverdue = 4 }
+        };
+        isLoading = false;
+    }
+
+    private Color GetUrgencyColor(int overdue) => overdue > 7 ? Color.Error : (overdue > 3 ? Color.Warning : Color.Info);
+    
+    private string GetDueClass(int overdue) => overdue > 7 ? "text-error fw-bold" : "mud-text-secondary";
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-dark { color: #212529; }
+    .text-error { color: #f44336; }
+    
+    .max-w-[250px] { max-width: 250px; }
+    .hover-shadow { transition: box-shadow 0.2s; }
+    .hover-shadow:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+</style>

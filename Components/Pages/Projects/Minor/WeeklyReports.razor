@@ -1,0 +1,96 @@
+@page "/projects/minor/weekly-reports"
+@using ntcc_admin_blazor.Components.Layout
+@layout MainLayout
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-16">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold text-gradient">Weekly Supervisor Logs</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Track mentor meetings and project velocity</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddComment" Class="fw-bold">Submit New Report</MudButton>
+    </div>
+
+    <MudGrid>
+        <!-- Left Sidebar: Selection & Analytics -->
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 rounded-xl mb-6" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Target Student/Group</MudText>
+                
+                <MudAutocomplete T="string" Label="Search Group or Student..." Value="@("AI Malware Detection (G1)")" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" />
+                
+                <MudCard Elevation="0" Class="mt-4 bg-light pa-3 border-solid border-1 mud-border-lines-default rounded-lg">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <MudText Typo="Typo.subtitle2" Class="fw-bold">Current Progress</MudText>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">On Track</MudChip>
+                    </div>
+                    <MudProgressLinear Color="Color.Success" Value="65" Class="mb-1" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-right">65% to Final Report</MudText>
+                </MudCard>
+            </MudPaper>
+
+            <!-- ApexCharts Meeting Frequency placeholder -->
+            <MudPaper Class="pa-6 rounded-xl" Elevation="4">
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mb-3">Meeting Frequency (Last 4 Weeks)</MudText>
+                <div class="w-100 d-flex flex-column align-center justify-center bg-light rounded-lg border-1 border-solid mud-border-lines-default" style="height: 200px;">
+                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.caption" Color="Color.Primary">ApexCharts Rendering Area</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Right Pane: Report Submission Editor -->
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6 rounded-xl h-100 d-flex flex-column" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-6">Log Meeting Details</MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Meeting Date" Date="@(DateTime.Today)" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="int" Label="Reported Progress (%)" Value="65" Variant="Variant.Outlined">
+                            @for(int i = 0; i <= 100; i+=5)
+                            {
+                                <MudSelectItem Value="@i" />
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudText Typo="Typo.subtitle2" Class="fw-bold mt-6 mb-2">Discussion Notes & Issues</MudText>
+                
+                <!-- Quill Editor Placeholder -->
+                <div class="quill-container rounded-lg border-solid border-1 mud-border-lines-default bg-white flex-grow-1 d-flex flex-column" style="min-height: 250px;">
+                    <div class="quill-toolbar bg-light border-b-1 mud-border-lines-default pa-2 d-flex gap-2">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatBold" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatItalic" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatListNumbered" Size="Size.Small" />
+                    </div>
+                    <div class="quill-content pa-4 flex-grow-1 mud-text-secondary">
+                        <p>Discussed the preliminary dataset loading script.</p>
+                        <ul>
+                            <li>Issue: The dataset is too large for memory.</li>
+                            <li>Action: Implement batched processing using Python generators before next week.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-end mt-6 gap-3">
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary">Clear Draft</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="fw-bold px-8" StartIcon="@Icons.Material.Filled.Send">Publish Report</MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-gradient {
+        background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>

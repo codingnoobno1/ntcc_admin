@@ -1,0 +1,153 @@
+@page "/projects/teams"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Team Formation - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+           <MudText Typo="Typo.h3" Class="fw-black text-primary">Team Formation</MudText>
+           <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Drag and drop or select students to form Minor/Major project cohorts</MudText>
+        </div>
+        <div class="d-flex gap-3">
+             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="bg-white hover-shadow">Auto-Assign Remaining</MudButton>
+             <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.Save" Class="shadow-sm">Save Group Config</MudButton>
+        </div>
+    </div>
+
+    <!-- Interactive Builder Array -->
+    <MudGrid Spacing="4">
+        <!-- Ungrouped Students Panel -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="2" Class="pa-4 h-100 rounded-xl d-flex flex-column border-solid border-2 mud-border-lines-default" Style="max-height: 800px;">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4 d-flex justify-space-between align-center">
+                    <span>Unassigned Pool</span>
+                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">12 Remaining</MudChip>
+                </MudText>
+                
+                <MudTextField @bind-Value="searchString" Placeholder="Search students..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" Class="mb-4" Variant="Variant.Outlined"></MudTextField>
+                
+                <div class="flex-grow-1 overflow-y-auto pr-2">
+                    <MudList T="string" Dense="true" Hover="true">
+                        <MudListItem Class="border-solid border-1 mud-border-lines-default rounded px-3 py-2 mb-2 draggable-item">
+                             <div class="d-flex align-center cursor-move">
+                                 <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Class="mr-2 mud-text-secondary" Size="Size.Small"/>
+                                 <div>
+                                     <MudText Typo="Typo.body2" Class="fw-bold">Rohit Sharma</MudText>
+                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">2023-CSE-001</MudText>
+                                 </div>
+                             </div>
+                        </MudListItem>
+                        <MudListItem Class="border-solid border-1 mud-border-lines-default rounded px-3 py-2 mb-2 draggable-item">
+                             <div class="d-flex align-center cursor-move">
+                                 <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Class="mr-2 mud-text-secondary" Size="Size.Small"/>
+                                 <div>
+                                     <MudText Typo="Typo.body2" Class="fw-bold">Rhea Gupta</MudText>
+                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">2023-CSE-014</MudText>
+                                 </div>
+                             </div>
+                        </MudListItem>
+                    </MudList>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Formed Groups Panel -->
+        <MudItem xs="12" md="8">
+            <div class="d-flex justify-space-between align-center mb-4">
+                 <MudText Typo="Typo.h6" Class="fw-bold">Active Cohorts (Semester 5)</MudText>
+                 <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Create New Group</MudButton>
+            </div>
+            
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudCard Elevation="1" Class="rounded-lg h-100 drop-zone">
+                        <MudCardHeader Class="bg-light-gray pb-2 border-b-1 border-solid mud-border-lines-default">
+                             <CardHeaderContent>
+                                 <div class="d-flex justify-space-between align-center">
+                                     <MudText Typo="Typo.subtitle1" Class="fw-bold">Group G-4050</MudText>
+                                     <MudChip T="string" Size="Size.Small" Color="Color.Success">Full (4/4)</MudChip>
+                                 </div>
+                             </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="pt-4">
+                            <MudList T="string" Dense="true" DisablePadding="true">
+                                <MudListItem Class="px-0 py-1">
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-3">A</MudAvatar>
+                                        <MudText Typo="Typo.body2">Arjun Das (Leader)</MudText>
+                                    </div>
+                                </MudListItem>
+                                <MudListItem Class="px-0 py-1">
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Size="Size.Small" Color="Color.Surface" Class="mr-3 text-dark">N</MudAvatar>
+                                        <MudText Typo="Typo.body2">Nikhil Varma</MudText>
+                                    </div>
+                                </MudListItem>
+                                <MudListItem Class="px-0 py-1">
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Size="Size.Small" Color="Color.Surface" Class="mr-3 text-dark">P</MudAvatar>
+                                        <MudText Typo="Typo.body2">Pooja Iyer</MudText>
+                                    </div>
+                                </MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                
+                 <MudItem xs="12" sm="6">
+                    <MudCard Elevation="1" Class="rounded-lg h-100 drop-zone drop-zone-active">
+                        <MudCardHeader Class="bg-light-gray pb-2 border-b-1 border-solid mud-border-lines-default">
+                             <CardHeaderContent>
+                                 <div class="d-flex justify-space-between align-center">
+                                     <MudText Typo="Typo.subtitle1" Class="fw-bold">Group G-4051</MudText>
+                                     <MudChip T="string" Size="Size.Small" Color="Color.Warning">Need 2 (2/4)</MudChip>
+                                 </div>
+                             </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="pt-4">
+                            <MudList T="string" Dense="true" DisablePadding="true" Class="mb-4">
+                                <MudListItem Class="px-0 py-1">
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-3">S</MudAvatar>
+                                        <MudText Typo="Typo.body2">Siddharth Menon (Leader)</MudText>
+                                    </div>
+                                </MudListItem>
+                            </MudList>
+                            <div class="pa-4 border-dashed border-2 mud-border-lines-default rounded text-center mud-text-secondary bg-white">
+                                <MudIcon Icon="@Icons.Material.Filled.GroupAdd" Size="Size.Medium" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="d-block">Drop students here</MudText>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private string searchString = "";
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-dark { color: #212529 !important; border: 1px solid #dee2e6; }
+    
+    .bg-light-gray { background-color: #f8f9fa; }
+    .cursor-move { cursor: grab; }
+    
+    .draggable-item { background-color: #ffffff; transition: box-shadow 0.2s; }
+    .draggable-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-color: #1976D2 !important; }
+    
+    .drop-zone { border: 2px solid transparent; transition: border-color 0.2s; }
+    .drop-zone-active { border: 2px dashed #1976D2; background-color: rgba(25,118,210,0.02); }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .hover-shadow:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+</style>

@@ -1,0 +1,91 @@
+@page "/dashboard"
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject IDashboardService DashboardService
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>@dashboardTitle</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <!-- Header Section -->
+    <div class="d-flex justify-space-between align-end mb-8">
+        <div class="animate-fade-in">
+            <MudText Typo="Typo.h3" Class="fw-black premium-gradient-text">Welcome back, @userName</MudText>
+            <MudText Typo="Typo.h6" Class="mud-text-secondary">@userRole.ToUpper() PORTAL — NTCC Academic Lifecycle Control</MudText>
+        </div>
+        <div class="d-flex gap-3">
+            <MudChip T="string" Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.Event" Class="px-4 py-2 rounded-lg">Semester 5</MudChip>
+            <MudChip T="string" Variant="Variant.Filled" Color="Color.Secondary" Icon="@Icons.Material.Filled.BatchPrediction" Class="px-4 py-2 rounded-lg">Batch 2023</MudChip>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="my-4" />
+    }
+    else if (!widgets.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="my-4">
+            No widgets configured for this role.
+        </MudAlert>
+    }
+    else
+    {
+        <ntcc_admin_blazor.Components.Dashboard.WidgetContainer Widgets="@widgets" />
+    }
+
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    string userName = "";
+    string userRole = "";
+    string dashboardTitle = "Dashboard";
+    List<WidgetDto> widgets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userName = authState.User.Identity?.Name ?? "User";
+            userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "custom";
+            
+            dashboardTitle = $"{userRole.ToUpper()} Dashboard - NTCC";
+
+            widgets = await DashboardService.GetGlobalWidgetsAsync(userRole);
+        }
+        catch 
+        { 
+            userName = "User"; 
+            userRole = "custom";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .premium-gradient-text {
+        background: linear-gradient(135deg, #1976D2 0%, #9C27B0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .fw-black { font-weight: 900; }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>

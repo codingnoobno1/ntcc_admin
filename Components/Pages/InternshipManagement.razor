@@ -172,7 +172,7 @@
     decimal evalScore;
 
     List<Internship> internships = new();
-    List<Student> students = new();
+    List<ntcc_admin_blazor.Models.Student> students = new();
     Internship editItem = new();
 
     protected override async Task OnInitializedAsync() => await LoadData();
@@ -183,7 +183,7 @@
         try
         {
             internships = await Supabase.GetAll<Internship>();
-            students = await Supabase.GetAll<Student>();
+            students = await Supabase.GetAll<ntcc_admin_blazor.Models.Student>();
         }
         catch (Exception ex) { Console.WriteLine($"[INTERNSHIPS] Load error: {ex.Message}"); }
         finally { isLoading = false; }

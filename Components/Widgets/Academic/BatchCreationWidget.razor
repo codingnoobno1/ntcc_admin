@@ -1,0 +1,96 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Models
+@inject SupabaseService Supabase
+
+<MudPaper Class="pa-6 batch-metrics-widget" Elevation="4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-bold">Batch Formation</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary opacity-70">Semester 5 - 2023</MudText>
+        </div>
+        <MudAvatar Color="Color.Secondary" Variant="Variant.Outlined" Style="width:48px; height:48px;">
+            <MudIcon Icon="@Icons.Material.Filled.GroupAdd" />
+        </MudAvatar>
+    </div>
+
+    <div class="d-flex align-center justify-space-between pt-2">
+        <div class="text-center flex-grow-1">
+            <MudText Typo="Typo.h4" Class="fw-black text-primary">@TotalEnrolled</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Total Enrolled</MudText>
+        </div>
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+        <div class="text-center flex-grow-1">
+            <MudText Typo="Typo.h4" Class="fw-black text-success">@TeamsFormed</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Teams Formed</MudText>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <div class="d-flex justify-space-between mb-1">
+            <MudText Typo="Typo.body2" Class="fw-bold">Formation Progress</MudText>
+            <MudText Typo="Typo.body2" Class="text-success fw-bold">@(ProgressPercent)%</MudText>
+        </div>
+        <MudProgressLinear Color="Color.Success" Value="@ProgressPercent" Rounded="true" Size="Size.Medium" />
+    </div>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-6 rounded-lg py-3 fw-bold shadow-pulse" StartIcon="@Icons.Material.Filled.Bolt" Href="/admin/projects">
+        Configure Cohort Rules
+    </MudButton>
+</MudPaper>
+
+@code {
+    private int TotalEnrolled = 0;
+    private int TeamsFormed = 0;
+    private int ProgressPercent = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var students = await Supabase.GetAll<Student>();
+            var teams = await Supabase.GetAll<Project>();
+
+            TotalEnrolled = students.Count;
+            TeamsFormed = teams.Count;
+
+            if (TotalEnrolled > 0)
+            {
+                // Proxy logic: assuming 4 students per team
+                decimal expectedTeams = TotalEnrolled / 4.0m;
+                if (expectedTeams > 0)
+                {
+                    ProgressPercent = (int)Math.Clamp((TeamsFormed / expectedTeams) * 100, 0, 100);
+                }
+            }
+        }
+        catch { }
+    }
+}
+
+<style>
+    .batch-metrics-widget {
+        border-radius: 20px;
+        background-color: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
+    .batch-metrics-widget::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, #9C27B0, #E91E63);
+    }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-success { color: #00C853; }
+    
+    .shadow-pulse {
+        box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .shadow-pulse:hover {
+        box-shadow: 0 6px 20px rgba(25, 118, 210, 0.6);
+    }
+</style>

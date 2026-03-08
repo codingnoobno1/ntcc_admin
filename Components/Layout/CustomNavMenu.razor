@@ -1,0 +1,62 @@
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject SupabaseService Supabase
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+
+<MudNavMenu>
+    <MudNavLink href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Overview</MudNavLink>
+    
+    @if (isLoading)
+    {
+        <div class="px-4 py-2">
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        @foreach(var item in navItems.OrderBy(x => x.OrderIndex))
+        {
+            <MudNavLink Href="@item.Route" Icon="@item.Icon">@item.Label</MudNavLink>
+        }
+    }
+</MudNavMenu>
+
+@code {
+    bool isLoading = true;
+    List<CustomNavItemEntity> navItems = new();
+    string userRole = "custom";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "custom";
+            
+            navItems = await Supabase.GetWhere<CustomNavItemEntity>("role", userRole);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Nav Error] Failed to load custom nav: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .mud-nav-link.active {
+        background-color: rgba(25, 118, 210, 0.05) !important;
+        color: #1976D2 !important;
+        font-weight: 600;
+        border-right: 3px solid #1976D2;
+    }
+    .mud-nav-link:hover {
+        background-color: rgba(25, 118, 210, 0.03) !important;
+    }
+</style>

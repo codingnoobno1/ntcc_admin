@@ -1,0 +1,93 @@
+@using MudBlazor
+@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Models
+@inject SupabaseService Supabase
+
+<MudPaper Class="pa-6 eval-queue-widget" Elevation="4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h6" Class="fw-bold">Evaluation Queue</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary opacity-70">Pending Reviews & Scoring</MudText>
+        </div>
+        <MudBadge Content="@Evaluations.Count" Color="Color.Error" Overlap="true" Class="mx-2">
+            <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Secondary" Size="Size.Large" />
+        </MudBadge>
+    </div>
+
+    <MudTable Items="@Evaluations" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Class="transparent-table">
+        <HeaderContent>
+            <MudTh><MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Group</MudText></MudTh>
+            <MudTh><MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Type</MudText></MudTh>
+            <MudTh><MudText Typo="Typo.caption" Class="fw-bold text-uppercase">Deadline</MudText></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Group">
+                <MudText Typo="Typo.body2" Class="fw-bold">@context.Group</MudText>
+            </MudTd>
+            <MudTd DataLabel="Type">
+                <MudChip T="string" Size="Size.Small" Color="@GetChipColor(context.Type)" Variant="Variant.Filled">@context.Type</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Deadline">
+                <MudText Typo="Typo.caption" Color="@(context.DaysLeft <= 2 ? Color.Error : Color.Default)">
+                    @(context.DaysLeft) Days
+                </MudText>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.RateReview" Size="Size.Small" Color="Color.Primary" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" FullWidth="true" Class="mt-4 fw-bold" Href="/admin/evaluation">View Full Queue</MudButton>
+</MudPaper>
+
+@code {
+    class EvalItem
+    {
+        public string Group { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public int DaysLeft { get; set; }
+    }
+
+    private List<EvalItem> Evaluations = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var projects = await Supabase.GetAll<Project>();
+            var pending = projects.Where(p => p.SubmissionStatus == "pending" || p.ProposalStatus == "draft").Take(3).ToList();
+
+            foreach(var p in pending)
+            {
+                Evaluations.Add(new EvalItem 
+                { 
+                    Group = string.IsNullOrWhiteSpace(p.Title) ? "Untitled Group" : p.Title, 
+                    Type = p.SubmissionStatus == "pending" ? "Submission" : "Proposal", 
+                    DaysLeft = 0 
+                });
+            }
+        }
+        catch { }
+    }
+
+    private Color GetChipColor(string type) => type switch
+    {
+        "Proposal" => Color.Info,
+        "Mid-Term" => Color.Warning,
+        "Final" => Color.Secondary,
+        _ => Color.Default
+    };
+}
+
+<style>
+    .eval-queue-widget {
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .transparent-table { background: transparent !important; }
+    .transparent-table th { border-bottom: 2px solid #f0f0f0; }
+    .fw-bold { font-weight: 700; }
+</style>

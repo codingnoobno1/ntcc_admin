@@ -1,0 +1,166 @@
+@page "/admin/faculty/{FacultyId}"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize(Roles = "admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Faculty Detail - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <!-- Header Back Navigation -->
+    <MudButton Href="/admin/faculty" StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Text" Class="mb-4 text-muted hover-underline">
+        Back to Directory
+    </MudButton>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <!-- Profile Banner -->
+        <MudPaper Elevation="2" Class="pa-6 mb-6 rounded-xl profile-banner">
+            <div class="d-flex align-center gap-6">
+                <MudAvatar Color="Color.Primary" Style="width: 80px; height: 80px; font-size: 2rem;" Variant="Variant.Filled" Class="shadow-sm">AS</MudAvatar>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h4" Class="fw-black">Dr. Anita Sharma</MudText>
+                            <div class="d-flex align-center gap-2 mt-1">
+                                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Dept of CSE</MudText>
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Outlined">HOD</MudChip>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                             <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.VpnKey" Size="Size.Small">Force Reset PW</MudButton>
+                             <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Large">Active</MudChip>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- KPI Overview Cards -->
+        <MudGrid Class="mb-6">
+             <MudItem xs="12" sm="4">
+                 <MudPaper Elevation="1" Class="pa-4 rounded-lg d-flex align-center shadow-sm">
+                     <MudIcon Icon="@Icons.Material.Filled.AccountTree" Color="Color.Primary" Size="Size.Large" Class="mr-4" />
+                     <div>
+                         <MudText Typo="Typo.h5" Class="fw-black text-dark">14</MudText>
+                         <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Projects Supervised</MudText>
+                     </div>
+                 </MudPaper>
+             </MudItem>
+             <MudItem xs="12" sm="4">
+                 <MudPaper Elevation="1" Class="pa-4 rounded-lg d-flex align-center shadow-sm">
+                     <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Color="Color.Secondary" Size="Size.Large" Class="mr-4" />
+                     <div>
+                         <MudText Typo="Typo.h5" Class="fw-black text-dark">9</MudText>
+                         <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Internships Monitored</MudText>
+                     </div>
+                 </MudPaper>
+             </MudItem>
+             <MudItem xs="12" sm="4">
+                 <MudPaper Elevation="1" Class="pa-4 rounded-lg d-flex align-center shadow-sm">
+                     <MudIcon Icon="@Icons.Material.Filled.Grading" Color="Color.Success" Size="Size.Large" Class="mr-4" />
+                     <div>
+                         <MudText Typo="Typo.h5" Class="fw-black text-dark">32</MudText>
+                         <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Evaluations Done</MudText>
+                     </div>
+                 </MudPaper>
+             </MudItem>
+        </MudGrid>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="rounded-xl">
+            <!-- OVERVIEW TAB -->
+            <MudTabPanel Text="Profile Info" Icon="@Icons.Material.Filled.Person">
+                <MudCard Elevation="0" Class="border-solid border-2 mud-border-lines-default rounded-lg">
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Email Address</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-3">asharma@ntcc.edu</MudText>
+                                
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Contact Number</MudText>
+                                <MudText Typo="Typo.body1" Class="mb-3">+91 98765 12345</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">System Roles</MudText>
+                                <div class="d-flex gap-2 mb-3 mt-1">
+                                     <MudChip T="string" Color="Color.Warning" Size="Size.Small">Dean</MudChip>
+                                     <MudChip T="string" Color="Color.Primary" Size="Size.Small">Mentor</MudChip>
+                                </div>
+                                
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Last Login</MudText>
+                                <MudText Typo="Typo.body1" Class="mud-text-secondary">Oct 14, 2023 - 09:42 AM</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <!-- Mentorship TAB -->
+            <MudTabPanel Text="Active Supervisions" Icon="@Icons.Material.Filled.CoPresent">
+                 <MudText Typo="Typo.h6" Class="fw-bold mb-4">Currently Mentoring</MudText>
+                 <MudTable Items="@mentoredGroups" Hover="true" Dense="true" Elevation="0" Class="border-solid border-1 mud-border-lines-default rounded-lg">
+                     <HeaderContent>
+                         <MudTh>Group/Student</MudTh>
+                         <MudTh>Type</MudTh>
+                         <MudTh>Status</MudTh>
+                     </HeaderContent>
+                     <RowTemplate>
+                         <MudTd DataLabel="Group">
+                              <MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText>
+                         </MudTd>
+                         <MudTd DataLabel="Type">
+                              <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Type</MudChip>
+                         </MudTd>
+                         <MudTd DataLabel="Status">
+                              <MudText Typo="Typo.body2" Class="text-success fw-bold">@context.Status</MudText>
+                         </MudTd>
+                     </RowTemplate>
+                 </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string FacultyId { get; set; } = string.Empty;
+
+    private bool isLoading = true;
+
+    class MentorshipRecord
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
+    private List<MentorshipRecord> mentoredGroups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500); // Simulate fetch
+        mentoredGroups = new List<MentorshipRecord>();
+        isLoading = false;
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-success { color: #00C853; }
+    .text-dark { color: #212529; }
+    .text-muted { color: #6c757d; }
+    .hover-underline:hover { text-decoration: underline; background: transparent !important; }
+    
+    .profile-banner {
+        background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+</style>

@@ -94,14 +94,30 @@ namespace ntcc_admin_blazor.Services
             return result.Models;
         }
 
-        public async Task<T?> GetById<T>(string id) where T : BaseModel, new()
+        public async Task<List<T>> GetWhere<T>(string column, object value) where T : BaseModel, new()
+        {
+            await InitializeAsync();
+            var result = await Client.From<T>()
+                .Filter(column, Postgrest.Constants.Operator.Equals, value?.ToString())
+                .Get();
+            return result.Models;
+        }
+
+        public async Task<T> Upsert<T>(T model) where T : BaseModel, new()
+        {
+            await InitializeAsync();
+            var result = await Client.From<T>().Upsert(model);
+            return result.Models.FirstOrDefault();
+        }
+
+        public async Task<T?> GetById<T>(object id) where T : BaseModel, new()
         {
             try
             {
                 await InitializeAsync();
                 Console.WriteLine($"[DB] GetById<{typeof(T).Name}> for id: {id}");
                 var result = await Client.From<T>()
-                    .Filter("id", Postgrest.Constants.Operator.Equals, id)
+                    .Filter("id", Postgrest.Constants.Operator.Equals, id?.ToString())
                     .Get();
                 Console.WriteLine($"[DB] GetById Result: {result.Models.Count} record(s) found");
                 return result.Models.FirstOrDefault();

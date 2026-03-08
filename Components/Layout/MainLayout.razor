@@ -5,6 +5,10 @@
 
 
 <MudLayout>
+    <MudThemeProvider @rendermode="InteractiveServer" />
+    <MudDialogProvider @rendermode="InteractiveServer" />
+    <MudSnackbarProvider @rendermode="InteractiveServer" />
+    <MudPopoverProvider @rendermode="InteractiveServer" />
     <MudAppBar Elevation="1" Color="Color.Surface" Fixed="true">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
             <MudLink Href="dashboard" Underline="Underline.None">
@@ -37,7 +41,18 @@
         </MudAppBar>
 
         <MudDrawer @bind-Open="_drawerOpen" Elevation="1" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive">
-            <NavMenu />
+            @if (currentUserRole == "admin" || currentUserRole == "master")
+            {
+                <AdminNavMenu />
+            }
+            else if (currentUserRole == "faculty")
+            {
+                <FacultyNavMenu />
+            }
+            else
+            {
+                <CustomNavMenu />
+            }
         </MudDrawer>
 
         <MudMainContent Class="pa-8" Style="background-color: #f8f9fa; min-height: 100vh;">
@@ -47,6 +62,13 @@
 
 @code {
     bool _drawerOpen = true;
+    string currentUserRole = "custom";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToLower() ?? "custom";
+    }
 
     void DrawerToggle()
     {
@@ -62,13 +84,12 @@
 
     string GetRole(System.Security.Claims.ClaimsPrincipal user)
     {
-        return user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToUpper() ?? "FACULTY";
+        return currentUserRole.ToUpper();
     }
 
     Color GetRoleColor(System.Security.Claims.ClaimsPrincipal user)
     {
-        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToLower();
-        return role == "master" || role == "admin" ? Color.Primary : Color.Secondary;
+        return currentUserRole == "master" || currentUserRole == "admin" ? Color.Primary : Color.Secondary;
     }
 }
 

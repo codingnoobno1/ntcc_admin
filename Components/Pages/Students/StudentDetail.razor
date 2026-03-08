@@ -1,0 +1,206 @@
+@page "/students/{StudentId}"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Student Detail - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <!-- Header Back Navigation -->
+    <MudButton Href="/students" StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Text" Class="mb-4 text-muted hover-underline">
+        Back to Directory
+    </MudButton>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <!-- Profile Banner -->
+        <MudPaper Elevation="2" Class="pa-6 mb-6 rounded-xl profile-banner">
+            <div class="d-flex align-center gap-6">
+                <MudAvatar Color="Color.Primary" Style="width: 80px; height: 80px; font-size: 2rem;" Variant="Variant.Filled" Class="shadow-sm">SA</MudAvatar>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h4" Class="fw-black">Student Alpha</MudText>
+                            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Enrl: 2023-CSE-1442 | Semester 5</MudText>
+                        </div>
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Large">Active</MudChip>
+                    </div>
+                </div>
+            </div>
+        </MudPaper>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="rounded-xl">
+            <!-- OVERVIEW TAB -->
+            <MudTabPanel Text="Overview" Icon="@Icons.Material.Filled.Dashboard">
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="0" Class="border-solid border-2 mud-border-lines-default rounded-lg h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="fw-bold">Contact Info</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <div class="d-flex align-center mb-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Email" Class="mr-3 mud-text-secondary" />
+                                    <MudText>alpha.student@ntcc.edu</MudText>
+                                </div>
+                                <div class="d-flex align-center mb-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Phone" Class="mr-3 mud-text-secondary" />
+                                    <MudText>+91 98765 43210</MudText>
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="0" Class="border-solid border-2 mud-border-lines-default rounded-lg h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="fw-bold">Academic Status</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudList T="string" Dense="true">
+                                    <MudListItem>
+                                        <div class="d-flex justify-space-between">
+                                            <MudText>CGPA</MudText>
+                                            <MudText Class="fw-bold">8.4</MudText>
+                                        </div>
+                                    </MudListItem>
+                                    <MudListItem>
+                                        <div class="d-flex justify-space-between">
+                                            <MudText>Internship Credits</MudText>
+                                            <MudText Class="fw-bold text-success">Verified</MudText>
+                                        </div>
+                                    </MudListItem>
+                                </MudList>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <!-- PROJECT TAB -->
+            <MudTabPanel Text="Projects" Icon="@Icons.Material.Filled.WorkOutline">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Current Project: Smart Irrigation System</MudText>
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4">Minor Project - Phase 2</MudChip>
+                
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    <MudTimelineItem Color="Color.Success">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold">Proposal Approved</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">By Dr. Sharma on 12-Aug</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Warning">
+                        <ItemOpposite><MudText Typo="Typo.caption">Current</MudText></ItemOpposite>
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold text-warning">Mid-term Evaluation</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Scheduled for 15-Oct</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Default">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="mud-text-disabled">Final Submission</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudTabPanel>
+
+            <!-- INTERNSHIP TAB -->
+            <MudTabPanel Text="Internship" Icon="@Icons.Material.Filled.BusinessCenter">
+                <MudAlert Severity="Severity.Info" Class="mb-4">Student is currently tracking an ongoing internship.</MudAlert>
+                <MudCard Elevation="0" Class="border-solid border-2 mud-border-lines-default rounded-lg">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="fw-bold text-primary mb-2">Google India Pvt. Ltd.</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-4">Software Engineering Intern</MudText>
+                        
+                        <MudGrid>
+                            <MudItem xs="4">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Duration</MudText>
+                                <MudText Typo="Typo.body2">6 Months</MudText>
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Mentor</MudText>
+                                <MudText Typo="Typo.body2">Mr. Rajiv Desai</MudText>
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase fw-bold">Status</MudText>
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Ongoing</MudChip>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudTabPanel>
+
+            <!-- DOCUMENTS TAB -->
+            <MudTabPanel Text="Documents" Icon="@Icons.Material.Filled.Description">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Submission Portfolio</MudText>
+                
+                <MudList T="string" Clickable="true" Hover="true" Class="border-solid border-1 mud-border-lines-default rounded-lg">
+                    <MudListItem Icon="@Icons.Material.Filled.PictureAsPdf" IconColor="Color.Error">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText>Offer_Letter_Google.pdf</MudText>
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Verified</MudChip>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                    <MudListItem Icon="@Icons.Material.Filled.PictureAsPdf" IconColor="Color.Error">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText>NOC_Application_Signed.pdf</MudText>
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Verified</MudChip>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                    <MudListItem Icon="@Icons.Material.Filled.InsertDriveFile" IconColor="Color.Default">
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Class="mud-text-secondary">Mid_Term_Report.docx</MudText>
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Outlined">Missing</MudChip>
+                        </div>
+                    </MudListItem>
+                </MudList>
+            </MudTabPanel>
+
+            <!-- EVALUATION TAB -->
+            <MudTabPanel Text="Evaluations" Icon="@Icons.Material.Filled.Grade">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Scoring History</MudText>
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No final scores compiled yet for the current semester.</MudAlert>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string StudentId { get; set; } = string.Empty;
+
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500); // Simulate fetch
+        isLoading = false;
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-warning { color: #FF9800; }
+    .text-success { color: #00C853; }
+    .text-muted { color: #6c757d; }
+    .hover-underline:hover { text-decoration: underline; background: transparent !important; }
+    
+    .profile-banner {
+        background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+</style>

@@ -1,0 +1,119 @@
+@page "/projects/minor/supervisors"
+@using ntcc_admin_blazor.Components.Layout
+@layout MainLayout
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-16">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold text-gradient">Supervisor Assignment</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Map Faculty Mentors to Project Groups</MudText>
+        </div>
+        <div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2" StartIcon="@Icons.Material.Filled.Autorenew">Auto-Distribute Load</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">Publish Mapping</MudButton>
+        </div>
+    </div>
+
+    <MudGrid>
+        <!-- Left Column: Department Filtering & Stats -->
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-6 rounded-xl h-100" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Faculty Pool</MudText>
+                
+                <MudSelect T="string" Label="Department" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-6">
+                    <MudSelectItem Value="@("Computer Science (CSE)")" />
+                    <MudSelectItem Value="@("Information Technology (IT)")" />
+                </MudSelect>
+
+                <div class="d-flex flex-column gap-3">
+                    <MudPaper Class="pa-3 bg-light rounded shadow-sm d-flex justify-space-between align-center" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Available Mentors</MudText>
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">45</MudChip>
+                    </MudPaper>
+                    <MudPaper Class="pa-3 bg-light rounded shadow-sm d-flex justify-space-between align-center" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Unassigned Groups</MudText>
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">12</MudChip>
+                    </MudPaper>
+                    <MudPaper Class="pa-3 bg-light rounded shadow-sm d-flex justify-space-between align-center" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Avg Load / Mentor</MudText>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">3.2 Groups</MudChip>
+                    </MudPaper>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Right Column: Mapping Grid -->
+        <MudItem xs="12" md="9">
+            <MudPaper Class="pa-6 rounded-xl h-100" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Allocation Grid</MudText>
+                
+                <RadzenDataGrid Data="@assignments" TItem="SupervisorAssignmentDto" AllowFiltering="true" AllowSorting="true" AllowPaging="true" PageSize="10" FilterMode="FilterMode.Simple">
+                    <Columns>
+                        <!-- Group Name -->
+                        <RadzenDataGridColumn TItem="SupervisorAssignmentDto" Property="GroupName" Title="Project Group" Width="200px">
+                            <Template Context="record">
+                                <MudText Typo="Typo.subtitle2" Class="fw-bold">@record.GroupName</MudText>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        
+                        <!-- Members Preview -->
+                        <RadzenDataGridColumn TItem="SupervisorAssignmentDto" Title="Members" Width="250px" Filterable="false" Sortable="false">
+                            <Template Context="record">
+                                <MudAvatarGroup Max="3" Spacing="3" Class="justify-start">
+                                    @foreach(var m in record.Members)
+                                    {
+                                        <MudAvatar Size="Size.Small" Color="Color.Primary">@m.Substring(0,1)</MudAvatar>
+                                    }
+                                </MudAvatarGroup>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary ml-2">@string.Join(", ", record.Members)</MudText>
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <!-- Mentor Assignment Dropdown -->
+                        <RadzenDataGridColumn TItem="SupervisorAssignmentDto" Title="Assigned Mentor" Width="250px" Filterable="false" Sortable="false">
+                            <Template Context="record">
+                                <MudSelect T="string" Value="@record.MentorName" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                    <MudSelectItem Value="@("Dr. Varun Sharma")" />
+                                    <MudSelectItem Value="@("Dr. Piyush Gupta")" />
+                                    <MudSelectItem Value="@("Prof. Aditi Verma")" />
+                                    <MudSelectItem Value="@("Unassigned")" />
+                                </MudSelect>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    class SupervisorAssignmentDto
+    {
+        public string GroupName { get; set; } = string.Empty;
+        public List<string> Members { get; set; } = new();
+        public string MentorName { get; set; } = "Unassigned";
+    }
+
+    private List<SupervisorAssignmentDto> assignments = new()
+    {
+        new SupervisorAssignmentDto { GroupName = "AI Malware Detection", Members = new(){"Aryan", "Rahul"}, MentorName = "Dr. Varun Sharma" },
+        new SupervisorAssignmentDto { GroupName = "Blockchain Voting", Members = new(){"Neha", "Aditi", "Sahil"}, MentorName = "Dr. Piyush Gupta" },
+        new SupervisorAssignmentDto { GroupName = "Quantum Cryptography", Members = new(){"Vikram", "Sneha"}, MentorName = "Unassigned" },
+        new SupervisorAssignmentDto { GroupName = "IoT Smart Agriculture", Members = new(){"Ravi", "Sonali", "Amit"}, MentorName = "Unassigned" }
+    };
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-gradient {
+        background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    /* Radzen styling hooks for matching Material Design */
+    .rz-datatable { border: none !important; border-radius: 8px; }
+    .rz-datatable-header th { background-color: #f5f5f5 !important; border-bottom: 2px solid #e0e0e0 !important; }
+</style>

@@ -39,6 +39,9 @@ builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEvaluationService, EvaluationService>();
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IProjectFormationService, ProjectFormationService>();
+builder.Services.AddScoped<IInternshipService, InternshipService>();
 builder.Services.AddMudServices();
 
 // Enterprise Layer Integrations
@@ -85,8 +88,19 @@ app.MapGet("/api/auth/login", async (HttpContext context, string email, string r
 
     await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
     
-    Console.WriteLine("[COOKIE] Session cookie created. Redirecting to /dashboard...");
-    context.Response.Redirect("/dashboard");
+    Console.WriteLine($"[COOKIE] Session cookie created. Redirecting for role: {role}");
+    if (role == "admin" || role == "master")
+    {
+        context.Response.Redirect("/admin/dashboard");
+    }
+    else if (role == "faculty")
+    {
+        context.Response.Redirect("/faculty/dashboard");
+    }
+    else
+    {
+        context.Response.Redirect("/dashboard");
+    }
 });
 
 app.MapGet("/api/auth/logout", async (HttpContext context) =>

@@ -1,0 +1,122 @@
+@page "/projects/minor/evaluation-rules"
+@using ntcc_admin_blazor.Components.Layout
+@layout MainLayout
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-16">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold text-gradient">Evaluation Engine</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Configure dynamic scoring rubrics</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="fw-bold">New Category</MudButton>
+    </div>
+
+    <!-- Rubric Builder Interface -->
+    <MudExpansionPanels MultiExpansion="true" Class="rounded-xl overflow-hidden mt-6" Elevation="4">
+        
+        <!-- Example Category: Mid Term -->
+        <MudExpansionPanel Text="Mid Term Evaluation (30 Marks)" IsExpanded="true" Class="border-b-1 mud-border-lines-default">
+            <TitleContent>
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Color="Color.Primary" Class="mr-3" />
+                    <MudText Typo="Typo.h6" Class="fw-bold">Mid Term Evaluation</MudText>
+                    <MudSpacer />
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled" Class="mr-4">30 Marks Maximum</MudChip>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <div class="pa-4 bg-light rounded-lg mb-4">
+                    <MudGrid>
+                        <!-- Component: Analysis -->
+                        <MudItem xs="12" md="4">
+                            <MudPaper Class="pa-4 d-flex align-center justify-space-between border-solid border-1 mud-border-lines-default" Elevation="0">
+                                <div>
+                                    <MudText Typo="Typo.subtitle1" Class="fw-bold">Analysis Depth</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Research & Understanding</MudText>
+                                </div>
+                                <MudNumericField T="int" Value="10" Label="Pts" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 70px" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                            </MudPaper>
+                        </MudItem>
+
+                        <!-- Component: Presentation -->
+                        <MudItem xs="12" md="4">
+                            <MudPaper Class="pa-4 d-flex align-center justify-space-between border-solid border-1 mud-border-lines-default" Elevation="0">
+                                <div>
+                                    <MudText Typo="Typo.subtitle1" Class="fw-bold">Presentation</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Clarity and formatting</MudText>
+                                </div>
+                                <MudNumericField T="int" Value="10" Label="Pts" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 70px" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                            </MudPaper>
+                        </MudItem>
+
+                        <!-- Component: Viva -->
+                        <MudItem xs="12" md="4">
+                            <MudPaper Class="pa-4 d-flex align-center justify-space-between border-solid border-1 mud-border-lines-default" Elevation="0">
+                                <div>
+                                    <MudText Typo="Typo.subtitle1" Class="fw-bold">Viva Voce</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Q&A Handling</MudText>
+                                </div>
+                                <MudNumericField T="int" Value="10" Label="Pts" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 70px" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                    
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mt-4 fw-bold">Add Component</MudButton>
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+
+        <!-- Example Category: End Term -->
+        <MudExpansionPanel Text="End Term Evaluation (50 Marks)" Class="border-b-1 mud-border-lines-default">
+            <TitleContent>
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Gavel" Color="Color.Secondary" Class="mr-3" />
+                    <MudText Typo="Typo.h6" Class="fw-bold">End Term Evaluation</MudText>
+                    <MudSpacer />
+                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled" Class="mr-4">50 Marks Maximum</MudChip>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-4 text-center">Implementation (10), Innovation (5), Report (10), Validation (15), Viva (10)</MudText>
+                <div class="d-flex justify-center mb-4">
+                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit Rubric</MudButton>
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+
+        <!-- Example Category: Supervisor Tracking -->
+        <MudExpansionPanel Text="Supervisor Evaluation (20 Marks)">
+            <TitleContent>
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SupervisedUserCircle" Color="Color.Success" Class="mr-3" />
+                    <MudText Typo="Typo.h6" Class="fw-bold">Supervisor Tracking</MudText>
+                    <MudSpacer />
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Class="mr-4">20 Marks Maximum</MudChip>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary pa-4 text-center">Lab Participation (10), Meeting Consistency (5), Weekly Logs (5)</MudText>
+                 <div class="d-flex justify-center mb-4">
+                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit Rubric</MudButton>
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+
+    </MudExpansionPanels>
+    
+    <div class="d-flex justify-end mt-6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="fw-bold px-8">Save Master Configuration</MudButton>
+    </div>
+</MudContainer>
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-gradient {
+        background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>

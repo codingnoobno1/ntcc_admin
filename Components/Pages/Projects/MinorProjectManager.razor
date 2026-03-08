@@ -1,0 +1,164 @@
+@page "/projects/minor"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Minor Project Manager - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h3" Class="fw-black text-primary">Minor Project Cohort</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Track group formation, proposals, and phase progressions</MudText>
+        </div>
+        <div class="d-flex gap-3">
+            <MudSelect T="string" Label="Semester" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="bg-white">
+                <MudSelectItem Value="@("5th Semester")" />
+                <MudSelectItem Value="@("6th Semester")" />
+            </MudSelect>
+            <MudSelect T="string" Label="Batch" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="bg-white">
+                <MudSelectItem Value="@("2023 - 2027")" />
+                <MudSelectItem Value="@("2022 - 2026")" />
+            </MudSelect>
+        </div>
+    </div>
+
+    <!-- Metrics Header -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="3">
+            <MudPaper Elevation="1" Class="pa-4 rounded-xl stat-card border-l-primary shadow-sm h-100">
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Total Groups</MudText>
+                <MudText Typo="Typo.h3" Class="fw-black text-primary">84</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudPaper Elevation="1" Class="pa-4 rounded-xl stat-card border-l-warning shadow-sm h-100">
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Proposals Pending</MudText>
+                <MudText Typo="Typo.h3" Class="fw-black text-warning">12</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudPaper Elevation="1" Class="pa-4 rounded-xl stat-card border-l-success shadow-sm h-100">
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">Mid-Term Done</MudText>
+                <MudText Typo="Typo.h3" Class="fw-black text-success">38</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudPaper Elevation="1" Class="pa-4 rounded-xl stat-card border-l-error shadow-sm h-100">
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold">No Mentor Assigned</MudText>
+                <MudText Typo="Typo.h3" Class="fw-black text-error">4</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Elevation="2" Class="pa-0 rounded-xl overflow-hidden">
+        <MudTable Items="@projectGroups" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm" Loading="@isLoading" Striped="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6" Class="fw-bold px-4 pt-4">Active Project Groups</MudText>
+                <MudSpacer />
+                <div class="px-4 pt-4">
+                    <MudTextField @bind-Value="searchString" Placeholder="Search groups or topics..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Margin="Margin.Dense"></MudTextField>
+                </div>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Group ID</MudTh>
+                <MudTh>Project Title</MudTh>
+                <MudTh>Mentor</MudTh>
+                <MudTh>Phase</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Group ID"><MudText Class="fw-bold text-primary">@context.GroupId</MudText></MudTd>
+                <MudTd DataLabel="Project Title">
+                    <MudText Typo="Typo.body2" Class="fw-bold">@context.Title</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Members Members</MudText>
+                </MudTd>
+                <MudTd DataLabel="Mentor">
+                    @if(string.IsNullOrEmpty(context.Mentor))
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.PersonAdd">Assign</MudButton>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-center">
+                            <MudAvatar Size="Size.Small" Color="Color.Secondary" Class="mr-2">@(context.Mentor.Substring(4,1))</MudAvatar>
+                            @context.Mentor
+                        </div>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Phase">
+                    <MudChip T="string" Color="Color.Dark" Size="Size.Small">@context.Phase</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small" Variant="Variant.Outlined">@context.Status</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Size="Size.Small" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool isLoading = true;
+    private string searchString = "";
+
+    class ProjectGroup
+    {
+        public string GroupId { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public int Members { get; set; }
+        public string Mentor { get; set; } = string.Empty;
+        public string Phase { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
+    private List<ProjectGroup> projectGroups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(600);
+        projectGroups = new List<ProjectGroup>
+        {
+            new ProjectGroup { GroupId = "G-4012", Title = "AI Traffic Management", Members = 4, Mentor = "Dr. Anita Sharma", Phase = "Mid-Term", Status = "On Track" },
+            new ProjectGroup { GroupId = "G-4013", Title = "Blockchain Voting", Members = 3, Mentor = "", Phase = "Proposal", Status = "Needs Mentor" },
+            new ProjectGroup { GroupId = "G-4014", Title = "IoT Smart Agriculture", Members = 4, Mentor = "Prof. Rajesh Kumar", Phase = "Proposal", Status = "Pending Approval" },
+            new ProjectGroup { GroupId = "G-4015", Title = "Cyber Threat Scanner", Members = 3, Mentor = "Dr. Vikram Seth", Phase = "Final", Status = "Evaluating" },
+        };
+        isLoading = false;
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "On Track" => Color.Success,
+        "Needs Mentor" => Color.Error,
+        "Pending Approval" => Color.Warning,
+        "Evaluating" => Color.Info,
+        _ => Color.Default
+    };
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-warning { color: #FF9800; }
+    .text-success { color: #00C853; }
+    .text-error { color: #F44336; }
+    
+    .border-l-primary { border-left: 6px solid #1976D2; }
+    .border-l-warning { border-left: 6px solid #FF9800; }
+    .border-l-success { border-left: 6px solid #00C853; }
+    .border-l-error { border-left: 6px solid #F44336; }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .stat-card { transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-4px); }
+</style>

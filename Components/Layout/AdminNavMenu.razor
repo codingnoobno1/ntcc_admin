@@ -1,0 +1,68 @@
+@using ntcc_admin_blazor.Components.Shared
+<MudNavMenu>
+    <MudNavLink href="admin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Overview</MudNavLink>
+
+    <MudNavGroup Title="Academics" Icon="@Icons.Material.Filled.School" Expanded="true">
+        <PermissionView Permission="manage_students">
+            <MudNavLink href="students" Icon="@Icons.Material.Filled.Person">Student Directory</MudNavLink>
+            <MudNavLink href="students/documents/missing" Icon="@Icons.Material.Filled.Warning">Missing Documents</MudNavLink>
+        </PermissionView>
+    </MudNavGroup>
+
+    <MudNavGroup Title="Projects" Icon="@Icons.Material.Filled.AccountTree" Expanded="true">
+        <PermissionView Permission="manage_projects">
+            <MudNavLink href="projects/minor/stages" Icon="@Icons.Material.Filled.LinearScale">Stage Engine</MudNavLink>
+            <MudNavLink href="projects/minor/documents" Icon="@Icons.Material.Filled.Description">Document Vault</MudNavLink>
+            <MudNavLink href="projects/minor/groups" Icon="@Icons.Material.Filled.GroupWork">Team Formation</MudNavLink>
+            <MudNavLink href="projects/minor/supervisors" Icon="@Icons.Material.Filled.SupervisorAccount">Mentorship Sync</MudNavLink>
+            <MudNavLink href="projects/minor/weekly-reports" Icon="@Icons.Material.Filled.Assessment">Weekly Logs</MudNavLink>
+        </PermissionView>
+    </MudNavGroup>
+
+    <MudNavGroup Title="Internships" Icon="@Icons.Material.Filled.BusinessCenter" Expanded="true">
+        <PermissionView Permission="manage_internships">
+            <MudNavLink href="internships" Icon="@Icons.Material.Filled.TrackChanges">Internship Monitor</MudNavLink>
+            <MudNavLink href="admin/companies" Icon="@Icons.Material.Filled.Business">Company Registry</MudNavLink>
+        </PermissionView>
+    </MudNavGroup>
+
+    <MudNavGroup Title="Evaluations" Icon="@Icons.Material.Filled.FactCheck" Expanded="true">
+        <PermissionView Permission="evaluate_submission">
+            <MudNavLink href="projects/minor/evaluation-rules" Icon="@Icons.Material.Filled.SettingsSuggest">Rubric Engine</MudNavLink>
+            <MudNavLink href="projects/minor/evaluation" Icon="@Icons.Material.Filled.Grading">Workspace</MudNavLink>
+        </PermissionView>
+    </MudNavGroup>
+
+    <MudNavGroup Title="Reports & Analytics" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
+        <MudNavLink href="reports/placement" Icon="@Icons.Material.Filled.TrendingUp">Placement Analysis</MudNavLink>
+    </MudNavGroup>
+
+    <PermissionView Permission="configure_stages">
+        <MudNavGroup Title="Stage Engine" Icon="@Icons.Material.Filled.SettingsSuggest" Expanded="false" Class="mt-2">
+            <MudNavLink href="stage-config" Icon="@Icons.Material.Filled.Construction">Stage Config</MudNavLink>
+            <MudNavLink href="batches" Icon="@Icons.Material.Filled.Group">Batches</MudNavLink>
+        </MudNavGroup>
+    </PermissionView>
+
+    <PermissionView Permission="create_faculty">
+        <MudNavGroup Title="Admin Controls" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="false" Class="mt-4">
+            <MudNavLink href="admin/faculty" Icon="@Icons.Material.Filled.ManageAccounts">Manage Faculty</MudNavLink>
+            <PermissionView Permission="manage_permissions">
+                <MudNavLink href="admin/permissions" Icon="@Icons.Material.Filled.FactCheck">Role Matrix</MudNavLink>
+            </PermissionView>
+            <MudNavLink href="stage-config" Icon="@Icons.Material.Filled.Settings">Stage Engine</MudNavLink>
+        </MudNavGroup>
+    </PermissionView>
+</MudNavMenu>
+
+<style>
+    .mud-nav-link.active {
+        background-color: rgba(25, 118, 210, 0.05) !important;
+        color: #1976D2 !important;
+        font-weight: 600;
+        border-right: 3px solid #1976D2;
+    }
+    .mud-nav-link:hover {
+        background-color: rgba(25, 118, 210, 0.03) !important;
+    }
+</style>

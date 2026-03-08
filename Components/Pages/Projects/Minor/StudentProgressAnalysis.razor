@@ -1,0 +1,141 @@
+@page "/projects/minor/analysis/{studentId}"
+@using ntcc_admin_blazor.Components.Layout
+@layout MainLayout
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-16">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div class="d-flex align-center">
+            <MudAvatar Color="Color.Primary" Size="Size.Large" Class="mr-4">A</MudAvatar>
+            <div>
+                <MudText Typo="Typo.h4" Class="fw-bold text-gradient">Aryan Sharma - 360° Analysis</MudText>
+                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">A2305221001 | Group: AI Malware Detection</MudText>
+            </div>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf">Export Report</MudButton>
+    </div>
+
+    <MudGrid>
+        <!-- Top Metrics Row -->
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 rounded-xl border-l-4 border-success d-flex flex-column justify-center" Elevation="4" Style="height: 120px;">
+                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary fw-bold text-uppercase">Project Velocity</MudText>
+                <MudText Typo="Typo.h4" Class="fw-black text-success">Ahead of Schedule</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 rounded-xl border-l-4 border-primary d-flex flex-column justify-center" Elevation="4" Style="height: 120px;">
+                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary fw-bold text-uppercase">Cumulative Grade</MudText>
+                <div class="d-flex align-baseline">
+                    <MudText Typo="Typo.h4" Class="fw-black text-primary">82</MudText>
+                    <MudText Typo="Typo.h6" Class="mud-text-secondary ml-1">/ 100</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 rounded-xl border-l-4 border-warning d-flex flex-column justify-center" Elevation="4" Style="height: 120px;">
+                <MudText Typo="Typo.subtitle1" Class="mud-text-secondary fw-bold text-uppercase">Next Pending Stage</MudText>
+                <MudText Typo="Typo.h5" Class="fw-black text-warning">Draft Report</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Left Column: Progress Graph -->
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6 rounded-xl h-100" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Cumulative Completion Over Time</MudText>
+                
+                <!-- ApexCharts Progress Line Chart -->
+                <div class="w-100 d-flex flex-column align-center justify-center bg-light rounded-lg border-1 border-solid mud-border-lines-default" style="height: 400px;">
+                    <MudIcon Icon="@Icons.Material.Filled.ShowChart" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="fw-bold mt-2">ApexCharts Sync</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Expected vs Actual Progress Curve</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Right Column: Document/Stage Status Checklist -->
+        <MudItem xs="12" md="4">
+             <MudPaper Class="pa-6 rounded-xl h-100" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Stage Completion</MudText>
+                
+                <MudList T="string" Dense="true" Class="bg-transparent pa-0">
+                    <MudListItem>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body1" Class="fw-bold text-success">1. Title Approval</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small"/>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Completed Aug 12</MudText>
+                    </MudListItem>
+                    <MudDivider Class="my-2" />
+                    
+                    <MudListItem>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body1" Class="fw-bold text-success">2. Proposal Submission</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small"/>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ev. Score: 24/30</MudText>
+                    </MudListItem>
+                    <MudDivider Class="my-2" />
+                    
+                    <MudListItem>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body1" Class="fw-bold text-warning">3. Mid Term Draft</MudText>
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">In Progress</MudChip>
+                        </div>
+                        <MudProgressLinear Color="Color.Warning" Value="60" Class="mt-3" />
+                    </MudListItem>
+                    <MudDivider Class="my-2" />
+
+                    <MudListItem>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body1" Class="mud-text-disabled">4. End Term Report</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.Pending" Class="opacity-30" Size="Size.Small"/>
+                        </div>
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Full Width: Weekly Meeting Timeline -->
+        <MudItem xs="12">
+            <MudPaper Class="pa-6 rounded-xl" Elevation="4">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-6">Mentor Meeting Logs</MudText>
+
+                <MudTimeline TimelineOrientation="TimelineOrientation.Horizontal" TimelinePosition="TimelinePosition.Alternate">
+                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold">Week 1: Kickoff</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Dataset approved.</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold">Week 2: Scoping</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Architecture finalized.</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold">Week 3: Codebase</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Script optimized.</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string StudentId { get; set; } = string.Empty;
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-gradient {
+        background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>

@@ -177,7 +177,7 @@
 
     List<Project> projects = new();
     List<ProjectMember> projectMembers = new();
-    List<Student> students = new();
+    List<ntcc_admin_blazor.Models.Student> students = new();
     List<Batch> batches = new();
     Project editProject = new();
     Project? selectedProject;
@@ -195,7 +195,7 @@
         {
             projects = await Supabase.GetAll<Project>();
             projectMembers = await Supabase.GetAll<ProjectMember>();
-            students = await Supabase.GetAll<Student>();
+            students = await Supabase.GetAll<ntcc_admin_blazor.Models.Student>();
             batches = await Supabase.GetAll<Batch>();
         }
         catch (Exception ex) { Console.WriteLine($"[PROJECTS] Load error: {ex.Message}"); }

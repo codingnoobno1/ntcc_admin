@@ -26,5 +26,7 @@ namespace ntcc_admin_blazor.Application.DTOs
         public ComponentType Type { get; set; }
         public string ConfigJson { get; set; }
         public int Order { get; set; }
+        public int Width { get; set; } = 6;
+        public string RowGroup { get; set; } = "operations";
     }
 }

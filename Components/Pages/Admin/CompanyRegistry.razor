@@ -1,0 +1,101 @@
+@page "/admin/companies"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@inject IInternshipService InternshipService
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Company Registry - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Company <span class="text-primary">Registry</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage industry partner directory</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AddBusiness" OnClick="OpenAddDialog">Add Partner</MudButton>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var company in companies)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudPaper Class="pa-6 company-card h-100" Elevation="2">
+                        <div class="d-flex justify-space-between align-start mb-4">
+                            <MudAvatar Color="Color.Dark" Size="Size.Medium" Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Filled.Business" />
+                            </MudAvatar>
+                            <MudRating SelectedValue="(int)company.Rating" Max="5" ReadOnly="true" Size="Size.Small" />
+                        </div>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@company.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@company.Industry</MudText>
+                        <MudText Typo="Typo.caption" Class="d-flex align-center mud-text-secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" /> @company.Location
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+
+            @if (!companies.Any())
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info">No companies registered yet. Add an industry partner to begin.</MudAlert>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    List<CompanyEntity> companies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCompanies();
+    }
+
+    async Task LoadCompanies()
+    {
+        isLoading = true;
+        try
+        {
+            companies = await InternshipService.GetAllCompaniesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load companies: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    void OpenAddDialog()
+    {
+        Snackbar.Add("Add Partner dialog will be implemented here.", Severity.Info);
+        // Note: Use MudDialogService to build a robust creation form
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .company-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .company-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+    }
+</style>

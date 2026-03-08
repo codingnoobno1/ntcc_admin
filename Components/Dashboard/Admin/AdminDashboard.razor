@@ -1,0 +1,66 @@
+﻿@page "/admin/dashboard"
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Enums
+@using Microsoft.AspNetCore.Authorization
+@inject IDashboardService DashboardService
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Welcome back, <span class="text-primary">@userName</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@userRole.ToUpper() Dashboard · @DateTime.Now.ToString("dddd, dd MMMM yyyy")</MudText>
+        </div>
+        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small">Connected</MudChip>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <ntcc_admin_blazor.Components.Dashboard.WidgetContainer Widgets="@widgets" />
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    string userName = "";
+    string userRole = "";
+    List<WidgetDto> widgets = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userName = authState.User.Identity?.Name ?? "User";
+            userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "admin";
+            
+            // Fetch widgets dynamically from the Dashboard Service
+            // This pulls from Supabase DB or falls back to standard template if unseeded
+            widgets = await DashboardService.GetGlobalWidgetsAsync(userRole);
+        }
+        catch 
+        { 
+            userName = "Admin"; 
+            userRole = "admin";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+</style>

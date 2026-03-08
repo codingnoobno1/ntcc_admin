@@ -1,0 +1,138 @@
+@page "/admin/team-builder"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectFormationService ProjectFormationService
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Team Builder Control - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Team <span class="text-primary">Builder</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Oversee and resolve group formation conflicts</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.GroupAdd">Force Create Group</MudButton>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            <!-- System Stats -->
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2" Style="border-top: 4px solid #1976D2">
+                    <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h3" Class="fw-black mt-2">@groups.Count</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Formed Groups</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2" Style="border-top: 4px solid #FF9800">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Large" />
+                    <MudText Typo="Typo.h3" Class="fw-black mt-2">0</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Formation Conflicts</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2" Style="border-top: 4px solid #4CAF50">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                    <MudText Typo="Typo.h3" Class="fw-black mt-2">@groups.Count(g => g.Status == "approved")</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Approved Proposals</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Group Grid -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-0" Style="border-radius: 12px; overflow: hidden;">
+                    <MudTable Items="@groups" Dense="true" Hover="true" Striped="true" Elevation="0">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6" Class="fw-bold pa-4">Active Groups (Current Stage)</MudText>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString" Placeholder="Search Groups..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 pa-4"></MudTextField>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>ID</MudTh>
+                            <MudTh>Title</MudTh>
+                            <MudTh>Members</MudTh>
+                            <MudTh>Proposal Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="ID">@context.Id.Substring(0,8)...</MudTd>
+                            <MudTd DataLabel="Title">
+                                <MudText Typo="Typo.body2" Class="fw-bold">@context.ProjectTitle</MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Members">
+                                <MudAvatarGroup Max="3" Spacing="2" MaxColor="Color.Primary" Size="Size.Small">
+                                    <MudAvatar Color="Color.Info">S</MudAvatar>
+                                    <MudAvatar Color="Color.Secondary">A</MudAvatar>
+                                </MudAvatarGroup>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                @if (context.Status == "draft") { <MudChip T="string" Color="Color.Default" Size="Size.Small">Draft</MudChip> }
+                                @if (context.Status == "pending") { <MudChip T="string" Color="Color.Warning" Size="Size.Small">Pending Approval</MudChip> }
+                                @if (context.Status == "approved") { <MudChip T="string" Color="Color.Success" Size="Size.Small">Locked</MudChip> }
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager />
+                        </PagerContent>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    List<ProjectGroupEntity> groups = new();
+    string searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGroups();
+    }
+
+    async Task LoadGroups()
+    {
+        isLoading = true;
+        try
+        {
+            // Hardcoded stageId for now; ideally fetched from active global config
+            groups = await ProjectFormationService.GetGroupsForStageAsync("active_stage_id");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load groups: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .stat-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+</style>

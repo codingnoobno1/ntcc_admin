@@ -144,7 +144,7 @@
     string selectedStudentId = "";
 
     List<NtccStage> stages = new();
-    List<Student> students = new();
+    List<ntcc_admin_blazor.Models.Student> students = new();
     List<EvaluationCategory> categories = new();
     List<EvaluationScore> allScores = new();
 
@@ -167,7 +167,7 @@
         try
         {
             stages = await Supabase.GetAll<NtccStage>();
-            students = await Supabase.GetAll<Student>();
+            students = await Supabase.GetAll<ntcc_admin_blazor.Models.Student>();
             allScores = await Supabase.GetAll<EvaluationScore>();
         }
         catch (Exception ex) { Console.WriteLine($"[EVAL] Load error: {ex.Message}"); }

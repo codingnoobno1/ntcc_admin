@@ -1,54 +1,115 @@
 @using ntcc_admin_blazor.Application.DTOs
 @using ntcc_admin_blazor.Domain.Enums
 
-<MudGridSpacing Spacing="4">
-    @foreach (var widget in Widgets.OrderBy(w => w.Order))
-    {
-        <MudItem xs="12" md="@GetWidgetWidth(widget)">
-            <MudPaper Elevation="2" Class="pa-4 dashboard-widget-card">
-                <DynamicComponent Type="@GetComponentType(widget.ComponentKey)" 
-                                  Parameters="@GetParameters(widget.ConfigJson)" />
-            </MudPaper>
-        </MudItem>
-    }
-</MudGridSpacing>
+@foreach (var group in Widgets.GroupBy(w => string.IsNullOrWhiteSpace(w.RowGroup) ? "operations" : w.RowGroup))
+{
+    <MudPaper Class="mb-6 pa-4 dashboard-section" Elevation="0">
+        <MudText Typo="Typo.h6" Class="section-title">
+            @FormatGroupTitle(group.Key)
+        </MudText>
+        <MudDivider Class="mb-4"/>
+
+        <MudGrid Spacing="3">
+            @foreach (var widget in group.OrderBy(w => w.Order))
+            {
+                <MudItem xs="12" md="@GetWidgetWidth(widget)">
+                    <MudPaper Elevation="2" Class="dashboard-widget-card pa-4">
+                        <DynamicComponent Type="@GetComponentType(widget.ComponentKey)" 
+                                          Parameters="@GetParameters(widget.ConfigJson)" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+}
 
 @code {
     [Parameter] public List<WidgetDto> Widgets { get; set; } = new();
 
     private int GetWidgetWidth(WidgetDto widget)
     {
-        // Logic to determine width based on widget type or config
+        if (widget.Width > 0 && widget.Width <= 12)
+            return widget.Width;
+
+        if (widget.ComponentKey == "faculty_accounts") return 12;
         return widget.Type == ComponentType.Metric ? 3 : 6;
     }
 
     private Type GetComponentType(string key)
     {
-        // This is a mapping from registry keys to actual C# types
-        // In a real implementation, this could use reflection or a static dictionary
         return key switch
         {
             "attendance_tracker" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.AttendanceTracker),
             "deadline_timer" => typeof(ntcc_admin_blazor.Components.Widgets.Metrics.DeadlineTimer),
+            "project_supervision" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.ProjectSupervisionWidget),
+            "department_metrics" => typeof(ntcc_admin_blazor.Components.Widgets.Metrics.DepartmentMetricsWidget),
+            "evaluation_queue" => typeof(ntcc_admin_blazor.Components.Widgets.Evaluation.EvaluationQueueWidget),
+            "internship_pipeline" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.InternshipPipelineWidget),
+            "research_publications" => typeof(ntcc_admin_blazor.Components.Widgets.Metrics.ResearchPublicationsWidget),
+            "stage_engine" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.StageEngineWidget),
+            "batch_creation" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.BatchCreationWidget),
+            "faculty_accounts" => typeof(ntcc_admin_blazor.Components.Widgets.Admin.FacultyAccountsWidget),
+            "student_metrics" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.StudentMetricsWidget),
+            "student_count" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.StudentMetricsWidget),
             _ => typeof(ntcc_admin_blazor.Components.Widgets.PlaceholderWidget)
         };
     }
 
     private Dictionary<string, object> GetParameters(string configJson)
     {
-        // Deserialize configJson into parameters for the dynamic component
-        return new Dictionary<string, object>();
+        var dict = new Dictionary<string, object>();
+        try 
+        {
+            if (string.IsNullOrWhiteSpace(configJson) || configJson == "{}") return dict;
+            using var jsonDoc = System.Text.Json.JsonDocument.Parse(configJson);
+            foreach (var prop in jsonDoc.RootElement.EnumerateObject())
+            {
+                if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    if (prop.Value.TryGetInt32(out int intVal)) dict[prop.Name] = intVal;
+                    else if (prop.Value.TryGetDouble(out double doubleVal)) dict[prop.Name] = doubleVal;
+                }
+                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.String) dict[prop.Name] = prop.Value.GetString() ?? "";
+                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.True) dict[prop.Name] = true;
+                else if (prop.Value.ValueKind == System.Text.Json.JsonValueKind.False) dict[prop.Name] = false;
+            }
+        }
+        catch { }
+        return dict;
+    }
+
+    string FormatGroupTitle(string key)
+    {
+        return key.ToLower() switch
+        {
+            "operations" => "Operations Overview",
+            "insights" => "Academic Insights",
+            "pipeline" => "Project & Internship Pipeline",
+            "admin" => "Administrative Tools",
+            _ => "Dashboard"
+        };
     }
 }
 
 <style>
-    .dashboard-widget-card {
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.7);
+    .dashboard-section {
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(10px);
-        transition: transform 0.2s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    }
+    .section-title {
+        font-weight: 700;
+        color: #2b3a55;
+    }
+    .dashboard-widget-card {
+        border-radius: 14px;
+        transition: all .2s ease;
+        background: white;
+        height: 100%;
     }
     .dashboard-widget-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     }
 </style>

@@ -62,16 +62,16 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StudentWorkflowStepEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public Guid Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [Column("student_id")]
-        public Guid StudentId { get; set; }
+        public string StudentId { get; set; } = string.Empty;
 
         [Column("step_id")]
         public long StepId { get; set; }
 
         [Column("status")]
-        public string Status { get; set; } // pending, submitted, approved, rejected
+        public string Status { get; set; } = "pending"; // pending, submitted, approved, rejected
 
         [Column("submitted_at")]
         public DateTime? SubmittedAt { get; set; }

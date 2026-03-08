@@ -1,0 +1,109 @@
+@page "/internships"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Internship Monitor - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h3" Class="fw-black text-primary">Internship Placements</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Track 5th Semester Industrial Pipeline</MudText>
+        </div>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudDownload" Class="fw-bold bg-white">
+            Export Report
+        </MudButton>
+    </div>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="px-0 py-6" Class="rounded-xl">
+        <MudTabPanel Text="Active Placements" Icon="@Icons.Material.Filled.BusinessCenter">
+             <MudTable Items="@interns" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@isLoading" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Student</MudTh>
+                    <MudTh>Company</MudTh>
+                    <MudTh>Designation</MudTh>
+                    <MudTh>Duration</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Faculty Guide</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Student">
+                        <MudText Typo="Typo.body2" Class="fw-bold hover-primary cursor-pointer">@context.StudentName</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.EnrollmentNo</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Company">
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="mr-2 mud-text-secondary" />
+                            <MudText Typo="Typo.body2" Class="fw-bold">@context.Company</MudText>
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Designation">@context.Designation</MudTd>
+                    <MudTd DataLabel="Duration">@context.Duration</MudTd>
+                    <MudTd DataLabel="Status">
+                        @if(context.Status == "Verified")
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.CheckCircle">Verified</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Pending">Pending NOC</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Faculty Guide">@context.Guide</MudTd>
+                    <MudTd Style="text-align:right">
+                         <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Dark" Size="Size.Small" />
+                    </MudTd>
+                </RowTemplate>
+             </MudTable>
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Company Distribution" Icon="@Icons.Material.Filled.PieChart" BadgeData='"New"' BadgeColor="Color.Error">
+            <div class="pa-8 text-center h-100 d-flex flex-column align-center justify-center min-h-[300px]">
+                <MudIcon Icon="@Icons.Material.Filled.QueryStats" Size="Size.Large" Color="Color.Primary" Class="mb-4" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h5" Class="fw-bold mb-2">Analytics Engine Initializing</MudText>
+                <MudText Typo="Typo.body1" Class="mud-text-secondary">Charting components will render pipeline distributions here shortly.</MudText>
+            </div>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private bool isLoading = true;
+
+    class InternRecord
+    {
+        public string StudentName { get; set; } = string.Empty;
+        public string EnrollmentNo { get; set; } = string.Empty;
+        public string Company { get; set; } = string.Empty;
+        public string Designation { get; set; } = string.Empty;
+        public string Duration { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Guide { get; set; } = string.Empty;
+    }
+
+    private List<InternRecord> interns = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(700);
+        interns = new List<InternRecord>
+        {
+            new InternRecord { StudentName = "Aaditya Verma", EnrollmentNo = "2023-CSE-110", Company = "Microsoft", Designation = "SDE Intern", Duration = "6 Months", Status = "Verified", Guide = "Dr. A. Sharma" },
+            new InternRecord { StudentName = "Priya Tech", EnrollmentNo = "2023-CSE-112", Company = "Google", Designation = "Cloud Architect Intern", Duration = "6 Months", Status = "Verified", Guide = "Prof. R. Kumar" },
+            new InternRecord { StudentName = "John Doe", EnrollmentNo = "2023-CSE-144", Company = "StartupX", Designation = "Frontend Dev", Duration = "3 Months", Status = "Pending NOC", Guide = "Unassigned" },
+        };
+        isLoading = false;
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .cursor-pointer { cursor: pointer; }
+    .hover-primary:hover { color: #1976D2; text-decoration: underline; }
+    .min-h-[300px] { min-height: 300px; }
+</style>

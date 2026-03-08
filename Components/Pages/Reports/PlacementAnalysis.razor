@@ -1,0 +1,154 @@
+@page "/reports/placement"
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Placement Analysis - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h3" Class="fw-black text-primary">Placement Analytics</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mud-text-secondary">Comprehensive overview of batch employability metrics</MudText>
+        </div>
+        <div class="d-flex gap-3">
+             <MudSelect T="string" Label="Batch Timeline" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Class="bg-white" Value='"Batch 2023 - 2027"'>
+                 <MudSelectItem Value='"Batch 2023 - 2027"'/>
+                 <MudSelectItem Value='"Batch 2022 - 2026"'/>
+                 <MudSelectItem Value='"Batch 2021 - 2025"'/>
+             </MudSelect>
+             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" Class="shadow-sm">Export Report</MudButton>
+        </div>
+    </div>
+
+    <!-- Top KPI Cards -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="1" Class="pa-6 rounded-xl text-center shadow-sm">
+                 <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Large" Class="mb-2" />
+                 <MudText Typo="Typo.h3" Class="fw-black text-dark">68%</MudText>
+                 <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold mt-1">Placement Rate (YTD)</MudText>
+                 <MudText Typo="Typo.caption" Class="text-success fw-bold">+12% vs last year</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="1" Class="pa-6 rounded-xl text-center shadow-sm">
+                 <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Color="Color.Primary" Size="Size.Large" Class="mb-2" />
+                 <MudText Typo="Typo.h3" Class="fw-black text-dark">8.5 <span class="text-sm text-muted fw-bold">LPA</span></MudText>
+                 <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold mt-1">Average Offer</MudText>
+                 <MudText Typo="Typo.caption" Class="text-success fw-bold">+0.8 LPA vs last year</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="1" Class="pa-6 rounded-xl text-center shadow-sm">
+                 <MudIcon Icon="@Icons.Material.Filled.StarRate" Color="Color.Warning" Size="Size.Large" Class="mb-2" />
+                 <MudText Typo="Typo.h3" Class="fw-black text-dark">42 <span class="text-sm text-muted fw-bold">Offers</span></MudText>
+                 <MudText Typo="Typo.subtitle2" Class="mud-text-secondary text-uppercase fw-bold mt-1">Tier-1 Companies</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid>
+        <!-- Chart placeholder 1: Conversion Funnel -->
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="1" Class="pa-6 rounded-xl h-100 shadow-sm border-t-primary d-flex flex-column">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Recruitment Funnel Conversion</MudText>
+                
+                <div class="flex-grow-1 d-flex justify-center align-center">
+                    <div class="chart-mockup w-100">
+                        <!-- CSS Bar mockups -->
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Class="fw-bold">Applied (340)</MudText>
+                            <div class="bg-light-primary rounded-lg overflow-hidden h-8">
+                                <div class="bg-primary h-100" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Class="fw-bold">Interviewed (185)</MudText>
+                            <div class="bg-light-primary rounded-lg overflow-hidden h-8">
+                                <div class="bg-secondary h-100" style="width: 54%;"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Class="fw-bold">Offered (115)</MudText>
+                            <div class="bg-light-primary rounded-lg overflow-hidden h-8">
+                                <div class="bg-success h-100" style="width: 33%;"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Class="fw-bold">Accepted (98)</MudText>
+                            <div class="bg-light-primary rounded-lg overflow-hidden h-8">
+                                <div class="bg-warning h-100" style="width: 28%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Chart placeholder 2: Sector dist -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="1" Class="pa-6 rounded-xl h-100 shadow-sm d-flex flex-column">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Sector Distribution</MudText>
+                
+                <div class="flex-grow-1 d-flex flex-column justify-center align-center min-h-[250px]">
+                     <div class="donut-chart-placeholder mb-6"></div>
+                     
+                     <div class="w-100 px-4">
+                         <div class="d-flex justify-space-between align-center mb-2">
+                             <div class="d-flex align-center"><div class="color-dot bg-primary mr-2"></div><MudText Typo="Typo.body2">FinTech</MudText></div>
+                             <MudText Typo="Typo.body2" Class="fw-bold">42%</MudText>
+                         </div>
+                         <div class="d-flex justify-space-between align-center mb-2">
+                             <div class="d-flex align-center"><div class="color-dot bg-secondary mr-2"></div><MudText Typo="Typo.body2">Service Providers</MudText></div>
+                             <MudText Typo="Typo.body2" Class="fw-bold">35%</MudText>
+                         </div>
+                         <div class="d-flex justify-space-between align-center mb-2">
+                             <div class="d-flex align-center"><div class="color-dot bg-success mr-2"></div><MudText Typo="Typo.body2">Product/SaaS</MudText></div>
+                             <MudText Typo="Typo.body2" Class="fw-bold">18%</MudText>
+                         </div>
+                         <div class="d-flex justify-space-between align-center">
+                             <div class="d-flex align-center"><div class="color-dot bg-warning mr-2"></div><MudText Typo="Typo.body2">Others</MudText></div>
+                             <MudText Typo="Typo.body2" Class="fw-bold">5%</MudText>
+                         </div>
+                     </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-success { color: #00C853; }
+    .text-dark { color: #212529; }
+    .text-muted { color: #9e9e9e; }
+    .text-sm { font-size: 1.2rem; }
+    
+    .shadow-sm { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .border-t-primary { border-top: 4px solid #1976D2; }
+    
+    .bg-light-primary { background: rgba(25, 118, 210, 0.1); }
+    .bg-primary { background: #1976D2; }
+    .bg-secondary { background: #9C27B0; }
+    .bg-success { background: #00C853; }
+    .bg-warning { background: #FF9800; }
+    
+    .h-8 { height: 28px; }
+    .min-h-[250px] { min-height: 250px; }
+    
+    .donut-chart-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(#1976D2 0% 42%, #9C27B0 42% 77%, #00C853 77% 95%, #FF9800 95% 100%);
+        mask: radial-gradient(transparent 55%, black 55%);
+        -webkit-mask: radial-gradient(transparent 55%, black 55%);
+    }
+    .color-dot {
+        width: 10px; height: 10px; border-radius: 50%;
+    }
+</style>

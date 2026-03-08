@@ -12,7 +12,7 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<EvaluationSchemeEntity> GetSchemeForStageAsync(long stageId)
+        public async Task<EvaluationSchemeEntity?> GetSchemeForStageAsync(long stageId)
         {
             var schemes = await _supabase.GetWhere<EvaluationSchemeEntity>("stage_id", stageId);
             return schemes.FirstOrDefault();

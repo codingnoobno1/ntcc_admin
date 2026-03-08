@@ -1,0 +1,135 @@
+@page "/student/internships"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@inject IInternshipService InternshipService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "student,admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Internship Portal - NTCC Student</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">My <span class="text-primary">Internships</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Log and track your external industry experience</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Log New Internship</MudButton>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            <!-- Stats -->
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2">
+                    <MudText Typo="Typo.h3" Class="fw-black text-primary">@myInternships.Count</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Logged Internships</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2">
+                    <MudText Typo="Typo.h3" Class="fw-black text-success">@myInternships.Count(i => i.Status == "approved" || i.Status == "completed")</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Verified</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-6 text-center stat-card" Elevation="2">
+                    <MudText Typo="Typo.h3" Class="fw-black text-warning">@myInternships.Count(i => i.Status.Contains("pending"))</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Pending NOC</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <!-- List -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-radius: 12px;">
+                    @if (!myInternships.Any())
+                    {
+                        <div class="pa-8 text-center text-secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.WorkOff" Size="Size.Large" Class="mb-3 opacity-50" />
+                            <MudText Typo="Typo.h6">No Internships Logged</MudText>
+                            <MudText Typo="Typo.body2">Record your external training or placement here to earn academic credits.</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudList T="string">
+                            @foreach (var curr in myInternships)
+                            {
+                                <MudListItem>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@curr.Mode Internship</MudText>
+                                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                                <MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Small" Class="mr-1" />
+                                                @curr.StartDate.ToString("MMM yyyy") - @curr.EndDate.ToString("MMM yyyy")
+                                            </MudText>
+                                        </div>
+                                        <div class="d-flex align-center gap-3">
+                                            @if (curr.Status == "pending_noc") { <MudChip T="string" Color="Color.Warning" Size="Size.Small">Pending NOC</MudChip> }
+                                            @if (curr.Status == "approved") { <MudChip T="string" Color="Color.Success" Size="Size.Small">Approved</MudChip> }
+                                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" />
+                                        </div>
+                                    </div>
+                                </MudListItem>
+                                <MudDivider />
+                            }
+                        </MudList>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    List<InternshipEntity> myInternships = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMyInternships();
+    }
+
+    async Task LoadMyInternships()
+    {
+        isLoading = true;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!string.IsNullOrEmpty(userId))
+            {
+                myInternships = await InternshipService.GetStudentInternshipsAsync(userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load internships: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-success { color: #4CAF50; }
+    .text-warning { color: #FF9800; }
+    .stat-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+</style>

@@ -1,0 +1,129 @@
+@page "/faculty/proposals"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@inject IProjectFormationService ProjectFormationService
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "faculty,master,admin")]
+@rendermode InteractiveServer
+
+<PageTitle>Proposal Vetting - NTCC Faculty</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-12">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Proposal <span class="text-secondary">Vetting</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Approve or reject student project abstracts</MudText>
+        </div>
+        <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.PendingActions">@pendingGroups.Count Pending</MudChip>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var group in pendingGroups)
+            {
+                <MudItem xs="12" md="6" lg="4">
+                    <MudPaper Class="pa-6 proposal-card d-flex flex-column" Elevation="2" Style="height: 100%;">
+                        <div class="d-flex justify-space-between mb-2">
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">ID: @group.Id.Substring(0, 8)</MudChip>
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Pending</MudChip>
+                        </div>
+                        
+                        <MudText Typo="Typo.h6" Class="fw-bold mb-2">@group.ProjectTitle</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary flex-grow-1 mb-4" Style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                           @(string.IsNullOrWhiteSpace(group.ProjectDescription) ? "No abstract provided." : group.ProjectDescription)
+                        </MudText>
+                        
+                        <MudDivider Class="my-3"/>
+                        
+                        <div class="d-flex justify-space-between align-center mt-auto">
+                            <MudAvatarGroup Max="3" MaxColor="Color.Primary" Size="Size.Small">
+                                <MudAvatar Color="Color.Info">M</MudAvatar>
+                                <MudAvatar Color="Color.Info">S</MudAvatar>
+                            </MudAvatarGroup>
+                            <div class="d-flex gap-2">
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled" OnClick="() => VetProposal(group.Id, false)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" OnClick="() => VetProposal(group.Id, true)" />
+                            </div>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+
+            @if (!pendingGroups.Any())
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-8 text-center" Elevation="0" Style="border: 2px dashed #e0e0e0; border-radius: 12px;">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Color="Color.Success" Size="Size.Large" Class="mb-3" />
+                        <MudText Typo="Typo.h6" Class="fw-bold mud-text-secondary">All Caught Up!</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">You have no pending project proposals to review.</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    List<ProjectGroupEntity> pendingGroups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProposals();
+    }
+
+    async Task LoadProposals()
+    {
+        isLoading = true;
+        try
+        {
+            var groups = await ProjectFormationService.GetGroupsForStageAsync("active_stage_id"); // Ideally fetched dynamically
+            pendingGroups = groups.Where(g => g.Status == "pending").ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading proposals: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    async Task VetProposal(string groupId, bool approve)
+    {
+        try
+        {
+            // Simulated faculty ID injection normally grabbed from AuthState
+            var success = await ProjectFormationService.VetProposalAsync(groupId, "current_faculty_id", approve, approve ? "Looks good" : "Needs revision");
+            if (success)
+            {
+                Snackbar.Add($"Proposal {(approve ? "Approved" : "Rejected")}", approve ? Severity.Success : Severity.Warning);
+                await LoadProposals();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Action failed: {ex.Message}", Severity.Error);
+        }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-secondary { color: #424242; }
+    .proposal-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s;
+    }
+    .proposal-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+    }
+</style>
