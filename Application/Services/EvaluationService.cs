@@ -28,7 +28,7 @@ namespace ntcc_admin_blazor.Application.Services
             return await _supabase.GetWhere<EvaluationComponentEntity>("category_id", categoryId);
         }
 
-        public async Task<bool> SubmitScoreAsync(Guid studentId, long componentId, int marks)
+        public async Task<bool> SubmitScoreAsync(string studentId, long componentId, int marks)
         {
             var score = new EvaluationScoreEntity
             {
@@ -43,7 +43,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<int> CalculateTotalScoreAsync(Guid studentId, long stageId)
+        public async Task<int> CalculateTotalScoreAsync(string studentId, long stageId)
         {
             var scheme = await GetSchemeForStageAsync(stageId);
             if (scheme == null) return 0;
@@ -70,7 +70,7 @@ namespace ntcc_admin_blazor.Application.Services
             return total;
         }
 
-        public async Task<bool> LockEvaluationAsync(Guid studentId, long stageId)
+        public async Task<bool> LockEvaluationAsync(string studentId, long stageId)
         {
             // Logic to mark all scores for this student/stage as IsLocked = true
             return true;

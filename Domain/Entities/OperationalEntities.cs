@@ -113,31 +113,4 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string Role { get; set; } = "member";
     }
 
-    [Table("evaluation_scores")]
-    public class EvaluationScoreEntity : DomainBase
-    {
-        [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
-        [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
-
-        [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
-
-        [Column("category_id")]
-        public string CategoryId { get; set; } = string.Empty;
-
-        [Column("evaluator_id")]
-        public string EvaluatorId { get; set; } = string.Empty;
-
-        [Column("score")]
-        public decimal Score { get; set; }
-
-        [Column("max_score")]
-        public decimal MaxScore { get; set; }
-
-        [Column("remarks")]
-        public string? Remarks { get; set; }
-    }
 }

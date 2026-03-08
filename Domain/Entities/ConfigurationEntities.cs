@@ -15,8 +15,6 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("description")]
         public string? Description { get; set; }
 
-        [Column("updated_at")]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 
     [Table("faculty_workload")]

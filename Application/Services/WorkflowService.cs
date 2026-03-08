@@ -14,7 +14,7 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<StageDashboardDto> GetStageDashboardAsync(Guid studentId, long stageId)
+        public async Task<StageDashboardDto> GetStageDashboardAsync(string studentId, long stageId)
         {
             var dto = new StageDashboardDto();
             
@@ -64,7 +64,7 @@ namespace ntcc_admin_blazor.Application.Services
             }).ToList();
         }
 
-        public async Task<bool> SubmitStepAsync(Guid studentId, long stepId, string payloadJson)
+        public async Task<bool> SubmitStepAsync(string studentId, long stepId, string payloadJson)
         {
             // Update or Insert progress
             var progress = new StudentWorkflowStepEntity
@@ -80,18 +80,18 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<bool> ApproveStepAsync(Guid studentId, long stepId, string feedback)
+        public async Task<bool> ApproveStepAsync(string studentId, long stepId, string feedback)
         {
             // Implementation for host/coordinator
             return await UpdateStepStatus(studentId, stepId, StepStatus.Approved);
         }
 
-        public async Task<bool> RejectStepAsync(Guid studentId, long stepId, string feedback)
+        public async Task<bool> RejectStepAsync(string studentId, long stepId, string feedback)
         {
             return await UpdateStepStatus(studentId, stepId, StepStatus.Rejected);
         }
 
-        private async Task<bool> UpdateStepStatus(Guid studentId, long stepId, StepStatus status)
+        private async Task<bool> UpdateStepStatus(string studentId, long stepId, StepStatus status)
         {
              // Logic to find record and update status
              return true; 

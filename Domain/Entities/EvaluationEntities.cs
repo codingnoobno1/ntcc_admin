@@ -52,19 +52,28 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class EvaluationScoreEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public Guid Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [Column("student_id")]
-        public Guid StudentId { get; set; }
+        public string StudentId { get; set; } = string.Empty;
+
+        [Column("stage_id")]
+        public string StageId { get; set; } = string.Empty;
 
         [Column("component_id")]
-        public long ComponentId { get; set; }
+        public long? ComponentId { get; set; }
+
+        [Column("score")]
+        public decimal Score { get; set; }
 
         [Column("marks")]
         public int Marks { get; set; }
 
         [Column("faculty_id")]
-        public Guid FacultyId { get; set; }
+        public string FacultyId { get; set; } = string.Empty;
+
+        [Column("remarks")]
+        public string? Remarks { get; set; }
 
         [Column("is_locked")]
         public bool IsLocked { get; set; }
