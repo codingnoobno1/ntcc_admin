@@ -1,0 +1,246 @@
+@page "/faculty/dashboard"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject IFacultyAppService FacultyService
+@inject IStudentAppService StudentService
+@inject IStageAppService StageService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "faculty,admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Faculty Dashboard - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-12">
+    <!-- Header Section -->
+    <div class="d-flex justify-space-between align-end mb-8">
+        <div class="animate-fade-in">
+            <MudText Typo="Typo.h3" Class="fw-black premium-gradient-text">Welcome back, @facultyName</MudText>
+            <MudText Typo="Typo.h6" Class="mud-text-secondary">@department — NTCC Academic Lifecycle Control</MudText>
+        </div>
+        <div class="d-flex gap-3">
+            <MudChip T="string" Variant="Variant.Filled" Color="Color.Primary" Icon="@Icons.Material.Filled.Event" Class="px-4 py-2 rounded-lg">Semester 5</MudChip>
+            <MudChip T="string" Variant="Variant.Filled" Color="Color.Secondary" Icon="@Icons.Material.Filled.BatchPrediction" Class="px-4 py-2 rounded-lg">Batch 2023</MudChip>
+        </div>
+    </div>
+
+    <!-- KPI Section (Zone 1) -->
+    <MudGrid Class="mb-8">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-6 glass-card kpi-card-hover d-flex align-center justify-space-between" Style="border-left: 6px solid #1976D2;">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-1">Assigned Students</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-black">@assignedStudentsCount</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Size="Size.Large" Class="opacity-20" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-6 glass-card kpi-card-hover d-flex align-center justify-space-between" Style="border-left: 6px solid #4CAF50;">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-1">Active Projects</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-black">@activeProjectsCount</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Assignment" Color="Color.Success" Size="Size.Large" Class="opacity-20" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-6 glass-card kpi-card-hover d-flex align-center justify-space-between" Style="border-left: 6px solid #FF9800;">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-1">Avg. Evaluation</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-black">@pendingEvaluationsCount.0</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.RateReview" Color="Color.Warning" Size="Size.Large" Class="opacity-20" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-6 glass-card kpi-card-hover d-flex align-center justify-space-between" Style="border-left: 6px solid #F44336;">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-1">Deadlines</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-black">@upcomingDeadlinesCount</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Timer" Color="Color.Error" Size="Size.Large" Class="opacity-20" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid>
+        <!-- Student Lifecycle Tracker (Zone 2) -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-6 glass-card h-100">
+                <div class="d-flex justify-space-between align-center mb-6">
+                    <MudText Typo="Typo.h5" Class="fw-bold">Student Lifecycle <span class="text-primary">Timeline</span></MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Href="students">View Directory</MudButton>
+                </div>
+                
+                <MudSimpleTable Style="overflow-x: auto;" Elevation="0" Class="mud-table-transparent">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Internship</th>
+                            <th>Minor</th>
+                            <th>Major</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in recentStudents)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Color="Color.Primary" Size="Size.Small" Variant="Variant.Outlined" Class="mr-3">@student.FullName[0]</MudAvatar>
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="fw-bold">@student.FullName</MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@student.RollNumber</MudText>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /></td>
+                                <td><MudIcon Icon="@Icons.Material.Filled.Pending" Color="Color.Warning" Size="Size.Small" /></td>
+                                <td><MudIcon Icon="@Icons.Material.Filled.RadioButtonUnchecked" Color="Color.Default" Size="Size.Small" /></td>
+                                <td><MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">Active</MudChip></td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Recent Activity & Notifications (Zone 3) -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Class="pa-6 glass-card h-100">
+                <MudText Typo="Typo.h5" Class="fw-bold mb-6">Activity <span class="text-secondary">Pulse</span></MudText>
+                <MudTimeline TimelinePosition="TimelinePosition.Start" Dense="true" Class="mx-0">
+                    <MudTimelineItem Color="Color.Info" Size="Size.Small" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Report Uploaded</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Aryan Sharma uploaded Sem 5 Report</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #1976D2;">2 hours ago</MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Success" Size="Size.Small" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Evaluation Completed</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">You marked Minor Project for Neha Gupta</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #4CAF50;">Yesterday</MudText>
+                    </MudTimelineItem>
+                    <MudTimelineItem Color="Color.Warning" Size="Size.Small" Elevation="0">
+                        <MudText Typo="Typo.body2" Class="fw-bold">Deadline Approaching</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Proposal submission ends in 2 days</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #FF9800;">Oct 12, 2023</MudText>
+                    </MudTimelineItem>
+                </MudTimeline>
+                <MudButton Variant="Variant.Filled" FullWidth="true" Color="Color.Primary" Class="mt-6 rounded-pill" EndIcon="@Icons.Material.Filled.OpenInNew">Global Log</MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+</MudContainer>
+
+@code {
+    string facultyName = "Professor";
+    string department = "Department of CSE";
+    bool isLoading = true;
+
+    // KPI Stats (Simulated for Phase 3)
+    int assignedStudentsCount = 24;
+    int activeProjectsCount = 8;
+    int pendingEvaluationsCount = 88; // Score avg
+    int upcomingDeadlinesCount = 3;
+
+    List<StudentEntity> recentStudents = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFacultyDashboard();
+    }
+
+    async Task LoadFacultyDashboard()
+    {
+        isLoading = true;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var profiles = await FacultyService.GetAllFaculty();
+                var p = profiles.FirstOrDefault(x => x.Id == userId);
+                if (p != null)
+                {
+                    facultyName = p.FullName;
+                    department = "Faculty of IT & CSE";
+                }
+            }
+
+            // Load sample students via AppService
+            var allStudents = await StudentService.GetStudentsByBatch("default");
+            recentStudents = allStudents.Take(5).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Dashboard refresh failed: {ex.Message}", Severity.Warning);
+        }
+        finally { isLoading = false; }
+    }
+}
+
+<style>
+    .premium-gradient-text {
+        background: linear-gradient(135deg, #1976D2 0%, #9C27B0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1) !important;
+    }
+    .kpi-card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .kpi-card-hover:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.15) !important;
+    }
+    .opacity-20 { opacity: 0.2; }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 800; }
+    .mud-table-transparent { background: transparent !important; }
+    .rounded-pill { border-radius: 50px !important; }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<style>
+    .premium-gradient-text {
+        background: linear-gradient(135deg, #1976D2 0%, #9C27B0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 20px !important;
+    }
+    .kpi-card-hover {
+        transition: transform 0.3s ease;
+    }
+    .kpi-card-hover:hover {
+        transform: translateY(-5px);
+    }
+    .fw-black { font-weight: 900; }
+    .fw-bold { font-weight: 700; }
+</style>

@@ -1,0 +1,104 @@
+@page "/adminlogin"
+@layout EmptyLayout
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@inject SupabaseService Supabase
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Admin Login - NTCC</PageTitle>
+
+<div class="login-container d-flex align-center justify-center" style="height: 100vh; background-color: #f8f9fa;">
+    <MudPaper Elevation="4" Class="pa-8 login-card" MaxWidth="400px">
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Class="fw-bold mt-2">MASTER <span class="text-primary">ADMIN</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Official NTCC Governance Access</MudText>
+        </div>
+
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudTextField T="string" Label="Admin Email" Required="true" RequiredError="Email is required!"
+                          @bind-Value="email" InputType="InputType.Email" Variant="Variant.Outlined" Class="mb-4" />
+
+            <MudTextField T="string" Label="Password" Required="true" RequiredError="Password is required!"
+                          @bind-Value="password" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-6" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large"
+                       OnClick="HandleLogin" Disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Authenticating...</MudText>
+                }
+                else
+                {
+                    <MudText>Sign In as Admin</MudText>
+                }
+            </MudButton>
+
+            <div class="mt-4 text-center">
+                <MudLink OnClick='() => Navigation.NavigateTo("admin-register")'>Don't have an account? Register</MudLink>
+            </div>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    MudForm form = null!;
+    bool success;
+    string email = "";
+    string password = "";
+    bool isLoading;
+
+    async Task HandleLogin()
+    {
+        isLoading = true;
+        Console.WriteLine($"[UI] Admin Login attempt for: {email}");
+        try
+        {
+            var session = await Supabase.SignIn(email, password);
+            if (session != null && session.User != null)
+            {
+                Console.WriteLine("[UI] Auth Successful. Fetching Profile from DB...");
+                var profile = await Supabase.GetById<Profile>(session.User.Id!);
+                var role = profile?.Role?.ToLower() ?? "faculty";
+                Console.WriteLine($"[UI] DB Verified Role: {role}");
+                
+                if (role == "master" || role == "admin")
+                {
+                    // Create ASP.NET cookie via API endpoint (forceLoad = real HTTP request)
+                    var loginUrl = $"api/auth/login?email={Uri.EscapeDataString(email)}&role={role}&userId={session.User.Id!}";
+                    Navigation.NavigateTo(loginUrl, forceLoad: true);
+                }
+                else
+                {
+                    Console.WriteLine("[UI] Role Mismatch (Not an admin). Signing Out.");
+                    await Supabase.SignOut();
+                    Snackbar.Add("Access Denied: This portal is for Administrators only.", Severity.Error);
+                }
+            }
+            else
+            {
+                Console.WriteLine("[UI] Auth Failed (Invalid Credentials).");
+                Snackbar.Add("Invalid credentials.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UI ERROR] Login Exception: {ex.Message}");
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .login-card { width: 100%; border-top: 4px solid #1976D2; border-radius: 12px; }
+    .fw-bold { font-weight: 800; }
+    .text-primary { color: #1976D2; }
+</style>

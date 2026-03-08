@@ -1,0 +1,86 @@
+@page "/batches"
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Batches - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-content-between align-center mb-6">
+        <MudText Typo="Typo.h4" Class="fw-bold">Academic <span class="text-primary">Batches</span></MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _addBatchDialogOpen = true">Create New Batch</MudButton>
+    </div>
+
+    <MudGrid>
+        @foreach (var batch in _batches)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="1">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.h6" Class="fw-bold">Batch @batch.Name</MudText>
+                                <MudChip T="string" Color="@(batch.IsActive ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Text">
+                                    @(batch.IsActive ? "ACTIVE" : "COMPLETED")
+                                </MudChip>
+                            </div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" /> @batch.YearStart - @batch.YearEnd</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2 text-primary">Total Students: @batch.StudentCount</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true">View Details</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true">Assign Stages</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+<MudDialog @bind-Visible="_addBatchDialogOpen" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" /> Create New Batch</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField T="string" Label="Batch Name" Placeholder="e.g. 2023-27" Required="true" />
+            <div class="d-flex gap-4">
+                <MudNumericField T="int" Label="Start Year" Value="2023" />
+                <MudNumericField T="int" Label="End Year" Value="2027" />
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _addBatchDialogOpen = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _addBatchDialogOpen = false">Create Batch</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _addBatchDialogOpen = false;
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+    
+    private List<BatchInfo> _batches = new()
+    {
+        new BatchInfo { Name = "2021-25", YearStart = 2021, YearEnd = 2025, IsActive = true, StudentCount = 320 },
+        new BatchInfo { Name = "2022-26", YearStart = 2022, YearEnd = 2026, IsActive = true, StudentCount = 280 },
+        new BatchInfo { Name = "2023-27", YearStart = 2023, YearEnd = 2027, IsActive = true, StudentCount = 450 },
+        new BatchInfo { Name = "2020-24", YearStart = 2020, YearEnd = 2024, IsActive = false, StudentCount = 310 }
+    };
+
+    public class BatchInfo
+    {
+        public string Name { get; set; } = "";
+        public int YearStart { get; set; }
+        public int YearEnd { get; set; }
+        public bool IsActive { get; set; }
+        public int StudentCount { get; set; }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+</style>

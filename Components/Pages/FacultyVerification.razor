@@ -1,0 +1,114 @@
+@page "/faculty-verification"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Master,Admin")]
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Faculty Verification - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Faculty <span class="text-primary">Verification</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Approve or reject new faculty registration requests.</MudText>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudTable Items="@unverifiedFaculty" Hover="true" Elevation="1" Bordered="false" Striped="true">
+            <HeaderContent>
+                <MudTh>Full Name</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Role</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Full Name">@context.FullName</MudTd>
+                <MudTd DataLabel="Email">@context.Id</MudTd>
+                <MudTd DataLabel="Role">@context.Role</MudTd>
+                <MudTd DataLabel="Status">
+                     <MudChip T="string" Color="Color.Warning" Size="Size.Small">Pending Approval</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" 
+                               OnClick="@(async () => await VerifyFaculty(context))" Class="mr-2">Verify</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
+                               OnClick="@(async () => await RejectFaculty(context))">Reject</MudButton>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body1" Class="pa-4">No pending faculty verification requests.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    List<Profile> unverifiedFaculty = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFaculty();
+    }
+
+    async Task LoadFaculty()
+    {
+        isLoading = true;
+        try
+        {
+            var allProfiles = await Supabase.GetAll<Profile>();
+            unverifiedFaculty = allProfiles.Where(p => p.Role == "faculty" && !p.IsVerified).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading faculty: {ex.Message}", Severity.Error);
+        }
+        finally { isLoading = false; }
+    }
+
+    async Task VerifyFaculty(Profile profile)
+    {
+        try
+        {
+            profile.IsVerified = true;
+            await Supabase.Update(profile);
+            Snackbar.Add($"Faculty {profile.FullName} verified successfully!", Severity.Success);
+            await LoadFaculty();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error verifying faculty: {ex.Message}", Severity.Error);
+        }
+    }
+
+    async Task RejectFaculty(Profile profile)
+    {
+        // For rejection, we might delete the profile or mark as rejected. 
+        // For now, let's just delete the profile.
+        try
+        {
+            await Supabase.Delete(profile);
+            Snackbar.Add($"Faculty {profile.FullName} request rejected and removed.", Severity.Info);
+            await LoadFaculty();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error rejecting faculty: {ex.Message}", Severity.Error);
+        }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 800; }
+    .text-primary { color: #1976D2; }
+</style>

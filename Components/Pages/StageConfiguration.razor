@@ -1,0 +1,468 @@
+@page "/stage-config"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Stage Configuration Engine - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Stage Config <span style="color:#1976D2">Engine</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Define academic lifecycles, milestones, and evaluation rubrics.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+            Create New Stage
+        </MudButton>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            <!-- Stage Sidebar List -->
+            <MudItem xs="12" md="3">
+                <MudPaper Elevation="1" Class="pa-4" Style="border-radius:12px; height: 75vh; overflow-y: auto;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Stages</MudText>
+                    <MudNavMenu Color="Color.Primary" Bordered="true">
+                        @foreach (var stage in stages)
+                        {
+                            <MudNavLink OnClick="() => SelectStage(stage)" 
+                                        Icon="@GetStageIcon(stage.StageType)"
+                                        ActiveClass="mud-chip-text mud-chip-color-primary">
+                                @stage.Name <br/>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Sem @stage.Semester | @stage.Batch</MudText>
+                            </MudNavLink>
+                        }
+                    </MudNavMenu>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Configuration Detail -->
+            <MudItem xs="12" md="9">
+                @if (selectedStage == null)
+                {
+                    <MudPaper Elevation="1" Class="pa-12 d-flex flex-column align-center justify-center" Style="border-radius:12px; height: 75vh;">
+                        <MudIcon Icon="@Icons.Material.Filled.SettingsSuggest" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Color="Color.Default">Select a stage from the list to configure</MudText>
+                    </MudPaper>
+                }
+                else
+                {
+                    <MudPaper Elevation="1" Class="pa-6" Style="border-radius:12px; min-height: 75vh;">
+                        <div class="d-flex justify-space-between align-center mb-4">
+                            <MudText Typo="Typo.h5" Class="fw-bold">@selectedStage.Name</MudText>
+                            <div>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="OpenEditDialog" Class="mr-2">Edit Info</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="DeleteSelectedStage">Delete</MudButton>
+                            </div>
+                        </div>
+
+                        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Color="Color.Primary">
+                            <!-- Tab 1: Stage Info -->
+                            <MudTabPanel Text="Stage Info" Icon="@Icons.Material.Filled.Info">
+                                <div class="pa-4">
+                                    <MudGrid>
+                                        <MudItem xs="12" sm="6">
+                                            <MudField Label="Program" Variant="Variant.Text">@selectedStage.Program</MudField>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudField Label="Semester" Variant="Variant.Text">Semester @selectedStage.Semester</MudField>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudField Label="Batch" Variant="Variant.Text">@selectedStage.Batch</MudField>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudField Label="Type" Variant="Variant.Text">@selectedStage.StageType.ToUpper()</MudField>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudField Label="Credits" Variant="Variant.Text">@selectedStage.Credits Credits</MudField>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudChip T="string" Color="@(selectedStage.Status == "active" ? Color.Success : Color.Default)">@selectedStage.Status.ToUpper()</MudChip>
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                            </MudTabPanel>
+
+                            <!-- Tab 2: Deadlines -->
+                            <MudTabPanel Text="Deadlines" Icon="@Icons.Material.Filled.Event">
+                                <div class="pa-4">
+                                    <MudTable Items="@deadlines" Hover="true" Elevation="0" Dense="true" Class="mb-4">
+                                        <HeaderContent>
+                                            <MudTh>Order</MudTh>
+                                            <MudTh>Milestone Name</MudTh>
+                                            <MudTh>Deadline</MudTh>
+                                            <MudTh>Sub. Req?</MudTh>
+                                            <MudTh></MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd>@context.OrderIndex</MudTd>
+                                            <MudTd><MudText Class="fw-bold">@context.MilestoneName</MudText></MudTd>
+                                            <MudTd>@context.Deadline.ToString("dd MMM yyyy")</MudTd>
+                                            <MudTd>
+                                                <MudChip T="string" Size="Size.Small" Color="@(context.IsSubmissionRequired ? Color.Info : Color.Default)">
+                                                    @(context.IsSubmissionRequired ? "YES" : "NO")
+                                                </MudChip>
+                                            </MudTd>
+                                            <MudTd>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteDeadline(context)" />
+                                            </MudTd>
+                                        </RowTemplate>
+                                            <FooterContent>
+                                                <MudTFootRow>
+                                                    <MudTd><MudNumericField @bind-Value="newDeadline.OrderIndex" Label="Order" Margin="Margin.Dense" /></MudTd>
+                                                    <MudTd><MudTextField @bind-Value="newDeadline.MilestoneName" Placeholder="Title Approval..." Margin="Margin.Dense" /></MudTd>
+                                                    <MudTd><MudDatePicker @bind-Date="newDeadlineDate" Placeholder="Date" Margin="Margin.Dense" /></MudTd>
+                                                    <MudTd><MudCheckBox @bind-Value="newDeadline.IsSubmissionRequired" Label="Required" Dense="true" /></MudTd>
+                                                    <MudTd><MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Success" OnClick="AddDeadline" /></MudTd>
+                                                </MudTFootRow>
+                                            </FooterContent>
+                                        </MudTable>
+                                    </div>
+                                </MudTabPanel>
+
+                            <!-- Tab 3: Submissions -->
+                            <MudTabPanel Text="Submissions" Icon="@Icons.Material.Filled.UploadFile">
+                                <div class="pa-4">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-3">Define rules for milestones marked as 'Submission Required'.</MudText>
+                                    <MudTable Items="@submissionRules" Hover="true" Elevation="0" Dense="true">
+                                        <HeaderContent>
+                                            <MudTh>Milestone</MudTh>
+                                            <MudTh>File Type</MudTh>
+                                            <MudTh>Max Files</MudTh>
+                                            <MudTh>Mandatory</MudTh>
+                                            <MudTh></MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd>@GetMilestoneName(context.MilestoneId)</MudTd>
+                                            <MudTd>@context.FileType</MudTd>
+                                            <MudTd>@context.MaxFiles</MudTd>
+                                            <MudTd>@context.Required</MudTd>
+                                            <MudTd>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteSubRule(context)" />
+                                            </MudTd>
+                                        </RowTemplate>
+                                        <FooterContent>
+                                            <MudTFootRow>
+                                                <MudTd>
+                                                    <MudSelect T="string" @bind-Value="newSubRule.MilestoneId" Label="Milestone" Margin="Margin.Dense">
+                                                        @foreach (var d in deadlines.Where(x => x.IsSubmissionRequired))
+                                                        {
+                                                            <MudSelectItem Value="@d.Id">@d.MilestoneName</MudSelectItem>
+                                                        }
+                                                    </MudSelect>
+                                                </MudTd>
+                                                <MudTd>
+                                                    <MudSelect T="string" @bind-Value="newSubRule.FileType" Label="Type" Margin="Margin.Dense">
+                                                        <MudSelectItem Value="@("PDF")">PDF</MudSelectItem>
+                                                        <MudSelectItem Value="@("DOCX")">DOCX</MudSelectItem>
+                                                        <MudSelectItem Value="@("ZIP")">ZIP (Code)</MudSelectItem>
+                                                        <MudSelectItem Value="@("LINK")">Link (URL)</MudSelectItem>
+                                                    </MudSelect>
+                                                </MudTd>
+                                                <MudTd><MudNumericField @bind-Value="newSubRule.MaxFiles" Margin="Margin.Dense" /></MudTd>
+                                                <MudTd><MudCheckBox @bind-Value="newSubRule.Required" Label="Req" Dense="true" /></MudTd>
+                                                <MudTd><MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Success" OnClick="AddSubRule" /></MudTd>
+                                            </MudTFootRow>
+                                        </FooterContent>
+                                    </MudTable>
+                                </div>
+                            </MudTabPanel>
+
+                            <!-- Tab 4: Evaluation -->
+                            <MudTabPanel Text="Evaluation" Icon="@Icons.Material.Filled.Grading">
+                                <div class="pa-4">
+                                    <div class="d-flex justify-space-between align-center mb-4">
+                                        <MudText Typo="Typo.subtitle1" Class="fw-bold">Assessment Rubric (Total: @categories.Sum(c => c.MaxMarks))</MudText>
+                                        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddCategoryDialog">Add Category</MudButton>
+                                    </div>
+                                    <MudExpansionPanels MultiExpansion="true">
+                                        @foreach (var cat in categories)
+                                        {
+                                            <MudExpansionPanel Text="@($"{cat.Name} ({cat.MaxMarks} Marks) — {cat.EvaluatorRole}")">
+                                                <MudTable Items="@allComponents.Where(c => c.CategoryId == cat.Id)" Dense="true" Elevation="0">
+                                                    <HeaderContent>
+                                                        <MudTh>Component Name</MudTh>
+                                                        <MudTh>Max Marks</MudTh>
+                                                        <MudTh></MudTh>
+                                                    </HeaderContent>
+                                                    <RowTemplate>
+                                                        <MudTd>@context.Name</MudTd>
+                                                        <MudTd>@context.Marks</MudTd>
+                                                        <MudTd>
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => DeleteComponent(context)" />
+                                                        </MudTd>
+                                                    </RowTemplate>
+                                                    <FooterContent>
+                                                        <MudTFootRow>
+                                                            <MudTd><MudTextField @bind-Value="newComponent.Name" Placeholder="e.g. Viva" Margin="Margin.Dense" /></MudTd>
+                                                            <MudTd><MudNumericField @bind-Value="newComponent.Marks" Margin="Margin.Dense" /></MudTd>
+                                                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Success" OnClick="() => AddComponent(cat.Id)" /></MudTd>
+                                                        </MudTFootRow>
+                                                    </FooterContent>
+                                                </MudTable>
+                                                <div class="mt-2 text-right">
+                                                    <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteCategory(cat)">Delete Category</MudButton>
+                                                </div>
+                                            </MudExpansionPanel>
+                                        }
+                                    </MudExpansionPanels>
+                                </div>
+                            </MudTabPanel>
+
+                            <!-- Tab 5: Requirements -->
+                            <MudTabPanel Text="Requirements" Icon="@Icons.Material.Filled.Checklist">
+                                <div class="pa-4">
+                                    <MudTable Items="@requirements" Hover="true" Elevation="0" Dense="true">
+                                        <HeaderContent>
+                                            <MudTh>Rule Type</MudTh>
+                                            <MudTh>Threshold Value</MudTh>
+                                            <MudTh></MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd>@context.RequirementType.Replace("_", " ").ToUpper()</MudTd>
+                                            <MudTd>@context.Value</MudTd>
+                                            <MudTd>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteRequirement(context)" />
+                                            </MudTd>
+                                        </RowTemplate>
+                                        <FooterContent>
+                                            <MudTFootRow>
+                                                <MudTd>
+                                                    <MudSelect T="string" @bind-Value="newReq.RequirementType" Margin="Margin.Dense">
+                                                        <MudSelectItem Value="@("min_supervisor_meetings")">Min Supervisor Meetings</MudSelectItem>
+                                                        <MudSelectItem Value="@("weekly_logs_required")">Weekly Logs Required (0/1)</MudSelectItem>
+                                                        <MudSelectItem Value="@("min_lab_attendance")">Min Lab Attendance %</MudSelectItem>
+                                                        <MudSelectItem Value="@("credits_required")">Credits Threshold</MudSelectItem>
+                                                    </MudSelect>
+                                                </MudTd>
+                                                <MudTd><MudNumericField @bind-Value="newReq.Value" Margin="Margin.Dense" /></MudTd>
+                                                <MudTd><MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Success" OnClick="AddRequirement" /></MudTd>
+                                            </MudTFootRow>
+                                        </FooterContent>
+                                    </MudTable>
+                                </div>
+                            </MudTabPanel>
+                        </MudTabs>
+                    </MudPaper>
+                }
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+<!-- Stage Edit Dialog -->
+<MudDialog @bind-Visible="stageDialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(isEdit ? "Edit Stage Info" : "Create New Stage")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="editStage.Name" Label="Stage Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudGrid>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="editStage.Program" Label="Program" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("B.Tech CSE")">B.Tech CSE</MudSelectItem>
+                    <MudSelectItem Value="@("B.Tech ECE")">B.Tech ECE</MudSelectItem>
+                    <MudSelectItem Value="@("MCA")">MCA</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudNumericField @bind-Value="editStage.Semester" Label="Semester" Variant="Variant.Outlined" Min="1" Max="8" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudNumericField @bind-Value="editStage.Batch" Label="Batch Year" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="editStage.StageType" Label="Type" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("internship")">Internship</MudSelectItem>
+                    <MudSelectItem Value="@("project")">Project</MudSelectItem>
+                    <MudSelectItem Value="@("seminar")">Seminar</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudNumericField @bind-Value="editStage.Credits" Label="Credits" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="editStage.Status" Label="Status" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("active")">Active</MudSelectItem>
+                    <MudSelectItem Value="@("draft")">Draft</MudSelectItem>
+                    <MudSelectItem Value="@("closed")">Closed</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => stageDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveStage">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Category Add Dialog -->
+<MudDialog @bind-Visible="catDialogVisible">
+    <TitleContent><MudText Typo="Typo.h6">Add Evaluation Category</MudText></TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newCategory.Name" Label="Category Name (e.g. Midterm)" Variant="Variant.Outlined" Class="mb-3" />
+        <MudNumericField @bind-Value="newCategory.MaxMarks" Label="Max Marks" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect T="string" @bind-Value="newCategory.EvaluatorRole" Label="Evaluator Role" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("evaluator")">Internal/External Evaluator</MudSelectItem>
+            <MudSelectItem Value="@("mentor")">Supervisor (Mentor)</MudSelectItem>
+            <MudSelect T="string" Value="@("admin")">Organization Admin</MudSelect>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => catDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddCategory">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = true;
+    bool stageDialogVisible = false;
+    bool catDialogVisible = false;
+    bool isEdit = false;
+    
+    List<NtccStage> stages = new();
+    NtccStage? selectedStage;
+    NtccStage editStage = new();
+
+    // Contextual Data
+    List<StageDeadline> deadlines = new();
+    List<StageSubmissionRule> submissionRules = new();
+    List<EvaluationCategory> categories = new();
+    List<EvaluationComponent> allComponents = new();
+    List<StageRequirement> requirements = new();
+
+    // New item templates
+    StageDeadline newDeadline = new() { OrderIndex = 1 };
+    DateTime? newDeadlineDate = DateTime.Today;
+    StageSubmissionRule newSubRule = new();
+    EvaluationCategory newCategory = new();
+    EvaluationComponent newComponent = new();
+    StageRequirement newReq = new() { RequirementType = "min_supervisor_meetings" };
+
+    protected override async Task OnInitializedAsync() => await LoadStages();
+
+    async Task LoadStages()
+    {
+        isLoading = true;
+        try { stages = (await Supabase.GetAll<NtccStage>()).OrderByDescending(s => s.Batch).ThenBy(s => s.Semester).ToList(); }
+        catch (Exception ex) { Snackbar.Add($"Load error: {ex.Message}", Severity.Error); }
+        finally { isLoading = false; }
+    }
+
+    async Task SelectStage(NtccStage stage)
+    {
+        selectedStage = stage;
+        await RefreshConfig();
+    }
+
+    async Task RefreshConfig()
+    {
+        if (selectedStage == null) return;
+        var config = await Supabase.GetStageConfiguration(selectedStage.Id);
+        deadlines = config.Deadlines.OrderBy(d => d.OrderIndex).ToList();
+        categories = config.Categories;
+        requirements = config.Requirements;
+        submissionRules = config.SubmissionRules;
+        allComponents = await Supabase.GetAll<EvaluationComponent>();
+        StateHasChanged();
+    }
+
+    // ─── Stage CRUD ───────────────────────────────────
+    void OpenCreateDialog() { isEdit = false; editStage = new NtccStage(); stageDialogVisible = true; }
+    void OpenEditDialog() { isEdit = true; editStage = selectedStage!; stageDialogVisible = true; }
+
+    async Task SaveStage()
+    {
+        try 
+        {
+            if (isEdit) await Supabase.Update(editStage);
+            else await Supabase.Insert(editStage);
+            stageDialogVisible = false;
+            await LoadStages();
+            if (!string.IsNullOrEmpty(editStage.Id)) selectedStage = stages.Find(s => s.Id == editStage.Id);
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    async Task DeleteSelectedStage()
+    {
+        try { await Supabase.Delete(selectedStage!); selectedStage = null; await LoadStages(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    // ─── Timeline CRUD ────────────────────────────────
+    async Task AddDeadline()
+    {
+        if (string.IsNullOrEmpty(newDeadline.MilestoneName) || !newDeadlineDate.HasValue) return;
+        newDeadline.StageId = selectedStage!.Id;
+        newDeadline.Deadline = newDeadlineDate.Value;
+        await Supabase.Insert(newDeadline);
+        newDeadline = new StageDeadline { OrderIndex = deadlines.Count + 2 };
+        await RefreshConfig();
+    }
+    async Task DeleteDeadline(StageDeadline d) { await Supabase.Delete(d); await RefreshConfig(); }
+
+    // ─── Submission Rules ─────────────────────────────
+    async Task AddSubRule()
+    {
+        if (string.IsNullOrEmpty(newSubRule.MilestoneId)) return;
+        newSubRule.StageId = selectedStage!.Id;
+        await Supabase.Insert(newSubRule);
+        newSubRule = new StageSubmissionRule();
+        await RefreshConfig();
+    }
+    async Task DeleteSubRule(StageSubmissionRule r) { await Supabase.Delete(r); await RefreshConfig(); }
+
+    // ─── Evaluation Rubric ────────────────────────────
+    void OpenAddCategoryDialog() { newCategory = new EvaluationCategory() { StageId = selectedStage!.Id }; catDialogVisible = true; }
+    async Task AddCategory()
+    {
+        await Supabase.Insert(newCategory);
+        catDialogVisible = false;
+        await RefreshConfig();
+    }
+    async Task DeleteCategory(EvaluationCategory c) { await Supabase.Delete(c); await RefreshConfig(); }
+
+    async Task AddComponent(string catId)
+    {
+        if (string.IsNullOrEmpty(newComponent.Name)) return;
+        newComponent.CategoryId = catId;
+        await Supabase.Insert(newComponent);
+        newComponent = new EvaluationComponent();
+        await RefreshConfig();
+    }
+    async Task DeleteComponent(EvaluationComponent c) { await Supabase.Delete(c); await RefreshConfig(); }
+
+    // ─── Requirements ─────────────────────────────────
+    async Task AddRequirement()
+    {
+        newReq.StageId = selectedStage!.Id;
+        await Supabase.Insert(newReq);
+        newReq = new StageRequirement { RequirementType = "min_supervisor_meetings" };
+        await RefreshConfig();
+    }
+    async Task DeleteRequirement(StageRequirement r) { await Supabase.Delete(r); await RefreshConfig(); }
+
+    // ─── Helpers ──────────────────────────────────────
+    string GetMilestoneName(string id) => deadlines.FirstOrDefault(d => d.Id == id)?.MilestoneName ?? "Unknown";
+    string GetStageIcon(string type) => type switch {
+        "internship" => Icons.Material.Filled.BusinessCenter,
+        "project" => Icons.Material.Filled.DeveloperBoard,
+        "seminar" => Icons.Material.Filled.School,
+        _ => Icons.Material.Filled.Settings
+    };
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+</style>

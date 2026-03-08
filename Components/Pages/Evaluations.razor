@@ -1,0 +1,210 @@
+@page "/evaluations"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject IStageAppService StageService
+@inject IStudentAppService StudentService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject SupabaseService Supabase
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Evaluation Panel - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Evaluation <span class="text-secondary">Panel</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Rubric-based grading and feedback management</MudText>
+        </div>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download" Class="rounded-pill">
+                Export Reports
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Selection Filters -->
+    <MudPaper Elevation="0" Class="pa-4 mb-6 glass-card">
+        <MudGrid>
+            <MudItem xs="12" sm="5">
+                <MudSelect T="string" Label="Active Stage" @bind-Value="selectedStageId" Variant="Variant.Outlined" Dense="true" Class="rounded-lg">
+                    @foreach (var s in stages)
+                    {
+                        <MudSelectItem Value="@s.Id">@s.Name (@s.Program)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" Label="Category" @bind-Value="selectedCategoryId" Variant="Variant.Outlined" Dense="true" Class="rounded-lg">
+                    <MudSelectItem Value="@("midterm")">Midterm Presentation</MudSelectItem>
+                    <MudSelectItem Value="@("endterm")">Final Report</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="3" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="rounded-pill py-2" OnClick="LoadEvaluationList">
+                    Load List
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Scoring Table -->
+    <MudPaper Elevation="0" Class="glass-card">
+        @if (isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (studentList.Count == 0)
+        {
+            <div class="pa-12 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Default" Class="mb-3" />
+                <MudText Typo="Typo.h6" Class="mud-text-secondary">Please select filters to load evaluation list</MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="@studentList" Dense="true" Hover="true" Striped="true" Bordered="false" Elevation="0" Class="mud-table-transparent">
+                <HeaderContent>
+                    <MudTh>Roll No</MudTh>
+                    <MudTh>Student Name</MudTh>
+                    <MudTh>Max Marks</MudTh>
+                    <MudTh>Score</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Roll No">@context.RollNumber</MudTd>
+                    <MudTd DataLabel="Student Name">@context.FullName</MudTd>
+                    <MudTd DataLabel="Max Marks">100</MudTd>
+                    <MudTd DataLabel="Score">
+                        <MudNumericField T="decimal?" Value="@GetScore(context.Id)" Disabled="true" Variant="Variant.Text" Margin="Margin.None" Class="score-display" />
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Color="@(GetScore(context.Id).HasValue ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Text">
+                            @(GetScore(context.Id).HasValue ? "Evaluated" : "Pending")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.EditNote" Size="Size.Small" OnClick="() => OpenScoring(context)">
+                            Grade
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+</MudContainer>
+
+<!-- Scoring Dialog -->
+<MudDialog @bind-Visible="scoringVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Grade Student</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (selectedStudent != null)
+        {
+            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-4">@selectedStudent.FullName (@selectedStudent.RollNumber)</MudText>
+            <MudNumericField @bind-Value="currentScore" Label="Score (Marks)" Min="0" Max="100" Step="0.5m" Variant="Variant.Outlined" Class="mb-4" />
+            <MudTextField @bind-Value="currentRemarks" Label="Feedback / Remarks" Lines="3" Placeholder="Enter constructive feedback..." Variant="Variant.Outlined" Class="mb-4" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => scoringVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveScore">Submit Grading</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = false;
+    bool scoringVisible = false;
+    string? selectedStageId;
+    string? selectedCategoryId;
+    
+    List<NtccStage> stages = new();
+    List<StudentEntity> studentList = new();
+    List<EvaluationScoreEntity> scores = new();
+    
+    StudentEntity? selectedStudent;
+    decimal currentScore;
+    string? currentRemarks;
+
+    protected override async Task OnInitializedAsync()
+    {
+        stages = await StageService.GetAllStages();
+    }
+
+    async Task LoadEvaluationList()
+    {
+        if (string.IsNullOrEmpty(selectedStageId))
+        {
+            Snackbar.Add("Please select a stage", Severity.Warning);
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            studentList = await Supabase.GetAll<StudentEntity>();
+            scores = await Supabase.GetAll<EvaluationScoreEntity>();
+            
+            // Filter scores by stage if possible, or just let UI handle it via GetScore
+            scores = scores.Where(x => x.StageId == selectedStageId).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading evaluations: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    decimal? GetScore(string studentId) => scores.FirstOrDefault(s => s.StudentId == studentId)?.Score;
+
+    void OpenScoring(StudentEntity s)
+    {
+        selectedStudent = s;
+        currentScore = GetScore(s.Id) ?? 0;
+        currentRemarks = scores.FirstOrDefault(x => x.StudentId == s.Id)?.Remarks;
+        scoringVisible = true;
+    }
+
+    async Task SaveScore()
+    {
+        if (selectedStudent != null)
+        {
+            var existing = scores.FirstOrDefault(x => x.StudentId == selectedStudent.Id);
+            if (existing != null) 
+            {
+                existing.Score = currentScore;
+                existing.Remarks = currentRemarks;
+            }
+            else
+            {
+                scores.Add(new EvaluationScoreEntity { StudentId = selectedStudent.Id, Score = currentScore, Remarks = currentRemarks });
+            }
+            
+            Snackbar.Add("Grading saved successfully!", Severity.Success);
+            scoringVisible = false;
+        }
+    }
+}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+    }
+    .fw-bold { font-weight: 800; }
+    .mud-table-transparent { background: transparent !important; }
+    .rounded-pill { border-radius: 50px !important; }
+    .score-display input { font-weight: 900 !important; font-size: 1.1rem !important; color: #1976D2 !important; }
+</style>

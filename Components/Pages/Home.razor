@@ -1,0 +1,305 @@
+﻿@page "/dashboard"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@inject SupabaseService Supabase
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Welcome back, <span class="text-primary">@userName</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@userRole.ToUpper() Dashboard · @DateTime.Now.ToString("dddd, dd MMMM yyyy")</MudText>
+        </div>
+        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small">Connected</MudChip>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <!-- KPI Cards Row -->
+        <MudGrid Class="mb-6">
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #1976D2; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Students</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@totalStudents</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #4CAF50; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Active Stages</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@activeStagesCount</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #FF9800; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Internships</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@totalInternships</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #9C27B0; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Projects</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@totalProjects</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #E91E63; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Faculty</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@totalFaculty</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="2">
+                <MudPaper Class="pa-4 stat-card" Elevation="2" Style="border-left: 5px solid #00BCD4; border-radius: 12px;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Deadlines</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@upcomingDeadlines</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Main Content Grid -->
+        <MudGrid>
+            <!-- Active Stages Table -->
+            <MudItem xs="12" md="8">
+                <MudPaper Elevation="2" Class="pa-5" Style="border-radius: 12px;">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="fw-bold">Active Stages</MudText>
+                        @if (userRole == "admin" || userRole == "master")
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Href="stage-config">New Stage</MudButton>
+                        }
+                    </div>
+                    @if (stages.Any())
+                    {
+                        <MudTable Items="@stages" Dense="true" Hover="true" Bordered="false" Striped="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Stage</MudTh>
+                                <MudTh>Program</MudTh>
+                                <MudTh>Semester</MudTh>
+                                <MudTh>Session</MudTh>
+                                <MudTh>Status</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Stage"><MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText></MudTd>
+                                <MudTd DataLabel="Program">@context.Program</MudTd>
+                                <MudTd DataLabel="Semester">@context.Semester</MudTd>
+                                <MudTd DataLabel="Batch">@context.Batch</MudTd>
+                                <MudTd DataLabel="Status">
+                                    <MudChip T="string" Color="@(context.Status == "active" ? Color.Success : Color.Default)" Size="Size.Small">
+                                        @context.Status.ToUpper()
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info" Class="mt-2">
+                            No stages created yet. Click "New Stage" to get started.
+                        </MudAlert>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- Quick Actions + Recent Faculty -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-5 mb-4" Style="border-radius: 12px;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Quick Actions</MudText>
+                    <MudStack Spacing="2">
+                        @if (userRole == "admin" || userRole == "master")
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" FullWidth="true" Href="stage-config">
+                                Create New Stage
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.HowToReg" FullWidth="true" Href="faculty-verification">
+                                Verify Faculty (@pendingVerification)
+                            </MudButton>
+                        }
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Dashboard" FullWidth="true" Href="action-center">
+                            Faculty Action Center
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Elevation="2" Class="pa-5" Style="border-radius: 12px;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Recent Faculty</MudText>
+                    @if (recentFaculty.Any())
+                    {
+                        <MudList T="string" Dense="true">
+                            @foreach (var faculty in recentFaculty)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Person">
+                                    <div class="d-flex justify-space-between align-center" style="width:100%">
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="fw-bold">@faculty.FullName</MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@faculty.Email</MudText>
+                                        </div>
+                                        <MudChip T="string" Size="Size.Small" Color="@(faculty.IsVerified ? Color.Success : Color.Warning)">
+                                            @(faculty.IsVerified ? "Verified" : "Pending")
+                                        </MudChip>
+                                    </div>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No faculty registered yet.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- Upcoming Deadlines -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-5" Style="border-radius: 12px;">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Upcoming Deadlines</MudText>
+                    @if (deadlines.Any())
+                    {
+                        <MudTimeline TimelinePosition="TimelinePosition.Start">
+                             @foreach (var dl in deadlines.Take(6))
+                            {
+                                var daysLeft = (dl.Deadline - DateTime.UtcNow).Days;
+                                var color = daysLeft < 3 ? Color.Error : (daysLeft < 7 ? Color.Warning : Color.Success);
+                                <MudTimelineItem Color="@color" Size="Size.Small">
+                                    <ItemContent>
+                                        <MudText Typo="Typo.body2" Class="fw-bold">@dl.MilestoneName</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                            @dl.Deadline.ToString("dd MMM yyyy") · 
+                                            @(daysLeft > 0 ? $"{daysLeft} days left" : (daysLeft == 0 ? "Due today!" : $"{Math.Abs(daysLeft)} days overdue"))
+                                        </MudText>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                            }
+                        </MudTimeline>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No upcoming deadlines found.</MudAlert>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    string userName = "";
+    string userRole = "";
+    int totalFaculty = 0;
+    int totalStudents = 0;
+    int totalInternships = 0;
+    int totalProjects = 0;
+    int activeStagesCount = 0;
+    int pendingVerification = 0;
+    int upcomingDeadlines = 0;
+
+    List<NtccStage> stages = new();
+    List<Profile> recentFaculty = new();
+    List<StageDeadline> deadlines = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userName = authState.User.Identity?.Name ?? "User";
+            userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "faculty";
+            Console.WriteLine($"[DASHBOARD] Loaded for: {userName} | Role: {userRole}");
+        }
+        catch { userName = "User"; userRole = "admin"; }
+        
+        await LoadDashboard();
+    }
+
+    async Task LoadDashboard()
+    {
+        isLoading = true;
+        try
+        {
+            await LoadProfiles();
+            await LoadStages();
+            await LoadDeadlines();
+            await LoadLifecycle();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DASHBOARD] Error: {ex.Message}");
+        }
+        finally { isLoading = false; }
+    }
+
+    async Task LoadProfiles()
+    {
+        try
+        {
+            var profiles = await Supabase.GetAll<Profile>();
+            totalFaculty = profiles.Count(p => p.Role == "faculty");
+            pendingVerification = profiles.Count(p => p.Role == "faculty" && !p.IsVerified);
+            recentFaculty = profiles
+                .Where(p => p.Role == "faculty")
+                .OrderByDescending(p => p.IsVerified)
+                .Take(5)
+                .ToList();
+        }
+        catch (Exception ex) { Console.WriteLine($"[DASHBOARD] Profiles load error: {ex.Message}"); }
+    }
+
+    async Task LoadStages()
+    {
+        try
+        {
+            stages = await Supabase.GetAll<NtccStage>();
+            activeStagesCount = stages.Count(s => s.Status == "active");
+        }
+        catch (Exception ex) { Console.WriteLine($"[DASHBOARD] Stages load error: {ex.Message}"); }
+    }
+
+    async Task LoadDeadlines()
+    {
+        try
+        {
+            var allDeadlines = await Supabase.GetAll<StageDeadline>();
+            deadlines = allDeadlines
+                .Where(d => d.Deadline >= DateTime.UtcNow.AddDays(-3))
+                .OrderBy(d => d.Deadline)
+                .ToList();
+            upcomingDeadlines = deadlines.Count;
+        }
+        catch (Exception ex) { Console.WriteLine($"[DASHBOARD] Deadlines load error: {ex.Message}"); }
+    }
+
+    async Task LoadLifecycle()
+    {
+        try { var s = await Supabase.GetAll<Student>(); totalStudents = s.Count; }
+        catch { Console.WriteLine("[DASHBOARD] students table not ready yet"); }
+
+        try { var i = await Supabase.GetAll<Internship>(); totalInternships = i.Count; }
+        catch { Console.WriteLine("[DASHBOARD] internships table not ready yet"); }
+
+        try { var p = await Supabase.GetAll<Project>(); totalProjects = p.Count; }
+        catch { Console.WriteLine("[DASHBOARD] projects table not ready yet"); }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .stat-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+</style>

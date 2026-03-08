@@ -1,0 +1,168 @@
+@page "/internship-hub"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject IFacultyAppService FacultyService
+@inject IStudentAppService StudentService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject SupabaseService Supabase
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Internship Hub - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Internship <span class="text-secondary">Hub</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Track industrial training and mentor feedback</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="rounded-pill">
+            Log Internship
+        </MudButton>
+    </div>
+
+    <!-- Analytics Row -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="3">
+            <MudPaper Class="pa-4 glass-card">
+                <MudText Typo="Typo.h4" Class="fw-bold">@internships.Count</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Ongoing Trainings</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudPaper Class="pa-4 glass-card">
+                <MudText Typo="Typo.h4" Class="fw-bold">@internships.Count(i => i.ReportUploaded)</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Reports Submitted</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudPaper Class="pa-4 glass-card">
+                <MudText Typo="Typo.h4" Class="fw-bold">@internships.Count(i => i.Status == "completed")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Evaluated</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Project List -->
+    <MudPaper Elevation="0" Class="glass-card">
+        <MudTable Items="@internships" Dense="true" Hover="true" Striped="true" Bordered="false" Elevation="0" Class="mud-table-transparent">
+            <HeaderContent>
+                <MudTh>Student</MudTh>
+                <MudTh>Company</MudTh>
+                <MudTh>Mentor</MudTh>
+                <MudTh>Duration</MudTh>
+                <MudTh>Report</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Student">
+                    <MudText Typo="Typo.body2" Class="fw-bold">@context.StudentId</MudText> <!-- In real app, join with Profile -->
+                </MudTd>
+                <MudTd DataLabel="Company">@context.CompanyName</MudTd>
+                <MudTd DataLabel="Mentor">@context.MentorName</MudTd>
+                <MudTd DataLabel="Duration">@context.DurationDays Days</MudTd>
+                <MudTd DataLabel="Report">
+                    @if (context.ReportUploaded)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Description" Color="Color.Info" Size="Size.Small" Href="@context.ReportUrl" Target="_blank" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Pending</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small" Variant="Variant.Text">@context.Status</MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Grading" Size="Size.Small" Color="Color.Primary" OnClick="() => OpenEvaluation(context)" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+<!-- Evaluation Dialog -->
+<MudDialog @bind-Visible="evaluationVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Internship Evaluation</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (selectedInternship != null)
+        {
+            <MudText Typo="Typo.subtitle2" Class="mb-4">Evaluating: @selectedInternship.StudentId @@ @selectedInternship.CompanyName</MudText>
+            <MudNumericField @bind-Value="selectedInternship.EvaluationScore" Label="Evaluation Score" Min="0" Max="100" Variant="Variant.Outlined" Class="mb-4" />
+            <MudTextField @bind-Value="selectedInternship.EvaluationRemarks" Label="Faculty Remarks" Lines="3" Variant="Variant.Outlined" Class="mb-4" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => evaluationVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveEvaluation">Submit Score</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    List<Internship> internships = new();
+    Internship? selectedInternship;
+    bool evaluationVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        try
+        {
+            internships = await Supabase.GetAll<Internship>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading internships: {ex.Message}", Severity.Error);
+        }
+    }
+
+    Color GetStatusColor(string status) => status switch
+    {
+        "completed" => Color.Success,
+        "ongoing" => Color.Info,
+        _ => Color.Default
+    };
+
+    void OpenCreateDialog() => Snackbar.Add("Opening Logger...", Severity.Info);
+
+    void OpenEvaluation(Internship i)
+    {
+        selectedInternship = i;
+        evaluationVisible = true;
+    }
+
+    async Task SaveEvaluation()
+    {
+        if (selectedInternship != null)
+        {
+            selectedInternship.Status = "completed";
+            Snackbar.Add("Internship Evaluated Successfully", Severity.Success);
+            evaluationVisible = false;
+        }
+    }
+}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+    }
+    .fw-bold { font-weight: 800; }
+    .mud-table-transparent { background: transparent !important; }
+    .rounded-pill { border-radius: 50px !important; }
+</style>

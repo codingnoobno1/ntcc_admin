@@ -1,0 +1,43 @@
+using Postgrest.Attributes;
+using Postgrest.Models;
+
+namespace ntcc_admin_blazor.Domain.Entities
+{
+    [Table("system_settings")]
+    public class SystemSettingEntity : DomainBase
+    {
+        [PrimaryKey("key", false)]
+        public string Key { get; set; } = string.Empty;
+
+        [Column("value")]
+        public string Value { get; set; } = string.Empty;
+
+        [Column("description")]
+        public string? Description { get; set; }
+
+        [Column("updated_at")]
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    [Table("faculty_workload")]
+    public class FacultyWorkloadEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("faculty_id")]
+        public string FacultyId { get; set; } = string.Empty;
+
+        [Column("stage_id")]
+        public string StageId { get; set; } = string.Empty;
+
+        [Column("students_assigned")]
+        public int StudentsAssigned { get; set; } = 0;
+
+        [Column("projects_assigned")]
+        public int ProjectsAssigned { get; set; } = 0;
+
+        [Column("evaluations_pending")]
+        public int EvaluationsPending { get; set; } = 0;
+    }
+}

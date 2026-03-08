@@ -1,0 +1,109 @@
+@page "/"
+@layout EmptyLayout
+@inject NavigationManager Navigation
+
+<PageTitle>Welcome - NTCC Admin</PageTitle>
+
+<div class="landing-page">
+    <MudAppBar Elevation="0" Color="Color.Surface" Fixed="true" Class="px-8 py-2">
+        <MudText Typo="Typo.h6" Class="fw-bold">
+            NTCC <span class="text-primary">ADMIN</span>
+        </MudText>
+        <MudSpacer />
+        <MudMenu Label="Sign In" Color="Color.Primary" Variant="Variant.Text" EndIcon="@Icons.Material.Filled.KeyboardArrowDown">
+            <MudMenuItem Href="adminlogin">Master Admin</MudMenuItem>
+            <MudMenuItem Href="faculty-login">Faculty Portal</MudMenuItem>
+        </MudMenu>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="border-radius: 8px;">Contact Support</MudButton>
+    </MudAppBar>
+
+    <MudContainer MaxWidth="MaxWidth.Large" Class="hero-section">
+        <MudGrid Class="align-center" Style="min-height: 80vh;">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.h2" Class="fw-bold mb-4">
+                    Enterprise <span class="text-primary">NTCC</span> Management Simplified.
+                </MudText>
+                <MudText Typo="Typo.h6" Class="mud-text-secondary mb-8" Style="font-weight: 400; line-height: 1.6;">
+                    The next-generation platform for managing Non-Teaching Credit Courses. 
+                    From Stage Configuration to Faculty Actions, empower your university with data-driven governance.
+                </MudText>
+                <div class="d-flex gap-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="px-8 py-3" 
+                               Style="border-radius: 12px; font-weight: 600;" 
+                               Href="adminlogin">
+                        Admin Portal
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Large" Class="px-8 py-3" 
+                               Style="border-radius: 12px; font-weight: 600;"
+                               Href="faculty-login">
+                        Faculty Portal
+                    </MudButton>
+                </div>
+                
+                <MudGrid Class="mt-12">
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.h5" Class="fw-bold">5000+</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Active Students</MudText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.h5" Class="fw-bold">200+</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Expert Mentors</MudText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudText Typo="Typo.h5" Class="fw-bold">100%</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Digital Workflow</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            
+            <MudItem xs="12" md="6" Class="d-flex justify-center">
+                <div class="hero-image-container">
+                    <MudPaper Elevation="25" Class="pa-2" Style="border-radius: 24px; background: linear-gradient(135deg, #1976D2 0%, #64B5F6 100%);">
+                         <MudImage Src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80" 
+                                   Alt="Dashboard Preview" 
+                                   Class="rounded-xl" 
+                                   ObjectFit="ObjectFit.Cover" 
+                                   Style="width: 100%; height: 400px; opacity: 0.9;" />
+                    </MudPaper>
+                    <div class="floating-card top-right">
+                        <MudPaper Elevation="10" Class="pa-4 rounded-lg">
+                            <MudIcon Icon="@Icons.Material.Filled.Timeline" Color="Color.Success" Class="mb-2" />
+                            <MudText Typo="Typo.body2" Class="fw-bold">98% Progress</MudText>
+                        </MudPaper>
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+</div>
+
+<style>
+    .landing-page {
+        background: radial-gradient(circle at 0% 0%, rgba(25, 118, 210, 0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 100% 100%, rgba(25, 118, 210, 0.03) 0%, transparent 50%);
+        min-height: 100vh;
+    }
+    .fw-bold { font-weight: 800; }
+    .text-primary { color: #1976D2; }
+    .hero-section {
+        padding-top: 64px;
+    }
+    .hero-image-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+    }
+    .floating-card {
+        position: absolute;
+        animation: float 6s ease-in-out infinite;
+    }
+    .top-right {
+        top: -20px;
+        right: -20px;
+    }
+    @@keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+</style>

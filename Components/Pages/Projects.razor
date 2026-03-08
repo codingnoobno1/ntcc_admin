@@ -1,0 +1,263 @@
+@page "/project-hub"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject IStageAppService StageService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject SupabaseService Supabase
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Project Hub - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Project <span class="text-secondary">Hub</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage and track student project groups (Minor/Major)</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="rounded-pill">
+            New Project Group
+        </MudButton>
+    </div>
+
+    <!-- Quick Stats -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 glass-card d-flex align-center">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Active Groups</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Primary" Size="Size.Large" UseAppbarColor="false" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 glass-card d-flex align-center">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.ProposalStatus == "pending")</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Pending Proposals</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Warning" Size="Size.Large" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 glass-card d-flex align-center">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.ProposalStatus == "approved")</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Approved Projects</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Stars" Color="Color.Success" Size="Size.Large" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Filters -->
+    <MudPaper Elevation="0" Class="pa-4 mb-6 glass-card">
+        <MudGrid>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="searchString" Label="Search Title or Student" Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Immediate="true" />
+            </MudItem>
+            <MudItem xs="12" sm="3">
+                <MudSelect T="string" Label="Project Type" @bind-Value="filterType" Variant="Variant.Outlined" Dense="true">
+                    <MudSelectItem Value="@((string?)null)">All Types</MudSelectItem>
+                    <MudSelectItem Value="@("minor")">Minor Project</MudSelectItem>
+                    <MudSelectItem Value="@("major")">Major Project</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="3">
+                <MudSelect T="string" Label="Proposal Status" @bind-Value="filterProposal" Variant="Variant.Outlined" Dense="true">
+                    <MudSelectItem Value="@((string?)null)">All Status</MudSelectItem>
+                    <MudSelectItem Value="@("draft")">Draft</MudSelectItem>
+                    <MudSelectItem Value="@("pending")">Pending Approval</MudSelectItem>
+                    <MudSelectItem Value="@("approved")">Approved</MudSelectItem>
+                    <MudSelectItem Value="@("rejected")">Revision Required</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Project List -->
+    <MudGrid>
+        @if (isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            </MudItem>
+        }
+        else
+        {
+            @foreach (var proj in filteredProjects)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Elevation="0" Class="glass-card h-100 project-card" @onclick="() => SelectProject(proj)">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold line-clamp-2">@proj.Title</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(proj.ProposalStatus)" Variant="Variant.Text">@proj.ProposalStatus</MudChip>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4 line-clamp-3">@proj.Description</MudText>
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Group" Size="Size.Small" Class="mr-2" />
+                                <MudText Typo="Typo.caption">Group Size: @GetGroupSize(proj.Id)</MudText>
+                            </div>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small">View Details</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+<!-- Project Detail Dialog -->
+<MudDialog @bind-Visible="detailDialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
+    <TitleContent>
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.FolderZip" Class="mr-3" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Project Details</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (selectedProject != null)
+        {
+            <MudGrid>
+                <MudItem xs="12" md="8">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">@selectedProject.Title</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-6">@selectedProject.Description</MudText>
+                    
+                    <MudDivider Class="mb-4" />
+                    
+                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-2">Group Members</MudText>
+                    <MudPaper Elevation="0" Outlined="true" Class="pa-2 mb-6">
+                        @foreach (var member in selectedProjectMembers)
+                        {
+                            <div class="d-flex align-center pa-2">
+                                <MudAvatar Size="Size.Small" Color="Color.Info" Class="mr-3">@member.StudentId[0].ToString().ToUpper()</MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@member.StudentId</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@member.Role</MudText>
+                                </div>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Message" Size="Size.Small" />
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="0" Class="pa-4 mud-background-gray rounded-lg">
+                        <MudText Typo="Typo.subtitle2" Class="fw-bold mb-4">Milestone Tracker</MudText>
+                        <MudTimeline TimelinePosition="TimelinePosition.Start" Dense="true">
+                            <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                                <MudText Typo="Typo.caption" Class="fw-bold">Proposal Submitted</MudText>
+                            </MudTimelineItem>
+                            <MudTimelineItem Color="Color.Info" Size="Size.Small">
+                                <MudText Typo="Typo.caption">Midterm Evaluation</MudText>
+                            </MudTimelineItem>
+                            <MudTimelineItem Color="Color.Default" Size="Size.Small">
+                                <MudText Typo="Typo.caption">Final Report</MudText>
+                            </MudTimelineItem>
+                        </MudTimeline>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => detailDialogVisible = false">Close</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => ApproveProposal(selectedProject!)" Disabled="@(selectedProject?.ProposalStatus == "approved")">Approve Proposal</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = true;
+    bool detailDialogVisible = false;
+    string searchString = "";
+    string? filterType;
+    string? filterProposal;
+
+    List<ProjectEntity> projects = new();
+    List<ProjectMemberEntity> members = new();
+    ProjectEntity? selectedProject;
+    List<ProjectMemberEntity> selectedProjectMembers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            projects = await Supabase.GetAll<ProjectEntity>();
+            members = await Supabase.GetAll<ProjectMemberEntity>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading projects: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    IEnumerable<ProjectEntity> filteredProjects => projects
+        .Where(p => (string.IsNullOrEmpty(filterType) || p.ProjectType == filterType) &&
+                    (string.IsNullOrEmpty(filterProposal) || p.ProposalStatus == filterProposal))
+        .Where(p => string.IsNullOrWhiteSpace(searchString) || 
+                    p.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+
+    int GetGroupSize(string projectId) => members.Count(m => m.ProjectId == projectId);
+
+    Color GetProposalColor(string status) => status switch
+    {
+        "approved" => Color.Success,
+        "pending" => Color.Warning,
+        "rejected" => Color.Error,
+        _ => Color.Default
+    };
+
+    void SelectProject(ProjectEntity p)
+    {
+        selectedProject = p;
+        selectedProjectMembers = members.Where(m => m.ProjectId == p.Id).ToList();
+        detailDialogVisible = true;
+    }
+
+    void OpenCreateDialog() => Snackbar.Add("Opening creation wizard...", Severity.Info);
+
+    async Task ApproveProposal(ProjectEntity p)
+    {
+        p.ProposalStatus = "approved";
+        Snackbar.Add("Proposal Approved Successfully!", Severity.Success);
+        StateHasChanged();
+    }
+}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+    }
+    .fw-bold { font-weight: 800; }
+    .project-card { transition: transform 0.2s; cursor: pointer; }
+    .project-card:hover { transform: translateY(-5px); }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .rounded-pill { border-radius: 50px !important; }
+</style>

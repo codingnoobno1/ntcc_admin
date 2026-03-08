@@ -1,0 +1,265 @@
+@page "/projects"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Project Management - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Project <span style="color:#4CAF50">Management</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Minor &amp; Major project tracking with group formation.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.CreateNewFolder" OnClick="OpenAddDialog">
+            New Project
+        </MudButton>
+    </div>
+
+    <!-- Filter Tabs -->
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" Class="mb-4">
+        <MudTabPanel Text="All" OnClick="() => typeFilter = null" />
+        <MudTabPanel Text="Minor Projects" OnClick='() => typeFilter = "minor"' />
+        <MudTabPanel Text="Major Projects" OnClick='() => typeFilter = "major"' />
+    </MudTabs>
+
+    <!-- Projects Grid -->
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Success" Indeterminate="true" Class="mb-4" />
+    }
+    else if (!filteredProjects.Any())
+    {
+        <MudAlert Severity="Severity.Info">No projects found. Click "New Project" to get started.</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var project in filteredProjects)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="2" Style="border-radius:12px;height:100%;">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@project.Title</MudText>
+                                <div class="d-flex gap-2 mt-1">
+                                    <MudChip T="string" Size="Size.Small" Color="@(project.ProjectType == "major" ? Color.Error : Color.Info)">
+                                        @project.ProjectType.ToUpper()
+                                    </MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(project.ProposalStatus)">
+                                        @project.ProposalStatus
+                                    </MudChip>
+                                </div>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OpenEditDialog(project)" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3" Style="min-height:40px;">
+                                @(string.IsNullOrEmpty(project.Description) ? "No description provided." : project.Description)
+                            </MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Semester @project.Semester</MudText>
+                            <MudDivider Class="my-2" />
+                            <MudText Typo="Typo.caption" Class="fw-bold mb-1">Team Members</MudText>
+                            @{
+                                var members = projectMembers.Where(m => m.ProjectId == project.Id).ToList();
+                            }
+                            @if (members.Any())
+                            {
+                                @foreach (var member in members)
+                                {
+                                    var student = students.FirstOrDefault(s => s.Id == member.StudentId);
+                                    <div class="d-flex align-center gap-2 mb-1">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                        <MudText Typo="Typo.caption">@(student?.FullName ?? "Unknown") @(member.Role == "leader" ? "⭐" : "")</MudText>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">No members assigned.</MudText>
+                            }
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenMembersDialog(project)">
+                                Manage Team
+                            </MudButton>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small" Color="@GetSubmissionColor(project.SubmissionStatus)">
+                                @project.SubmissionStatus
+                            </MudChip>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+<!-- Add/Edit Project Dialog -->
+<MudDialog @bind-Visible="dialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent><MudText Typo="Typo.h6">@(isEdit ? "Edit Project" : "New Project")</MudText></TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="editProject.Title" Label="Project Title" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="editProject.Description" Label="Description" Variant="Variant.Outlined" Lines="3" Class="mb-3" />
+        <MudSelect T="string" @bind-Value="editProject.ProjectType" Label="Type" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="@("minor")">Minor Project</MudSelectItem>
+            <MudSelectItem Value="@("major")">Major Project</MudSelectItem>
+        </MudSelect>
+        <MudSelect T="int" @bind-Value="editProject.Semester" Label="Semester" Variant="Variant.Outlined" Class="mb-3">
+            @for (int i = 1; i <= 8; i++) { <MudSelectItem Value="@i">Semester @i</MudSelectItem> }
+        </MudSelect>
+        <MudSelect T="string" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
+            @foreach (var b in batches) { <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem> }
+        </MudSelect>
+        <MudSelect T="string" @bind-Value="editProject.ProposalStatus" Label="Proposal Status" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="@("draft")">Draft</MudSelectItem>
+            <MudSelectItem Value="@("submitted")">Submitted</MudSelectItem>
+            <MudSelectItem Value="@("approved")">Approved</MudSelectItem>
+            <MudSelectItem Value="@("rejected")">Rejected</MudSelectItem>
+        </MudSelect>
+        <MudSelect T="string" @bind-Value="editProject.SubmissionStatus" Label="Submission Status" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="@("pending")">Pending</MudSelectItem>
+            <MudSelectItem Value="@("submitted")">Submitted</MudSelectItem>
+            <MudSelectItem Value="@("under_review")">Under Review</MudSelectItem>
+            <MudSelectItem Value="@("approved")">Approved</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => dialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProject">@(isEdit ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Manage Members Dialog -->
+<MudDialog @bind-Visible="membersDialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+    <TitleContent><MudText Typo="Typo.h6">Manage Team — @selectedProject?.Title</MudText></TitleContent>
+    <DialogContent>
+        <MudSelect T="string" @bind-Value="newMemberStudentId" Label="Add Student" Variant="Variant.Outlined" Class="mb-3">
+            @foreach (var s in students.Where(s => !currentMembers.Any(m => m.StudentId == s.Id)))
+            {
+                <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="AddMember" Class="mb-4">Add to Team</MudButton>
+
+        <MudText Typo="Typo.subtitle2" Class="fw-bold mb-2">Current Members</MudText>
+        @foreach (var member in currentMembers)
+        {
+            var student = students.FirstOrDefault(s => s.Id == member.StudentId);
+            <div class="d-flex justify-space-between align-center mb-2">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" />
+                    <MudText>@(student?.FullName ?? "Unknown")</MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@(member.Role == "leader" ? Color.Primary : Color.Default)">@member.Role</MudChip>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveMember(member)" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions><MudButton OnClick="() => membersDialogVisible = false">Close</MudButton></DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = true;
+    bool dialogVisible = false;
+    bool membersDialogVisible = false;
+    bool isEdit = false;
+    string? typeFilter;
+    string newMemberStudentId = "";
+
+    List<Project> projects = new();
+    List<ProjectMember> projectMembers = new();
+    List<Student> students = new();
+    List<Batch> batches = new();
+    Project editProject = new();
+    Project? selectedProject;
+    List<ProjectMember> currentMembers = new();
+
+    IEnumerable<Project> filteredProjects => projects
+        .Where(p => string.IsNullOrEmpty(typeFilter) || p.ProjectType == typeFilter);
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            projects = await Supabase.GetAll<Project>();
+            projectMembers = await Supabase.GetAll<ProjectMember>();
+            students = await Supabase.GetAll<Student>();
+            batches = await Supabase.GetAll<Batch>();
+        }
+        catch (Exception ex) { Console.WriteLine($"[PROJECTS] Load error: {ex.Message}"); }
+        finally { isLoading = false; }
+    }
+
+    Color GetProposalColor(string s) => s switch { "approved" => Color.Success, "submitted" => Color.Info, "rejected" => Color.Error, _ => Color.Default };
+    Color GetSubmissionColor(string s) => s switch { "approved" => Color.Success, "submitted" => Color.Info, "under_review" => Color.Warning, _ => Color.Default };
+
+    void OpenAddDialog() { isEdit = false; editProject = new Project(); dialogVisible = true; }
+    void OpenEditDialog(Project p)
+    {
+        isEdit = true;
+        editProject = new Project { Id = p.Id, Title = p.Title, Description = p.Description, ProjectType = p.ProjectType, Semester = p.Semester, BatchId = p.BatchId, ProposalStatus = p.ProposalStatus, SubmissionStatus = p.SubmissionStatus };
+        dialogVisible = true;
+    }
+
+    async Task SaveProject()
+    {
+        try
+        {
+            if (isEdit) await Supabase.Update(editProject);
+            else await Supabase.Insert(editProject);
+            Snackbar.Add(isEdit ? "Project updated!" : "Project created!", Severity.Success);
+            dialogVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    void OpenMembersDialog(Project p)
+    {
+        selectedProject = p;
+        currentMembers = projectMembers.Where(m => m.ProjectId == p.Id).ToList();
+        newMemberStudentId = "";
+        membersDialogVisible = true;
+    }
+
+    async Task AddMember()
+    {
+        if (string.IsNullOrEmpty(newMemberStudentId)) return;
+        try
+        {
+            var member = new ProjectMember { ProjectId = selectedProject!.Id, StudentId = newMemberStudentId, Role = currentMembers.Count == 0 ? "leader" : "member" };
+            await Supabase.Insert(member);
+            Snackbar.Add("Member added!", Severity.Success);
+            await LoadData();
+            currentMembers = projectMembers.Where(m => m.ProjectId == selectedProject.Id).ToList();
+            newMemberStudentId = "";
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    async Task RemoveMember(ProjectMember m)
+    {
+        try
+        {
+            await Supabase.Delete(m);
+            Snackbar.Add("Member removed.", Severity.Info);
+            await LoadData();
+            currentMembers = projectMembers.Where(pm => pm.ProjectId == selectedProject!.Id).ToList();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+}
+
+<style> .fw-bold { font-weight: 700; } </style>

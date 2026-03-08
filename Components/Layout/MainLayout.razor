@@ -1,0 +1,79 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject SupabaseService Supabase
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Surface" Fixed="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            <MudLink Href="dashboard" Underline="Underline.None">
+                <MudText Typo="Typo.h6" Class="ml-3 fw-bold">
+                    NTCC <span class="text-primary">ADMIN</span>
+                </MudText>
+            </MudLink>
+            <MudSpacer />
+            
+            <AuthorizeView>
+                <Authorized>
+                    <div class="d-flex align-center">
+                        <MudChip T="string" Color="@GetRoleColor(context.User)" Variant="Variant.Text" Icon="@Icons.Material.Filled.AdminPanelSettings" Label="true">
+                            @GetRole(context.User)
+                        </MudChip>
+                        
+                        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                            <MudMenuItem Disabled="true">@context.User.Identity?.Name</MudMenuItem>
+                            <MudDivider />
+                            <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick='() => Navigation.NavigateTo("/profile")'>My Profile</MudMenuItem>
+                            <MudNavLink href="dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Overview</MudNavLink>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="HandleLogout">Logout</MudMenuItem>
+                        </MudMenu>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Href="" Variant="Variant.Text" Color="Color.Primary">Sign In</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudAppBar>
+
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="1" ClipMode="DrawerClipMode.Always" Variant="@DrawerVariant.Responsive">
+            <NavMenu />
+        </MudDrawer>
+
+        <MudMainContent Class="pa-8" Style="background-color: #f8f9fa; min-height: 100vh;">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    async Task HandleLogout()
+    {
+        await Supabase.SignOut();
+        // Clear ASP.NET cookie via API endpoint
+        Navigation.NavigateTo("api/auth/logout", forceLoad: true);
+    }
+
+    string GetRole(System.Security.Claims.ClaimsPrincipal user)
+    {
+        return user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToUpper() ?? "FACULTY";
+    }
+
+    Color GetRoleColor(System.Security.Claims.ClaimsPrincipal user)
+    {
+        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToLower();
+        return role == "master" || role == "admin" ? Color.Primary : Color.Secondary;
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 800; }
+    .text-primary { color: #1976D2; }
+    .clickable { cursor: pointer; }
+</style>

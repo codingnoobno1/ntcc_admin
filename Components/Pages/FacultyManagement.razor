@@ -1,0 +1,261 @@
+@page "/admin/faculty"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Roles = "admin,master")]
+@rendermode InteractiveServer
+
+<PageTitle>Faculty Management - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Faculty <span class="text-primary">Management</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Provision accounts and manage the global role matrix.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenInviteDialog">
+            Invite Faculty
+        </MudButton>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-4" Style="border-radius:12px;">
+                    <MudTable Items="@facultyList" Hover="true" Dense="true" Striped="true" Elevation="0" Filter="new Func<FacultyViewModel,bool>(FilterFunc)">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">Registered Faculty</MudText>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="searchString" Placeholder="Search by name or email" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>Full Name</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Department</MudTh>
+                            <MudTh>Global Roles</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name"><MudText Class="fw-bold">@context.Profile.FullName</MudText></MudTd>
+                            <MudTd DataLabel="Email">@context.Profile.Email</MudTd>
+                            <MudTd DataLabel="Department">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@context.Profile.Department</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Roles">
+                                <div class="d-flex gap-1">
+                                    @foreach (var role in context.Roles)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(role.Role)">@role.Role.ToUpper()</MudChip>
+                                    }
+                                    @if (!context.Roles.Any())
+                                    {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary italic">No roles assigned</MudText>
+                                    }
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small" Color="@(context.Profile.IsVerified ? Color.Success : Color.Warning)">
+                                    @(context.Profile.IsVerified ? "Verified" : "Pending")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => EditRoles(context)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" />
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager />
+                        </PagerContent>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+<!-- Invite Dialog -->
+<MudDialog @bind-Visible="isInviteDialogOpen" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Email" Class="mr-3" />Invite New Faculty</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newFaculty.FullName" Label="Full Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
+        <MudTextField @bind-Value="newFaculty.Email" Label="Email Address" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
+        <MudSelect @bind-Value="newFaculty.Department" Label="Department" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3">
+            <MudSelectItem Value="@("Computer Science")">Computer Science</MudSelectItem>
+            <MudSelectItem Value="@("Information Technology")">Information Technology</MudSelectItem>
+            <MudSelectItem Value="@("Electronics & Communication")">Electronics & Communication</MudSelectItem>
+            <MudSelectItem Value="@("Mechanical Engineering")">Mechanical Engineering</MudSelectItem>
+        </MudSelect>
+        
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Assign Global Roles</MudText>
+        <div class="d-flex flex-wrap gap-4">
+            <MudCheckBox @bind-Value="roleMatrix.IsHost" Color="Color.Primary" Label="Host (Can Create Stages)" />
+            <MudCheckBox @bind-Value="roleMatrix.IsMentor" Color="Color.Success" Label="Mentor (Can Review Students)" />
+            <MudCheckBox @bind-Value="roleMatrix.IsEvaluator" Color="Color.Secondary" Label="Evaluator (Can Enter Marks)" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(generatedPassword))
+        {
+            <MudAlert Severity="Severity.Success" Class="mt-4" Variant="Variant.Filled">
+                <MudText Typo="Typo.body2">Account Created Successfully!</MudText>
+                <MudText Typo="Typo.h6">@generatedPassword</MudText>
+                <MudText Typo="Typo.caption">Copy this password. It will not be shown again.</MudText>
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => isInviteDialogOpen = false">Cancel</MudButton>
+        @if (string.IsNullOrEmpty(generatedPassword))
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAccount" Disabled="@isProcessing">
+                @(isProcessing ? "Creating..." : "Generate Account")
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => isInviteDialogOpen = false">Close</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = true;
+    bool isProcessing = false;
+    bool isInviteDialogOpen = false;
+    string searchString = "";
+    string generatedPassword = "";
+
+    List<FacultyViewModel> facultyList = new();
+    
+    // Form Models
+    Profile newFaculty = new();
+    RoleMatrixModel roleMatrix = new();
+
+    class FacultyViewModel
+    {
+        public Profile Profile { get; set; } = null!;
+        public List<FacultyRole> Roles { get; set; } = new();
+    }
+
+    class RoleMatrixModel
+    {
+        public bool IsHost { get; set; }
+        public bool IsMentor { get; set; }
+        public bool IsEvaluator { get; set; }
+
+        public List<string> GetSelectedRoles()
+        {
+            var list = new List<string>();
+            if (IsHost) list.Add("host");
+            if (IsMentor) list.Add("mentor");
+            if (IsEvaluator) list.Add("evaluator");
+            return list;
+        }
+    }
+
+    DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFaculty();
+    }
+
+    async Task LoadFaculty()
+    {
+        isLoading = true;
+        try
+        {
+            var profiles = await Supabase.GetAll<Profile>();
+            var allRoles = await Supabase.GetAll<FacultyRole>();
+            
+            facultyList = profiles.Where(p => p.Role == "faculty").Select(p => new FacultyViewModel
+            {
+                Profile = p,
+                Roles = allRoles.Where(r => r.FacultyId == p.Id).ToList()
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading faculty: {ex.Message}", Severity.Error);
+        }
+        finally { isLoading = false; }
+    }
+
+    void OpenInviteDialog()
+    {
+        newFaculty = new Profile();
+        roleMatrix = new RoleMatrixModel();
+        generatedPassword = "";
+        isInviteDialogOpen = true;
+    }
+
+    async Task CreateAccount()
+    {
+        if (string.IsNullOrEmpty(newFaculty.FullName) || string.IsNullOrEmpty(newFaculty.Email))
+        {
+            Snackbar.Add("Name and Email are required", Severity.Warning);
+            return;
+        }
+
+        isProcessing = true;
+        try
+        {
+            var password = SupabaseService.GenerateStrongPassword();
+            var roles = roleMatrix.GetSelectedRoles();
+            
+            var userId = await Supabase.CreateFacultyAccount(newFaculty.Email, password, newFaculty.FullName, newFaculty.Department, roles);
+            
+            if (!string.IsNullOrEmpty(userId))
+            {
+                generatedPassword = password;
+                Snackbar.Add("Faculty account provisioned!", Severity.Success);
+                await LoadFaculty();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Creation failed: {ex.Message}", Severity.Error);
+        }
+        finally { isProcessing = false; }
+    }
+
+    async Task EditRoles(FacultyViewModel vm)
+    {
+        // TODO: Implement role edit dialog
+        Snackbar.Add("Role editing coming soon...", Severity.Info);
+        await Task.CompletedTask;
+    }
+
+    bool FilterFunc(FacultyViewModel vm)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        if (vm.Profile.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        if (vm.Profile.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    Color GetRoleColor(string role) => role.ToLower() switch
+    {
+        "host" => Color.Primary,
+        "mentor" => Color.Success,
+        "evaluator" => Color.Secondary,
+        _ => Color.Default
+    };
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .italic { font-style: italic; }
+</style>

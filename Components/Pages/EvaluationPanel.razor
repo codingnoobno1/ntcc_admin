@@ -1,0 +1,272 @@
+@page "/evaluation-panel"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Evaluation Panel - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Evaluation <span style="color:#9C27B0">Panel</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Rubric-based scoring system for student evaluations.</MudText>
+        </div>
+    </div>
+
+    <!-- Step 1: Select Stage -->
+    <MudPaper Elevation="2" Class="pa-5 mb-4" Style="border-radius:12px;">
+        <MudText Typo="Typo.h6" Class="fw-bold mb-3">1. Select Stage</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" Value="selectedStageId" Label="NTCC Stage" Variant="Variant.Outlined"
+                           ValueChanged="OnStageChanged">
+                    @foreach (var stage in stages)
+                    {
+                        <MudSelectItem Value="@stage.Id">@stage.Name — Sem @stage.Semester (@stage.Batch)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="selectedStudentId" Label="Student" Variant="Variant.Outlined" Disabled="@(string.IsNullOrEmpty(selectedStageId))">
+                    @foreach (var s in students)
+                    {
+                        <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Step 2: Rubric Scoring -->
+    @if (!string.IsNullOrEmpty(selectedStageId) && categories.Any())
+    {
+        <MudPaper Elevation="2" Class="pa-5 mb-4" Style="border-radius:12px;">
+            <MudText Typo="Typo.h6" Class="fw-bold mb-3">2. Score by Rubric</MudText>
+            @if (string.IsNullOrEmpty(selectedStudentId))
+            {
+                <MudAlert Severity="Severity.Info">Select a student above to enter scores.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@categories" Dense="true" Hover="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Max Marks</MudTh>
+                        <MudTh>Evaluator</MudTh>
+                        <MudTh Style="width:200px">Score</MudTh>
+                        <MudTh>Remarks</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        @{
+                            var entry = GetOrCreateEntry(context);
+                        }
+                        <MudTd DataLabel="Category"><MudText Class="fw-bold">@context.Name</MudText></MudTd>
+                        <MudTd DataLabel="Max">@context.MaxMarks</MudTd>
+                        <MudTd DataLabel="Evaluator"><MudChip T="string" Size="Size.Small">@context.EvaluatorRole</MudChip></MudTd>
+                        <MudTd DataLabel="Score">
+                            <MudNumericField @bind-Value="entry.Score" Variant="Variant.Outlined" Min="0" Max="context.MaxMarks"
+                                             Margin="Margin.Dense" />
+                        </MudTd>
+                        <MudTd DataLabel="Remarks">
+                            <MudTextField @bind-Value="entry.Remarks" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+                <div class="d-flex justify-space-between align-center mt-4">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold">
+                            Total: @scoreEntries.Values.Sum(e => e.Score) / @categories.Sum(c => c.MaxMarks)
+                        </MudText>
+                    </div>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Save" OnClick="SaveScores" Disabled="@isSaving">
+                        @(isSaving ? "Saving..." : "Submit Evaluation")
+                    </MudButton>
+                </div>
+            }
+        </MudPaper>
+    }
+    else if (!string.IsNullOrEmpty(selectedStageId) && !categories.Any())
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">
+            No evaluation categories defined for this stage. Configure them in Stage Config Engine first.
+        </MudAlert>
+    }
+
+    <!-- Step 3: Scoreboard -->
+    <MudPaper Elevation="2" Class="pa-5" Style="border-radius:12px;">
+        <MudText Typo="Typo.h6" Class="fw-bold mb-3">3. Scoreboard</MudText>
+        @if (allScores.Any())
+        {
+            <MudTable Items="@scoreboardRows" Dense="true" Hover="true" Striped="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Student</MudTh>
+                    <MudTh>Roll No</MudTh>
+                    @foreach (var cat in categories)
+                    {
+                        <MudTh>@cat.Name</MudTh>
+                    }
+                    <MudTh>Total</MudTh>
+                    <MudTh>%</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudText Class="fw-bold">@context.StudentName</MudText></MudTd>
+                    <MudTd>@context.RollNumber</MudTd>
+                    @foreach (var score in context.CategoryScores)
+                    {
+                        <MudTd>@score.ToString("F1")</MudTd>
+                    }
+                    <MudTd><MudText Class="fw-bold">@context.Total.ToString("F1")</MudText></MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="@(context.Percentage >= 75 ? Color.Success : (context.Percentage >= 50 ? Color.Warning : Color.Error))">
+                            @context.Percentage.ToString("F0")%
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">No scores recorded yet. Select a stage and start evaluating.</MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    bool isSaving = false;
+    string selectedStageId = "";
+    string selectedStudentId = "";
+
+    List<NtccStage> stages = new();
+    List<Student> students = new();
+    List<EvaluationCategory> categories = new();
+    List<EvaluationScore> allScores = new();
+
+    Dictionary<string, ScoreEntry> scoreEntries = new();
+    List<ScoreboardRow> scoreboardRows = new();
+
+    class ScoreEntry { public decimal Score { get; set; } public string Remarks { get; set; } = ""; }
+    class ScoreboardRow
+    {
+        public string StudentName { get; set; } = "";
+        public string RollNumber { get; set; } = "";
+        public List<decimal> CategoryScores { get; set; } = new();
+        public decimal Total => CategoryScores.Sum();
+        public decimal MaxTotal { get; set; }
+        public decimal Percentage => MaxTotal > 0 ? (Total / MaxTotal * 100) : 0;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            stages = await Supabase.GetAll<NtccStage>();
+            students = await Supabase.GetAll<Student>();
+            allScores = await Supabase.GetAll<EvaluationScore>();
+        }
+        catch (Exception ex) { Console.WriteLine($"[EVAL] Load error: {ex.Message}"); }
+    }
+
+    async Task OnStageChanged(string stageId)
+    {
+        selectedStageId = stageId;
+        selectedStudentId = "";
+        scoreEntries.Clear();
+
+        try
+        {
+            var allCategories = await Supabase.GetAll<EvaluationCategory>();
+            categories = allCategories.Where(c => c.StageId == stageId).ToList();
+            allScores = await Supabase.GetAll<EvaluationScore>();
+            BuildScoreboard();
+        }
+        catch (Exception ex) { Console.WriteLine($"[EVAL] Categories load error: {ex.Message}"); }
+    }
+
+    ScoreEntry GetOrCreateEntry(EvaluationCategory cat)
+    {
+        if (!scoreEntries.ContainsKey(cat.Id))
+        {
+            var existing = allScores.FirstOrDefault(s => s.CategoryId == cat.Id && s.StudentId == selectedStudentId);
+            scoreEntries[cat.Id] = new ScoreEntry
+            {
+                Score = existing?.Score ?? 0,
+                Remarks = existing?.Remarks ?? ""
+            };
+        }
+        return scoreEntries[cat.Id];
+    }
+
+    async Task SaveScores()
+    {
+        if (string.IsNullOrEmpty(selectedStudentId)) return;
+        isSaving = true;
+        try
+        {
+            foreach (var cat in categories)
+            {
+                var entry = scoreEntries.GetValueOrDefault(cat.Id);
+                if (entry == null) continue;
+
+                var existing = allScores.FirstOrDefault(s => s.CategoryId == cat.Id && s.StudentId == selectedStudentId);
+                if (existing != null)
+                {
+                    existing.Score = entry.Score;
+                    existing.Remarks = entry.Remarks;
+                    await Supabase.Update(existing);
+                }
+                else
+                {
+                    var score = new EvaluationScore
+                    {
+                        StudentId = selectedStudentId,
+                        StageId = selectedStageId,
+                        CategoryId = cat.Id,
+                        Score = entry.Score,
+                        MaxScore = cat.MaxMarks,
+                        Remarks = entry.Remarks,
+                        EvaluatedAt = DateTime.UtcNow
+                    };
+                    await Supabase.Insert(score);
+                }
+            }
+
+            Snackbar.Add("Evaluation saved!", Severity.Success);
+            allScores = await Supabase.GetAll<EvaluationScore>();
+            BuildScoreboard();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { isSaving = false; }
+    }
+
+    void BuildScoreboard()
+    {
+        var stageScores = allScores.Where(s => s.StageId == selectedStageId).ToList();
+        var studentIds = stageScores.Select(s => s.StudentId).Distinct();
+
+        scoreboardRows = studentIds.Select(sid =>
+        {
+            var student = students.FirstOrDefault(s => s.Id == sid);
+            var row = new ScoreboardRow
+            {
+                StudentName = student?.FullName ?? "Unknown",
+                RollNumber = student?.RollNumber ?? "—",
+                MaxTotal = categories.Sum(c => c.MaxMarks)
+            };
+            foreach (var cat in categories)
+            {
+                var score = stageScores.FirstOrDefault(s => s.StudentId == sid && s.CategoryId == cat.Id);
+                row.CategoryScores.Add(score?.Score ?? 0);
+            }
+            return row;
+        }).OrderByDescending(r => r.Total).ToList();
+    }
+}
+
+<style> .fw-bold { font-weight: 700; } </style>

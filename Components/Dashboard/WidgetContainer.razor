@@ -1,0 +1,54 @@
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Domain.Enums
+
+<MudGridSpacing Spacing="4">
+    @foreach (var widget in Widgets.OrderBy(w => w.Order))
+    {
+        <MudItem xs="12" md="@GetWidgetWidth(widget)">
+            <MudPaper Elevation="2" Class="pa-4 dashboard-widget-card">
+                <DynamicComponent Type="@GetComponentType(widget.ComponentKey)" 
+                                  Parameters="@GetParameters(widget.ConfigJson)" />
+            </MudPaper>
+        </MudItem>
+    }
+</MudGridSpacing>
+
+@code {
+    [Parameter] public List<WidgetDto> Widgets { get; set; } = new();
+
+    private int GetWidgetWidth(WidgetDto widget)
+    {
+        // Logic to determine width based on widget type or config
+        return widget.Type == ComponentType.Metric ? 3 : 6;
+    }
+
+    private Type GetComponentType(string key)
+    {
+        // This is a mapping from registry keys to actual C# types
+        // In a real implementation, this could use reflection or a static dictionary
+        return key switch
+        {
+            "attendance_tracker" => typeof(ntcc_admin_blazor.Components.Widgets.Academic.AttendanceTracker),
+            "deadline_timer" => typeof(ntcc_admin_blazor.Components.Widgets.Metrics.DeadlineTimer),
+            _ => typeof(ntcc_admin_blazor.Components.Widgets.PlaceholderWidget)
+        };
+    }
+
+    private Dictionary<string, object> GetParameters(string configJson)
+    {
+        // Deserialize configJson into parameters for the dynamic component
+        return new Dictionary<string, object>();
+    }
+}
+
+<style>
+    .dashboard-widget-card {
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        transition: transform 0.2s ease;
+    }
+    .dashboard-widget-card:hover {
+        transform: translateY(-5px);
+    }
+</style>

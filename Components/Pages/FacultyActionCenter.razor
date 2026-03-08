@@ -1,0 +1,217 @@
+@page "/action-center"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@inject SupabaseService Supabase
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Faculty Action Center - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Class="fw-bold">Faculty <span class="text-primary">Action Center</span></MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage your assigned stages, students, and evaluations.</MudText>
+    </div>
+
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    else
+    {
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="pa-0">
+            <!-- My Stages Tab (Visible to Hosts) -->
+            @if (userRoles.Contains("host") || userRoles.Contains("admin") || userRoles.Contains("master"))
+            {
+                <MudTabPanel Text="My Stages" Icon="@Icons.Material.Filled.SettingsSuggest">
+                    <div class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-4">Stages You Coordinate</MudText>
+                        @if (myStages.Any())
+                        {
+                            <MudGrid>
+                                @foreach (var stage in myStages)
+                                {
+                                    <MudItem xs="12" sm="6" md="4">
+                                        <MudCard Elevation="1" Style="border-radius:12px;">
+                                            <MudCardHeader>
+                                                <CardHeaderContent>
+                                                    <MudText Typo="Typo.h6" Class="fw-bold">@stage.Name</MudText>
+                                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@stage.Program — Sem @stage.Semester</MudText>
+                                                </CardHeaderContent>
+                                            </MudCardHeader>
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.body2">Batch: @stage.Batch</MudText>
+                                                <MudChip T="string" Size="Size.Small" Color="@(stage.Status == "active" ? Color.Success : Color.Default)" Class="mt-2">
+                                                    @stage.Status.ToUpper()
+                                                </MudChip>
+                                            </MudCardContent>
+                                            <MudCardActions>
+                                                <MudButton Size="Size.Small" Color="Color.Primary" Href="@($"stage-config")">View Config</MudButton>
+                                            </MudCardActions>
+                                        </MudCard>
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info">No stages assigned to you. Contact the coordinator.</MudAlert>
+                        }
+                    </div>
+                </MudTabPanel>
+            }
+
+            <!-- Student Overview Tab (Visible to All Faculty) -->
+            <MudTabPanel Text="Students" Icon="@Icons.Material.Filled.People">
+                <div class="pa-6">
+                    <MudText Typo="Typo.h6" Class="mb-4">Student Overview</MudText>
+                    @if (students.Any())
+                    {
+                        <MudTable Items="@students" Hover="true" Dense="true" Striped="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Roll No</MudTh>
+                                <MudTh>Name</MudTh>
+                                <MudTh>Program</MudTh>
+                                <MudTh>Semester</MudTh>
+                                <MudTh>Status</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd><MudText Class="fw-bold">@context.RollNumber</MudText></MudTd>
+                                <MudTd>@context.FullName</MudTd>
+                                <MudTd>@context.Program</MudTd>
+                                <MudTd>Sem @context.CurrentSemester</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@(context.Status == "active" ? Color.Success : Color.Default)">@context.Status</MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                            </PagerContent>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No students enrolled yet.</MudAlert>
+                    }
+                </div>
+            </MudTabPanel>
+
+            <!-- Internship Tracking Tab (Visible to Mentors) -->
+            @if (userRoles.Contains("mentor") || userRoles.Contains("admin") || userRoles.Contains("master"))
+            {
+                <MudTabPanel Text="Internships" Icon="@Icons.Material.Filled.Business">
+                    <div class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-4">Internship Records</MudText>
+                        @if (internships.Any())
+                        {
+                            <MudTable Items="@internships" Hover="true" Dense="true" Striped="true" Elevation="0">
+                                <HeaderContent>
+                                    <MudTh>Student</MudTh>
+                                    <MudTh>Company</MudTh>
+                                    <MudTh>Duration</MudTh>
+                                    <MudTh>Report</MudTh>
+                                    <MudTh>Score</MudTh>
+                                    <MudTh>Status</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd><MudText Class="fw-bold">@GetStudentName(context.StudentId)</MudText></MudTd>
+                                    <MudTd>@context.CompanyName</MudTd>
+                                    <MudTd>@context.DurationDays days</MudTd>
+                                    <MudTd>
+                                        <MudIcon Icon="@(context.ReportUploaded ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                                 Color="@(context.ReportUploaded ? Color.Success : Color.Error)" Size="Size.Small" />
+                                    </MudTd>
+                                    <MudTd>@(context.EvaluationScore?.ToString("F1") ?? "—")</MudTd>
+                                    <MudTd><MudChip T="string" Size="Size.Small">@context.Status</MudChip></MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info">No internship records found.</MudAlert>
+                        }
+                    </div>
+                </MudTabPanel>
+            }
+
+            <!-- Quick Evaluation Tab (Visible to Evaluators) -->
+            @if (userRoles.Contains("evaluator") || userRoles.Contains("admin") || userRoles.Contains("master"))
+            {
+                <MudTabPanel Text="Quick Evaluate" Icon="@Icons.Material.Filled.Grading">
+                    <div class="pa-6">
+                        <MudText Typo="Typo.h6" Class="mb-4">Quick Evaluation Entry</MudText>
+                        <MudAlert Severity="Severity.Info" Class="mb-4">
+                            For full rubric-based evaluation, use the <MudLink Href="evaluations">Evaluation Panel</MudLink>.
+                        </MudAlert>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="evaluations" StartIcon="@Icons.Material.Filled.Grading">
+                            Open Evaluation Panel
+                        </MudButton>
+                    </div>
+                </MudTabPanel>
+            }
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    bool isLoading = true;
+    string currentUserId = "";
+
+    List<NtccStage> myStages = new();
+    List<Student> students = new();
+    List<Internship> internships = new();
+    List<Profile> profiles = new();
+
+    List<string> userRoles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        
+        // System-level role (admin/master/faculty)
+        var systemRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+        userRoles.Add(systemRole);
+
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            // Load Role Matrix (host, mentor, evaluator)
+            var roles = await Supabase.GetAll<FacultyRole>();
+            var myMatrixRoles = roles.Where(r => r.FacultyId == currentUserId).Select(r => r.Role).ToList();
+            userRoles.AddRange(myMatrixRoles);
+
+            // Load all stages (or filter by faculty if needed)
+            var allStages = await Supabase.GetAll<NtccStage>();
+            myStages = allStages.ToList(); // Show all for now, or filter by coordinator if we had that link
+
+            students = await Supabase.GetAll<Student>();
+            profiles = await Supabase.GetAll<Profile>();
+
+            try { internships = await Supabase.GetAll<Internship>(); }
+            catch { Console.WriteLine("[ACTION-CENTER] internships table not ready"); }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ACTION-CENTER] Load error: {ex.Message}");
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally { isLoading = false; }
+    }
+
+    string GetStudentName(string id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+</style>

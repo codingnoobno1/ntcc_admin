@@ -1,0 +1,253 @@
+@page "/internships"
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Internship Management - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Internship <span style="color:#FF9800">Management</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Track student internships across semesters.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.AddBusiness" OnClick="OpenAddDialog">
+            Add Internship
+        </MudButton>
+    </div>
+
+    <!-- Stats Row -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-4 text-center" Elevation="1" Style="border-radius:12px;border-top:4px solid #FF9800;">
+                <MudText Typo="Typo.h5" Class="fw-bold">@internships.Count</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Total</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-4 text-center" Elevation="1" Style="border-radius:12px;border-top:4px solid #4CAF50;">
+                <MudText Typo="Typo.h5" Class="fw-bold">@internships.Count(i => i.Status == "ongoing")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Ongoing</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-4 text-center" Elevation="1" Style="border-radius:12px;border-top:4px solid #2196F3;">
+                <MudText Typo="Typo.h5" Class="fw-bold">@internships.Count(i => i.Status == "completed")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Completed</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudPaper Class="pa-4 text-center" Elevation="1" Style="border-radius:12px;border-top:4px solid #9C27B0;">
+                <MudText Typo="Typo.h5" Class="fw-bold">@internships.Count(i => i.Status == "evaluated")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Evaluated</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Table -->
+    <MudPaper Elevation="2" Class="pa-4" Style="border-radius:12px;">
+        @if (isLoading)
+        {
+            <MudProgressLinear Color="Color.Warning" Indeterminate="true" />
+        }
+        else
+        {
+            <MudTable Items="@internships" Dense="true" Hover="true" Striped="true" Elevation="0"
+                      Filter="new Func<Internship, bool>(SearchFilter)">
+                <ToolBarContent>
+                    <MudTextField @bind-Value="searchString" Placeholder="Search by company or student..."
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Small" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Student</MudTh>
+                    <MudTh>Company</MudTh>
+                    <MudTh>Location</MudTh>
+                    <MudTh>Duration</MudTh>
+                    <MudTh>Start</MudTh>
+                    <MudTh>Mentor</MudTh>
+                    <MudTh>Report</MudTh>
+                    <MudTh>Score</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Student"><MudText Typo="Typo.body2" Class="fw-bold">@GetStudentName(context.StudentId)</MudText></MudTd>
+                    <MudTd DataLabel="Company">@context.CompanyName</MudTd>
+                    <MudTd DataLabel="Location">@context.CompanyLocation</MudTd>
+                    <MudTd DataLabel="Duration">@context.DurationDays days</MudTd>
+                    <MudTd DataLabel="Start">@(context.StartDate?.ToString("dd MMM yy") ?? "—")</MudTd>
+                    <MudTd DataLabel="Mentor">@context.MentorName</MudTd>
+                    <MudTd DataLabel="Report">
+                        <MudIcon Icon="@(context.ReportUploaded ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                 Color="@(context.ReportUploaded ? Color.Success : Color.Error)" Size="Size.Small" />
+                    </MudTd>
+                    <MudTd DataLabel="Score">@(context.EvaluationScore?.ToString("F1") ?? "—")</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@context.Status</MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudPaper>
+</MudContainer>
+
+<!-- Add/Edit Dialog -->
+<MudDialog @bind-Visible="dialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(isEdit ? "Edit Internship" : "Add Internship")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="editItem.StudentId" Label="Student" Required="true" Variant="Variant.Outlined">
+                    @foreach (var s in students)
+                    {
+                        <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="editItem.CompanyName" Label="Company Name" Required="true" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="editItem.CompanyLocation" Label="Location" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="editItem.DurationDays" Label="Duration (Days)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="startDate" Label="Start Date" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="endDate" Label="End Date" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="editItem.MentorName" Label="Industry Mentor" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="editItem.MentorContact" Label="Mentor Contact" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="editItem.Status" Label="Status" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("ongoing")">Ongoing</MudSelectItem>
+                    <MudSelectItem Value="@("completed")">Completed</MudSelectItem>
+                    <MudSelectItem Value="@("evaluated")">Evaluated</MudSelectItem>
+                    <MudSelectItem Value="@("cancelled")">Cancelled</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="evalScore" Label="Evaluation Score" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="editItem.EvaluationRemarks" Label="Remarks" Variant="Variant.Outlined" Lines="2" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => dialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveItem">@(isEdit ? "Update" : "Add")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    bool isLoading = true;
+    bool dialogVisible = false;
+    bool isEdit = false;
+    string searchString = "";
+    DateTime? startDate;
+    DateTime? endDate;
+    decimal evalScore;
+
+    List<Internship> internships = new();
+    List<Student> students = new();
+    Internship editItem = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            internships = await Supabase.GetAll<Internship>();
+            students = await Supabase.GetAll<Student>();
+        }
+        catch (Exception ex) { Console.WriteLine($"[INTERNSHIPS] Load error: {ex.Message}"); }
+        finally { isLoading = false; }
+    }
+
+    bool SearchFilter(Internship i) =>
+        string.IsNullOrEmpty(searchString) ||
+        i.CompanyName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+        GetStudentName(i.StudentId).Contains(searchString, StringComparison.OrdinalIgnoreCase);
+
+    string GetStudentName(string id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
+
+    Color GetStatusColor(string s) => s switch
+    {
+        "ongoing" => Color.Info,
+        "completed" => Color.Success,
+        "evaluated" => Color.Secondary,
+        "cancelled" => Color.Error,
+        _ => Color.Default
+    };
+
+    void OpenAddDialog()
+    {
+        isEdit = false;
+        editItem = new Internship();
+        startDate = null; endDate = null; evalScore = 0;
+        dialogVisible = true;
+    }
+
+    void OpenEditDialog(Internship i)
+    {
+        isEdit = true;
+        editItem = new Internship
+        {
+            Id = i.Id, StudentId = i.StudentId, CompanyName = i.CompanyName,
+            CompanyLocation = i.CompanyLocation, DurationDays = i.DurationDays,
+            MentorName = i.MentorName, MentorContact = i.MentorContact,
+            Status = i.Status, EvaluationRemarks = i.EvaluationRemarks,
+            ReportUploaded = i.ReportUploaded
+        };
+        startDate = i.StartDate; endDate = i.EndDate;
+        evalScore = i.EvaluationScore ?? 0;
+        dialogVisible = true;
+    }
+
+    async Task SaveItem()
+    {
+        try
+        {
+            editItem.StartDate = startDate;
+            editItem.EndDate = endDate;
+            editItem.EvaluationScore = evalScore > 0 ? evalScore : null;
+
+            if (isEdit) await Supabase.Update(editItem);
+            else await Supabase.Insert(editItem);
+
+            Snackbar.Add(isEdit ? "Internship updated!" : "Internship added!", Severity.Success);
+            dialogVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+</style>

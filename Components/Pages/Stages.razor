@@ -1,0 +1,126 @@
+@page "/stages"
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Academic Stages - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-2 fw-bold">Academic <span class="text-primary">Lifecycle Management</span></MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-6">Configure and track the NTCC progression for the current session.</MudText>
+
+    <MudTimeline TimelinePosition="TimelinePosition.Left">
+        @foreach (var stage in _academicStages)
+        {
+            <MudTimelineItem Color="@(stage.IsActive ? Color.Primary : Color.Default)" Size="Size.Small" Elevation="4">
+                <ItemContent>
+                    <MudPaper Class="pa-6 mb-4" Elevation="1">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.h6" Class="fw-bold">@stage.Name</MudText>
+                            <MudChip T="string" Color="@(stage.IsActive ? Color.Primary : Color.Default)" Variant="Variant.Text" Size="Size.Small">
+                                @(stage.IsActive ? "ACTIVE STAGE" : "UPCOMING / INACTIVE")
+                            </MudChip>
+                        </div>
+                        <MudText Typo="Typo.body2" Class="mb-4">@stage.Description</MudText>
+                        
+                        <MudGrid>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">SEMESTER</MudText>
+                                <MudText Typo="Typo.body2" Class="fw-bold">@stage.Semester</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">HOST FACULTY</MudText>
+                                <MudText Typo="Typo.body2" Class="fw-bold">@stage.Host</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">SUBMISSIONS</MudText>
+                                <MudText Typo="Typo.body2" Class="fw-bold">@stage.SubmissionCount / @stage.TotalStudents</MudText>
+                            </MudItem>
+                            <MudItem xs="6" sm="3" Class="text-right">
+                                <div class="d-flex align-center justify-end">
+                                    <MudSwitch T="bool" @bind-Value="stage.IsActive" Color="Color.Primary" Label="Open Submission" UnCheckedColor="Color.Default" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" Class="ml-2" />
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+
+                        @if (stage.IsActive)
+                        {
+                            <MudAlert Severity="Severity.Info" Class="mt-4" Dense="true" Elevation="0">
+                                This stage is currently accepting student uploads. Evaluation queue is being populated.
+                            </MudAlert>
+                        }
+                    </MudPaper>
+                </ItemContent>
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+</MudContainer>
+
+@code {
+    private List<AcademicStage> _academicStages = new()
+    {
+        new AcademicStage { 
+            Name = "45-Day Summer Internship Evaluation", 
+            Semester = "Sem 5 (Post 2nd Year)", 
+            Description = "Initial internship evaluation focusing on industrial training and report submission.",
+            Host = "Prof. R. Sharma",
+            IsActive = true,
+            SubmissionCount = 120,
+            TotalStudents = 120
+        },
+        new AcademicStage { 
+            Name = "Minor Project", 
+            Semester = "Sem 6", 
+            Description = "Development of a software or hardware module under faculty guidance.",
+            Host = "Dr. S. Singh",
+            IsActive = false,
+            SubmissionCount = 0,
+            TotalStudents = 120
+        },
+        new AcademicStage { 
+            Name = "45-Day Internship Evaluation", 
+            Semester = "Pre-Sem 7 (Post 3rd Year)", 
+            Description = "Advanced internship focusing on specialized technology stacks.",
+            Host = "Prof. A. Mehta",
+            IsActive = false,
+            SubmissionCount = 0,
+            TotalStudents = 120
+        },
+        new AcademicStage { 
+            Name = "Major Project", 
+            Semester = "Sem 7", 
+            Description = "Comprehensive system design, documentation, and implementation.",
+            Host = "Prof. R. Sharma",
+            IsActive = false,
+            SubmissionCount = 0,
+            TotalStudents = 120
+        },
+        new AcademicStage { 
+            Name = "Final Internship with PPO", 
+            Semester = "Sem 8", 
+            Description = "Corporate placement evaluation and Pre-Placement Offer verification.",
+            Host = "Training & Placement Cell",
+            IsActive = false,
+            SubmissionCount = 0,
+            TotalStudents = 120
+        }
+    };
+
+    public class AcademicStage
+    {
+        public string Name { get; set; } = "";
+        public string Semester { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Host { get; set; } = "";
+        public bool IsActive { get; set; }
+        public int SubmissionCount { get; set; }
+        public int TotalStudents { get; set; }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+    .text-right { text-align: right; }
+    .mud-timeline-item-content { width: 100%; }
+</style>

@@ -1,0 +1,99 @@
+@page "/admin-register"
+@layout EmptyLayout
+@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Services
+@inject SupabaseService Supabase
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Admin Registration - NTCC</PageTitle>
+
+<div class="login-container d-flex align-center justify-center" style="height: 100vh; background-color: #f8f9fa;">
+    <MudPaper Elevation="4" Class="pa-8 login-card" MaxWidth="450px">
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.AppRegistration" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.h5" Class="fw-bold mt-2">ADMIN <span class="text-primary">REGISTRATION</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Request Master Governance Access</MudText>
+        </div>
+
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudTextField T="string" Label="Full Name" Required="true" @bind-Value="fullName" Variant="Variant.Outlined" Class="mb-4" />
+            
+            <MudTextField T="string" Label="Official Email" Required="true" RequiredError="Email is required!"
+                          @bind-Value="email" InputType="InputType.Email" Variant="Variant.Outlined" Class="mb-4" />
+
+            <MudTextField T="string" Label="Password" Required="true" RequiredError="Password is required!"
+                          @bind-Value="password" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-4" />
+
+            <MudTextField T="string" Label="Confirm Password" Required="true" RequiredError="Confirm password is required!"
+                          @bind-Value="confirmPassword" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-6" 
+                          Validation="@(new Func<string, string?>(PasswordMatch))" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large"
+                       OnClick="HandleRegister" Disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <MudText>Register Admin Account</MudText>
+                }
+            </MudButton>
+            
+            <div class="mt-4 text-center">
+                <MudLink OnClick='() => Navigation.NavigateTo("adminlogin")'>Already have an account? Sign In</MudLink>
+            </div>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    MudForm form = null!;
+    bool success;
+    string fullName = "";
+    string email = "";
+    string password = "";
+    string confirmPassword = "";
+    bool isLoading;
+
+    private string? PasswordMatch(string arg)
+    {
+        if (password != arg)
+            return "Passwords do not match";
+        return null;
+    }
+
+    async Task HandleRegister()
+    {
+        isLoading = true;
+        Console.WriteLine($"[UI] Registering Admin: {email}");
+        try
+        {
+            var user = await Supabase.SignUp(email, password, "admin", fullName);
+            if (user != null)
+            {
+                Console.WriteLine($"[UI] Auth User created: {user.Id}. Profile will be auto-provisioned by Database Trigger.");
+                Snackbar.Add("Registration Successful! Please log in.", Severity.Success);
+                Navigation.NavigateTo("adminlogin");
+            }
+            else
+            {
+                Console.WriteLine("[UI] SignUp returned null user.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UI ERROR] Registration Exception: {ex.Message}");
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally { isLoading = false; }
+    }
+}
+
+<style>
+    .login-card { width: 100%; border-top: 4px solid #1976D2; border-radius: 12px; }
+    .fw-bold { font-weight: 800; }
+    .text-primary { color: #1976D2; }
+</style>

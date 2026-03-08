@@ -1,0 +1,100 @@
+@page "/faculty"
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Faculty - NTCC Admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-content-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Faculty <span class="text-primary">Directory</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Manage and assign faculty roles across NTCC stages.</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd">Add Faculty Member</MudButton>
+    </div>
+
+    <MudTable Items="@_faculty" Hover="true" Elevation="1" Filter="new Func<FacultyMember,bool>(FilterFunc1)">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Active Faculty</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search Faculty..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Faculty Info</MudTh>
+            <MudTh>Roles</MudTh>
+            <MudTh>Assigned Stages</MudTh>
+            <MudTh>Department</MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Faculty Info">
+                <MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Email</MudText>
+            </MudTd>
+            <MudTd DataLabel="Roles">
+                <MudStack Row="true" Spacing="1">
+                    @foreach (var role in context.Roles)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@GetRoleColor(role)">@role</MudChip>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Assigned Stages">
+                <MudText Typo="Typo.body2">@context.AssignedStage</MudText>
+            </MudTd>
+            <MudTd DataLabel="Department">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Department</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Inherit" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private string _searchString = "";
+    private List<FacultyMember> _faculty = new()
+    {
+        new FacultyMember { Name = "Prof. R. Sharma", Email = "rsharma@amity.edu", Department = "CSE", Roles = new() { "Host", "Mentor" }, AssignedStage = "Summer Intern / Major Project" },
+        new FacultyMember { Name = "Dr. S. Singh", Email = "ssingh@amity.edu", Department = "CSE", Roles = new() { "Mentor", "Evaluator" }, AssignedStage = "Minor Project" },
+        new FacultyMember { Name = "Prof. A. Mehta", Email = "amehta@amity.edu", Department = "IT", Roles = new() { "Host" }, AssignedStage = "Pre-7th Intern" },
+        new FacultyMember { Name = "Dr. K. Verma", Email = "kverma@amity.edu", Department = "CSE", Roles = new() { "Mentor" }, AssignedStage = "Minor Project" }
+    };
+
+    private bool FilterFunc1(FacultyMember element) => FilterFunc(element, _searchString);
+
+    private bool FilterFunc(FacultyMember element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private Color GetRoleColor(string role) => role switch
+    {
+        "Host" => Color.Primary,
+        "Mentor" => Color.Success,
+        "Evaluator" => Color.Warning,
+        _ => Color.Default
+    };
+
+    public class FacultyMember
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Department { get; set; } = "";
+        public List<string> Roles { get; set; } = new();
+        public string AssignedStage { get; set; } = "";
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .text-primary { color: #1976D2; }
+</style>
