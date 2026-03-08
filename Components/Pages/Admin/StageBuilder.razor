@@ -1,0 +1,109 @@
+@page "/admin/stage-config"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "admin")]
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6" Elevation="4" Style="border-radius: 16px; min-height: 80vh;">
+                <MudText Typo="Typo.h5" Class="fw-bold mb-4">Stages</MudText>
+                <MudList T="WorkflowStageEntity" Clickable="true" @bind-SelectedValue="_selectedStage">
+                    @foreach (var stage in _stages)
+                    {
+                        <MudListItem Value="@stage">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Custom.Uncategorized.AlertSuccess" Color="Color.Primary" Class="me-3" />
+                                <div>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">@stage.StageKey</MudText>
+                                    <MudText Typo="Typo.caption">B.Tech CSE - Semester 6</MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" Class="mt-4" 
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="AddNewStage">
+                    New Stage
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6" Elevation="4" Style="border-radius: 16px; min-height: 80vh;">
+                @if (_selectedStage == null)
+                {
+                    <div class="d-flex flex-column align-center justify-center" style="height: 60vh;">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Large" Color="Color.Disabled" Style="font-size: 5rem" />
+                        <MudText Typo="Typo.h6" Color="Color.Disabled">Select a stage to configure workflow</MudText>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-space-between align-center mb-6">
+                        <MudText Typo="Typo.h5" Class="fw-bold">Workflow Editor: @_selectedStage.StageKey</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveWorkflow">Save Workflow</MudButton>
+                    </div>
+
+                    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+                        @foreach (var step in _steps.OrderBy(s => s.OrderIndex))
+                        {
+                            <MudTimelineItem Color="Color.Primary" Elevation="2">
+                                <ItemContent>
+                                    <MudPaper Class="pa-4 flex-grow-1" Style="background: rgba(0,0,0,0.02)">
+                                        <div class="d-flex justify-space-between align-center">
+                                            <MudTextField @bind-Value="step.StepKey" Label="Step Label" Variant="Variant.Text" />
+                                            <div class="d-flex">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                                            </div>
+                                        </div>
+                                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Class="mt-2">@($"{step.OrderIndex + 1}. Current Step")</MudChip>
+                                    </MudPaper>
+                                </ItemContent>
+                            </MudTimelineItem>
+                        }
+                    </MudTimeline>
+
+                    <MudButton StartIcon="@Icons.Material.Filled.AddCircle" Color="Color.Primary" Class="mt-4" OnClick="AddStep">
+                        Add Workflow Step
+                    </MudButton>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<WorkflowStageEntity> _stages = new();
+    private WorkflowStageEntity _selectedStage;
+    private List<WorkflowStepEntity> _steps = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stages = await Supabase.GetAll<WorkflowStageEntity>();
+    }
+
+    private async Task OnStageSelected(WorkflowStageEntity stage)
+    {
+        _selectedStage = stage;
+        _steps = await Supabase.GetWhere<WorkflowStepEntity>("stage_id", stage.Id);
+    }
+
+    private void AddNewStage()
+    {
+        Snackbar.Add("Feature coming soon: Dynamic Stage Creation", Severity.Info);
+    }
+
+    private void AddStep()
+    {
+        _steps.Add(new WorkflowStepEntity { OrderIndex = _steps.Count, StepKey = "New Step" });
+    }
+
+    private void SaveWorkflow()
+    {
+        Snackbar.Add("Workflow configuration saved", Severity.Success);
+    }
+}

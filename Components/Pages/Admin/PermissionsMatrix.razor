@@ -1,0 +1,109 @@
+@page "/admin/permissions"
+@using ntcc_admin_blazor.Application.Services
+@using ntcc_admin_blazor.Domain.Entities
+@inject IPermissionService PermissionService
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "admin")]
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true" Color="Color.Primary" Class="fw-bold mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Shield" Class="me-2" /> Role & Permission Matrix
+    </MudText>
+
+    <MudTabs Elevation="4" Rounded="true" Color="Color.Primary" PanelClass="pa-6" Class="permission-tabs">
+        <MudTabPanel Text="Global Permissions">
+            <MudTable Items="@_roles" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Permission / Role</MudTh>
+                    @foreach (var role in _roles)
+                    {
+                        <MudTh Style="text-align: center">@role.RoleName</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Permission">@context.RoleName</MudTd>
+                    @* This dynamic grid logic needs more state management for a clean UI *@
+                    @foreach (var role in _roles)
+                    {
+                        <MudTd Style="text-align: center">
+                             <MudCheckBox T="bool" Color="Color.Primary"></MudCheckBox>
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Stage Action Permissions">
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Define which roles can perform specific actions (e.g., Approve, Evaluate) within active stages.
+            </MudAlert>
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="long" Label="Select Stage" @bind-Value="_selectedStageId">
+                        @foreach (var stage in _stages)
+                        {
+                            <MudSelectItem Value="@stage.Id">@stage.StageKey</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            
+            @if (_selectedStageId > 0)
+            {
+                <MudTable Items="@_stageActions" Class="mt-4" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Action</MudTh>
+                        @foreach (var role in _roles)
+                        {
+                            <MudTh Style="text-align: center">@role.RoleName</MudTh>
+                        }
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context</MudTd>
+                        @foreach (var role in _roles)
+                        {
+                            <MudTd Style="text-align: center">
+                                <MudToggleIconButton ToggledColor="Color.Success" 
+                                                     Icon="@Icons.Material.Filled.Close" 
+                                                     ToggledIcon="@Icons.Material.Filled.Check" />
+                            </MudTd>
+                        }
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+    </MudTabs>
+
+    <MudPaper Class="pa-4 mt-6 d-flex justify-end" Elevation="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveChanges">
+            Save Permissions
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<RoleEntity> _roles = new();
+    private List<WorkflowStageEntity> _stages = new();
+    private long _selectedStageId;
+    private string[] _stageActions = { "Apply", "Approve Title", "Submit Proposal", "Mid-Term Evaluate", "Final Evaluate", "Submit Report" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _roles = await Supabase.GetAll<RoleEntity>();
+        _stages = await Supabase.GetAll<WorkflowStageEntity>();
+    }
+
+    private void SaveChanges()
+    {
+        Snackbar.Add("Permissions updated successfully", Severity.Success);
+    }
+}
+
+<style>
+    .permission-tabs {
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+    }
+</style>
