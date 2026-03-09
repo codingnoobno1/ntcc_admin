@@ -26,7 +26,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [Column("program_id")]
-        public string ProgramId { get; set; } = string.Empty;
+        public string? ProgramId { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -57,5 +57,24 @@ namespace ntcc_admin_blazor.Domain.Entities
 
         [Column("is_active")]
         public bool IsActive { get; set; }
+    }
+
+    [Table("academic_stage_rules")]
+    public class AcademicStageRuleEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("program_id")]
+        public string? ProgramId { get; set; }
+
+        [Column("semester_number")]
+        public int SemesterNumber { get; set; }
+
+        [Column("stage_type")]
+        public string StageType { get; set; } = string.Empty; // e.g., minor_project
+
+        [Column("stage_name")]
+        public string StageName { get; set; } = string.Empty; // e.g., Minor Project
     }
 }

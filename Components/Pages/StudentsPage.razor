@@ -98,21 +98,20 @@
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    @{
+                        var batch = batches.FirstOrDefault(b => b.Id == context.BatchId);
+                        int totalYears = batch != null ? (batch.EndYear - batch.StartYear) : 4;
+                        int currentSem = CalendarService.CalculateCurrentSemester(context.EnrollmentYear, totalYears);
+                        string programId = batch?.ProgramId ?? "";
+                    }
                     <MudTd DataLabel="Roll No"><MudText Typo="Typo.body2" Class="fw-bold">@context.RollNumber</MudText></MudTd>
                     <MudTd DataLabel="Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
                     <MudTd DataLabel="Batch">@GetBatchName(context.BatchId)</MudTd>
-                    <MudTd DataLabel="Semester">
-                        @{
-                            var batch = batches.FirstOrDefault(b => b.Id == context.BatchId);
-                            int totalYears = batch != null ? (batch.EndYear - batch.StartYear) : 4;
-                            int currentSem = CalendarService.CalculateCurrentSemester(context.EnrollmentYear, totalYears);
-                        }
-                        Sem @currentSem
-                    </MudTd>
+                    <MudTd DataLabel="Semester">Sem @currentSem</MudTd>
                     <MudTd DataLabel="Active Module">
                         @{
-                            var activeStage = GetActiveStageForRule(context.ProgramId, currentSem);
+                            var activeStage = GetActiveStageForRule(programId, currentSem);
                             if (activeStage != null)
                             {
                                 <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">@activeStage.StageName</MudChip>
