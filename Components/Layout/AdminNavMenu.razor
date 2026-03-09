@@ -1,6 +1,8 @@
 @using ntcc_admin_blazor.Components.Shared
 <MudNavMenu>
     <MudNavLink href="admin/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Overview</MudNavLink>
+    <MudNavLink href="batches" Icon="@Icons.Material.Filled.Group">Batches</MudNavLink>
+    <MudNavLink href="admin/academic-calendar" Icon="@Icons.Material.Filled.CalendarMonth">Academic Calendar</MudNavLink>
 
     <MudNavGroup Title="Academics" Icon="@Icons.Material.Filled.School" Expanded="true">
         <PermissionView Permission="manage_students">
@@ -40,7 +42,6 @@
     <PermissionView Permission="configure_stages">
         <MudNavGroup Title="Stage Engine" Icon="@Icons.Material.Filled.SettingsSuggest" Expanded="false" Class="mt-2">
             <MudNavLink href="stage-config" Icon="@Icons.Material.Filled.Construction">Stage Config</MudNavLink>
-            <MudNavLink href="batches" Icon="@Icons.Material.Filled.Group">Batches</MudNavLink>
         </MudNavGroup>
     </PermissionView>
 

@@ -16,7 +16,7 @@
     <PackageReference Include="supabase-csharp" Version="0.16.2" />
     <PackageReference Include="Radzen.Blazor" Version="5.7.0" />
     <PackageReference Include="Blazor-ApexCharts" Version="4.0.0" />
-    <PackageReference Include="Toolbelt.Blazor.DragDrop" Version="3.3.0" />
+    <PackageReference Include="blazor-dragdrop" Version="2.6.1" />
   </ItemGroup>
 
 </Project>

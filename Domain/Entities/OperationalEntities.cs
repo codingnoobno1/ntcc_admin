@@ -95,6 +95,9 @@ namespace ntcc_admin_blazor.Domain.Entities
 
         [Column("proposal_status")]
         public string ProposalStatus { get; set; } = "draft";
+
+        [Column("gdrive_link")]
+        public string? GDriveLink { get; set; }
     }
 
     [Table("project_members")]

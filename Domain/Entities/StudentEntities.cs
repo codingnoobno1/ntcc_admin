@@ -24,6 +24,9 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("roll_number")]
         public string? RollNumber { get; set; }
 
+        [Column("enrollment_year")]
+        public int EnrollmentYear { get; set; }
+
         [Column("status")]
         public string Status { get; set; } = "active";
     }

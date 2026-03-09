@@ -10,6 +10,7 @@ using System.Security.Claims;
 using FluentValidation;
 using MediatR;
 using EasyCaching.Core;
+using Plk.Blazor.DragDrop;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +43,9 @@ builder.Services.AddScoped<IEvaluationService, EvaluationService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IProjectFormationService, ProjectFormationService>();
 builder.Services.AddScoped<IInternshipService, InternshipService>();
+builder.Services.AddSingleton<IAcademicCalendarService, AcademicCalendarService>();
 builder.Services.AddMudServices();
+builder.Services.AddBlazorDragDrop();
 
 // Enterprise Layer Integrations
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));

@@ -1,0 +1,131 @@
+@page "/admin/academic-calendar"
+@using ntcc_admin_blazor.Domain.Entities
+@inject SupabaseService Supabase
+@inject IAcademicCalendarService CalendarService
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Academic Calendar - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="fw-bold mb-6">Academic <span class="text-primary">Calendar</span></MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-6 glass-card">
+                <MudText Typo="Typo.h6" Class="mb-4">Standard Academic Cycle</MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+                    The academic system follows a standard bi-semester cycle with a 45-day summer break.
+                </MudAlert>
+                <MudSimpleTable Style="overflow-x: auto;">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Odd Semesters (1, 3, 5, 7)</td>
+                            <td>August 16th</td>
+                            <td>January 31st</td>
+                            <td><MudChip T="string" Size="Size.Small" Color="Color.Primary">Academic</MudChip></td>
+                        </tr>
+                        <tr>
+                            <td>Even Semesters (2, 4, 6, 8)</td>
+                            <td>February 1st</td>
+                            <td>June 30th</td>
+                            <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">Academic</MudChip></td>
+                        </tr>
+                        <tr>
+                            <td>Summer Break / Internship</td>
+                            <td>July 1st</td>
+                            <td>August 15th</td>
+                            <td><MudChip T="string" Size="Size.Small" Color="Color.Warning">Break (45 Days)</MudChip></td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" Class="mt-6 mb-4">Batch Timelines</MudText>
+            @if (_isLoading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            }
+            else
+            {
+                <MudExpansionPanels MultiExpansion="true">
+                    @foreach (var batch in _batches)
+                    {
+                        <MudExpansionPanel Text="@($"Batch {batch.Name} ({batch.StartYear} - {batch.EndYear})")">
+                            <TitleContent>
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Groups" Class="mr-3" />
+                                    <MudText>Batch <b>@batch.Name</b></MudText>
+                                    <MudSpacer />
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">Sem @CalendarService.CalculateCurrentSemester(batch.StartYear, 4)</MudChip>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                                    @{
+                                        int totalYears = batch.EndYear - batch.StartYear;
+                                        int totalSems = totalYears * 2;
+                                    }
+                                    @for (int i = 1; i <= totalSems; i++)
+                                    {
+                                        var range = CalendarService.GetSemesterDateRange(batch.StartYear, i);
+                                        var currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
+                                        <MudTimelineItem Color="@(i == currentSem ? Color.Primary : i < currentSem ? Color.Success : Color.Default)">
+                                            <ItemContent>
+                                                <MudPaper Elevation="0" Class="pa-3 mud-background-gray rounded-lg">
+                                                    <MudText Typo="Typo.subtitle2" Class="fw-bold">Semester @i</MudText>
+                                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@range.Start.ToString("MMMM dd, yyyy") - @range.End.ToString("MMMM dd, yyyy")</MudText>
+                                                </MudPaper>
+                                            </ItemContent>
+                                        </MudTimelineItem>
+                                    }
+                                </MudTimeline>
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<BatchEntity> _batches = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _batches = await Supabase.GetAll<BatchEntity>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading batches", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+    }
+    .fw-bold { font-weight: 700; }
+</style>

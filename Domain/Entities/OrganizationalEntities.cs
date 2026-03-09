@@ -37,4 +37,25 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("end_year")]
         public int EndYear { get; set; }
     }
+    [Table("batch_semesters")]
+    public class BatchSemesterEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("batch_id")]
+        public string BatchId { get; set; } = string.Empty;
+
+        [Column("semester_number")]
+        public int SemesterNumber { get; set; }
+
+        [Column("start_date")]
+        public DateTime StartDate { get; set; }
+
+        [Column("end_date")]
+        public DateTime EndDate { get; set; }
+
+        [Column("is_active")]
+        public bool IsActive { get; set; }
+    }
 }

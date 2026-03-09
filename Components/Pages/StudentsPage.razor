@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject SupabaseService Supabase
+@inject IAcademicCalendarService CalendarService
 @attribute [Authorize]
 @rendermode InteractiveServer
 
@@ -83,13 +84,14 @@
         else
         {
             <MudTable Items="@filteredStudents" Dense="true" Hover="true" Striped="true" Bordered="false" Elevation="0"
-                      Filter="new Func<StudentEntity, bool>(SearchFilter)" Class="mud-table-transparent">
+                      Filter="SearchFilter" Class="mud-table-transparent">
                 <HeaderContent>
                     <MudTh>Roll No</MudTh>
                     <MudTh>Name</MudTh>
                     <MudTh>Email</MudTh>
                     <MudTh>Batch</MudTh>
                     <MudTh>Semester</MudTh>
+                    <MudTh>GDrive</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Lifecycle</MudTh>
                     <MudTh>Actions</MudTh>
@@ -99,7 +101,18 @@
                     <MudTd DataLabel="Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
                     <MudTd DataLabel="Batch">@GetBatchName(context.BatchId)</MudTd>
-                    <MudTd DataLabel="Semester">Sem @context.CurrentSemester</MudTd>
+                    <MudTd DataLabel="Semester">Sem @CalendarService.CalculateCurrentSemester(context.EnrollmentYear, 4)</MudTd>
+                    <MudTd DataLabel="GDrive">
+                        @if (!string.IsNullOrEmpty(GetGDriveLink(context.Id)))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.CloudQueue" Color="Color.Info" Size="Size.Small" 
+                                           Href="@GetGDriveLink(context.Id)" Target="_blank" />
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-disabled">No Link</MudText>
+                        }
+                    </MudTd>
                     <MudTd DataLabel="Status">
                         <MudChip T="string" Color="@GetStatusColor(context.Status)" Size="Size.Small" Variant="Variant.Text">@context.Status</MudChip>
                     </MudTd>
@@ -138,7 +151,8 @@
                 <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudNumericField @bind-Value="editStudent.CurrentSemester" Label="Current Semester" Variant="Variant.Outlined" Min="1" Max="8" Class="mb-3" />
+        <MudNumericField @bind-Value="editStudent.EnrollmentYear" Label="Enrollment Year" Variant="Variant.Outlined" Min="2010" Max="2030" Class="mb-3" />
+        <MudTextField T="string" Label="GDrive Project Link" @bind-Value="tempGDriveLink" Variant="Variant.Outlined" Placeholder="https://drive.google.com/..." Class="mb-3" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => dialogVisible = false">Cancel</MudButton>
@@ -198,6 +212,8 @@
     StudentEntity editStudent = new();
     StudentEntity? selectedStudent;
     List<StudentStageProgress>? studentProgress;
+    string tempGDriveLink = "";
+    Dictionary<string, string> projectLinks = new(); // studentId -> gdriveLink
 
     protected override async Task OnInitializedAsync()
     {
@@ -216,16 +232,28 @@
                 students = await Supabase.GetAll<StudentEntity>();
             else
                 students = await StudentService.GetStudentsByBatch(filterBatch);
+
+            // Fetch Project Links (Simplified for now: find first project per student)
+            var allProjects = await Supabase.GetAll<ProjectEntity>();
+            var allMembers = await Supabase.GetAll<ProjectMemberEntity>();
+            
+            projectLinks = allMembers
+                .Join(allProjects, m => m.ProjectId, p => p.Id, (m, p) => new { m.StudentId, p.GDriveLink })
+                .Where(x => !string.IsNullOrEmpty(x.GDriveLink))
+                .GroupBy(x => x.StudentId)
+                .ToDictionary(g => g.Key, g => g.First().GDriveLink!);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error loading students: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
         }
         finally
         {
             isLoading = false;
         }
     }
+
+    string GetGDriveLink(string studentId) => projectLinks.GetValueOrDefault(studentId, "");
 
     IEnumerable<StudentEntity> filteredStudents => students
         .Where(s => string.IsNullOrEmpty(filterStatus) || s.Status == filterStatus);

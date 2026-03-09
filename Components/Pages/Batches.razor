@@ -1,5 +1,8 @@
 @page "/batches"
 @inject ISnackbar Snackbar
+@inject SupabaseService Supabase
+@inject IAcademicCalendarService CalendarService
+@using ntcc_admin_blazor.Domain.Entities
 @rendermode InteractiveServer
 
 <PageTitle>Batches - NTCC Admin</PageTitle>
@@ -14,24 +17,42 @@
         @foreach (var batch in _batches)
         {
             <MudItem xs="12" sm="6" md="4">
-                <MudCard Elevation="1">
+                <MudCard Elevation="1" Class="glass-card">
                     <MudCardHeader>
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
                                 <MudText Typo="Typo.h6" Class="fw-bold">Batch @batch.Name</MudText>
-                                <MudChip T="string" Color="@(batch.IsActive ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Text">
-                                    @(batch.IsActive ? "ACTIVE" : "COMPLETED")
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
+                                    @(batch.EndYear >= DateTime.Now.Year ? "ACTIVE" : "COMPLETED")
                                 </MudChip>
                             </div>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" /> @batch.YearStart - @batch.YearEnd</MudText>
-                        <MudText Typo="Typo.body2" Class="mt-2 text-primary">Total Students: @batch.StudentCount</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" /> @batch.StartYear - @batch.EndYear</MudText>
+                        
+                        <div class="mt-4">
+                            <MudText Typo="Typo.caption" Class="fw-bold d-block mb-1">Academic Timeline (@(batch.EndYear - batch.StartYear) Years)</MudText>
+                            <div class="d-flex gap-1 overflow-x-auto pb-2">
+                                @{
+                                    int totalYears = batch.EndYear - batch.StartYear;
+                                    int totalSems = totalYears * 2;
+                                }
+                                @for (int i = 1; i <= totalSems; i++)
+                                {
+                                    var currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
+                                    <MudTooltip Text="@($"Semester {i}: {CalendarService.GetSemesterDateRange(batch.StartYear, i).Start:MMM yyyy} - {CalendarService.GetSemesterDateRange(batch.StartYear, i).End:MMM yyyy}")">
+                                        <MudAvatar Color="@(i == currentSem ? Color.Primary : i < currentSem ? Color.Success : Color.Default)" 
+                                                   Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.7rem;">
+                                            @i
+                                        </MudAvatar>
+                                    </MudTooltip>
+                                }
+                            </div>
+                        </div>
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true">View Details</MudButton>
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true">Assign Stages</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" OnClick="() => ViewDetails(batch)">View Details</MudButton>
                     </MudCardActions>
                 </MudCard>
             </MudItem>
@@ -45,16 +66,25 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="4">
-            <MudTextField T="string" Label="Batch Name" Placeholder="e.g. 2023-27" Required="true" />
+            <MudTextField @bind-Value="_newBatch.Name" Label="Batch Name" Placeholder="e.g. 2023-27" Required="true" />
+            <MudSelect T="int" Label="Program Duration" Value="_selectedDuration" ValueChanged="OnDurationChanged">
+                <MudSelectItem Value="4">B.Tech (4 Years)</MudSelectItem>
+                <MudSelectItem Value="3">BCA / BSc (3 Years)</MudSelectItem>
+                <MudSelectItem Value="2">MCA / M.Tech (2 Years)</MudSelectItem>
+                <MudSelectItem Value="5">Integrated (5 Years)</MudSelectItem>
+            </MudSelect>
             <div class="d-flex gap-4">
-                <MudNumericField T="int" Label="Start Year" Value="2023" />
-                <MudNumericField T="int" Label="End Year" Value="2027" />
+                <MudNumericField @bind-Value="_newBatch.StartYear" Label="Start Year" ValueChanged="UpdateBatchYears" />
+                <MudNumericField @bind-Value="_newBatch.EndYear" Label="End Year (Graduation)" ReadOnly="true" />
             </div>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                Program Duration: @(_newBatch.EndYear - _newBatch.StartYear) Years (@((_newBatch.EndYear - _newBatch.StartYear) * 2) Semesters)
+            </MudAlert>
         </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _addBatchDialogOpen = false">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _addBatchDialogOpen = false">Create Batch</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateBatch">Create Batch</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -62,21 +92,59 @@
     private bool _addBatchDialogOpen = false;
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
     
-    private List<BatchInfo> _batches = new()
-    {
-        new BatchInfo { Name = "2021-25", YearStart = 2021, YearEnd = 2025, IsActive = true, StudentCount = 320 },
-        new BatchInfo { Name = "2022-26", YearStart = 2022, YearEnd = 2026, IsActive = true, StudentCount = 280 },
-        new BatchInfo { Name = "2023-27", YearStart = 2023, YearEnd = 2027, IsActive = true, StudentCount = 450 },
-        new BatchInfo { Name = "2020-24", YearStart = 2020, YearEnd = 2024, IsActive = false, StudentCount = 310 }
-    };
+    private List<BatchEntity> _batches = new();
+    private BatchEntity _newBatch = new BatchEntity { StartYear = DateTime.Now.Year, EndYear = DateTime.Now.Year + 4 };
+    private int _selectedDuration = 4;
 
-    public class BatchInfo
+    protected override async Task OnInitializedAsync()
     {
-        public string Name { get; set; } = "";
-        public int YearStart { get; set; }
-        public int YearEnd { get; set; }
-        public bool IsActive { get; set; }
-        public int StudentCount { get; set; }
+        await LoadBatches();
+    }
+
+    private void OnDurationChanged(int duration)
+    {
+        _selectedDuration = duration;
+        UpdateBatchYears();
+    }
+
+    private void UpdateBatchYears()
+    {
+        _newBatch.EndYear = _newBatch.StartYear + _selectedDuration;
+        _newBatch.Name = $"{_newBatch.StartYear}-{(_newBatch.EndYear % 100):D2}";
+    }
+
+    private async Task LoadBatches()
+    {
+        _batches = await Supabase.GetAll<BatchEntity>();
+    }
+
+    private async Task CreateBatch()
+    {
+        try
+        {
+            var savedBatch = await Supabase.Insert(_newBatch);
+            int totalYears = savedBatch.EndYear - savedBatch.StartYear;
+            
+            // Auto-generate semesters
+            var timeline = CalendarService.GenerateBatchTimeline(savedBatch.Id, savedBatch.StartYear, totalYears);
+            foreach (var sem in timeline)
+            {
+                await Supabase.Insert(sem);
+            }
+
+            Snackbar.Add($"Batch {savedBatch.Name} created with {totalYears * 2} semesters!", Severity.Success);
+            _addBatchDialogOpen = false;
+            await LoadBatches();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ViewDetails(BatchEntity batch)
+    {
+        // Implementation for detailed view
     }
 }
 
