@@ -74,7 +74,8 @@
                 <MudSelectItem Value="5">Integrated (5 Years)</MudSelectItem>
             </MudSelect>
             <div class="d-flex gap-4">
-                <MudNumericField @bind-Value="_newBatch.StartYear" Label="Start Year" ValueChanged="UpdateBatchYears" />
+                <MudNumericField Value="_newBatch.StartYear" Label="Start Year" 
+                                 ValueChanged="@((int val) => { _newBatch.StartYear = val; UpdateBatchYears(); })" />
                 <MudNumericField @bind-Value="_newBatch.EndYear" Label="End Year (Graduation)" />
             </div>
             <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
