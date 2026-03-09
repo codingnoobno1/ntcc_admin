@@ -15,10 +15,23 @@ namespace ntcc_admin_blazor.Services
         int CalculateCurrentSemester(int startYear, int totalYears, AcademicConfig? config = null);
         List<BatchSemesterEntity> GenerateBatchTimeline(string batchId, int startYear, int totalYears, AcademicConfig? config = null);
         (DateTime Start, DateTime End) GetSemesterDateRange(int startYear, int semesterNumber, AcademicConfig? config = null);
+        Task<AcademicStageRuleEntity?> GetActiveStage(string programId, int semesterNumber);
     }
 
     public class AcademicCalendarService : IAcademicCalendarService
     {
+        private readonly SupabaseService _supabase;
+
+        public AcademicCalendarService(SupabaseService supabase)
+        {
+            _supabase = supabase;
+        }
+
+        public async Task<AcademicStageRuleEntity?> GetActiveStage(string programId, int semesterNumber)
+        {
+            var rules = await _supabase.GetWhere<AcademicStageRuleEntity>("program_id", programId);
+            return rules.FirstOrDefault(r => r.SemesterNumber == semesterNumber);
+        }
         public int CalculateCurrentSemester(int startYear, int totalYears, AcademicConfig? config = null)
         {
             config ??= new AcademicConfig();

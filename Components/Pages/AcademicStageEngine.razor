@@ -1,0 +1,173 @@
+@page "/admin/stage-engine"
+@using ntcc_admin_blazor.Domain.Entities
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Academic Stage Engine - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Academic <span class="text-primary">Stage Engine</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Map semesters to specific academic activities and modules</MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">Add New Rule</MudButton>
+    </div>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-6 glass-card">
+                @if (_isLoading)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                }
+                else
+                {
+                    <MudTable Items="_rules" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Class="mud-table-transparent">
+                        <HeaderContent>
+                            <MudTh>Program</MudTh>
+                            <MudTh>Semester</MudTh>
+                            <MudTh>Stage Type</MudTh>
+                            <MudTh>Display Name</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Program">@GetProgramName(context.ProgramId)</MudTd>
+                            <MudTd DataLabel="Semester">Semester @context.SemesterNumber</MudTd>
+                            <MudTd DataLabel="Stage Type">
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small">@context.StageType</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Display Name">@context.StageName</MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditRule(context)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteRule(context)" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEdit ? "Update Rule" : "Add Stage Rule")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudSelect T="string" Label="Program" @bind-Value="_editRule.ProgramId" Required="true">
+                @foreach (var p in _programs)
+                {
+                    <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField @bind-Value="_editRule.SemesterNumber" Label="Semester Number" Min="1" Max="10" Required="true" />
+            <MudSelect T="string" Label="Stage Type" @bind-Value="_editRule.StageType" Required="true">
+                <MudSelectItem Value="@("minor_project")">Minor Project</MudSelectItem>
+                <MudSelectItem Value="@("major_project")">Major Project</MudSelectItem>
+                <MudSelectItem Value="@("internship")">Internship</MudSelectItem>
+                <MudSelectItem Value="@("summer_training")">Summer Training</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_editRule.StageName" Label="Display Name" Placeholder="e.g. Minor Project Phase 1" Required="true" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _dialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveRule">Save Rule</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<AcademicStageRuleEntity> _rules = new();
+    private List<ProgramEntity> _programs = new();
+    private bool _isLoading = true;
+    private bool _dialogVisible = false;
+    private bool _isEdit = false;
+    private AcademicStageRuleEntity _editRule = new();
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            _rules = await Supabase.GetAll<AcademicStageRuleEntity>();
+            _programs = await Supabase.GetAll<ProgramEntity>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading rules: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetProgramName(string id) => _programs.FirstOrDefault(p => p.Id == id)?.Name ?? "Internal Program";
+
+    private void OpenAddDialog()
+    {
+        _isEdit = false;
+        _editRule = new AcademicStageRuleEntity();
+        _dialogVisible = true;
+    }
+
+    private void EditRule(AcademicStageRuleEntity rule)
+    {
+        _isEdit = true;
+        _editRule = rule;
+        _dialogVisible = true;
+    }
+
+    private async Task SaveRule()
+    {
+        try
+        {
+            if (_isEdit)
+                await Supabase.Update(_editRule);
+            else
+                await Supabase.Insert(_editRule);
+
+            Snackbar.Add("Rule saved successfully!", Severity.Success);
+            _dialogVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error saving rule: " + ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task DeleteRule(AcademicStageRuleEntity rule)
+    {
+        try
+        {
+            await Supabase.Delete(rule);
+            Snackbar.Add("Rule deleted!", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error deleting rule: " + ex.Message, Severity.Error);
+        }
+    }
+}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+    }
+    .fw-bold { font-weight: 700; }
+    .mud-table-transparent { background: transparent !important; }
+</style>

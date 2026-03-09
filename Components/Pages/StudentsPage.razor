@@ -91,6 +91,7 @@
                     <MudTh>Email</MudTh>
                     <MudTh>Batch</MudTh>
                     <MudTh>Semester</MudTh>
+                    <MudTh>Active Module</MudTh>
                     <MudTh>GDrive</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Lifecycle</MudTh>
@@ -108,6 +109,19 @@
                             int currentSem = CalendarService.CalculateCurrentSemester(context.EnrollmentYear, totalYears);
                         }
                         Sem @currentSem
+                    </MudTd>
+                    <MudTd DataLabel="Active Module">
+                        @{
+                            var activeStage = GetActiveStageForRule(context.ProgramId, currentSem);
+                            if (activeStage != null)
+                            {
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">@activeStage.StageName</MudChip>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-disabled">None</MudText>
+                            }
+                        }
                     </MudTd>
                     <MudTd DataLabel="GDrive">
                         @if (!string.IsNullOrEmpty(GetGDriveLink(context.Id)))
@@ -216,6 +230,7 @@
     List<StudentEntity> students = new();
     List<BatchEntity> batches = new();
     List<NtccStage> stages = new();
+    List<AcademicStageRuleEntity> allStageRules = new();
     StudentEntity editStudent = new();
     StudentEntity? selectedStudent;
     List<StudentStageProgress>? studentProgress;
@@ -234,6 +249,7 @@
         {
             batches = await Supabase.GetAll<BatchEntity>();
             stages = await StageService.GetAllStages();
+            allStageRules = await Supabase.GetAll<AcademicStageRuleEntity>();
             
             if (string.IsNullOrEmpty(filterBatch))
                 students = await Supabase.GetAll<StudentEntity>();
@@ -259,6 +275,9 @@
             isLoading = false;
         }
     }
+
+     AcademicStageRuleEntity? GetActiveStageForRule(string programId, int semester) => 
+        allStageRules.FirstOrDefault(r => r.ProgramId == programId && r.SemesterNumber == semester);
 
     string GetGDriveLink(string studentId) => projectLinks.GetValueOrDefault(studentId, "");
 
