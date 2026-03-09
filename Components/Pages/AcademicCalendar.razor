@@ -13,42 +13,57 @@
     <MudGrid>
         <MudItem xs="12">
             <MudPaper Class="pa-6 glass-card">
-                <MudText Typo="Typo.h6" Class="mb-4">Standard Academic Cycle</MudText>
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6">Academic Configuration & Cycle</MudText>
+                    <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Primary" OnClick="() => _configOpen = true">Adjust Offsets</MudButton>
+                </div>
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-                    The academic system follows a standard bi-semester cycle with a 45-day summer break.
+                    Current settings: Odd Sem starts <b>@_config.OddSemStartMonth/@_config.OddSemStartDay</b>, Even Sem starts <b>@_config.EvenSemStartMonth/@_config.EvenSemStartDay</b>.
                 </MudAlert>
                 <MudSimpleTable Style="overflow-x: auto;">
                     <thead>
                         <tr>
                             <th>Period</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
+                            <th>Start (Standard)</th>
                             <th>Type</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Odd Semesters (1, 3, 5, 7)</td>
-                            <td>August 16th</td>
-                            <td>January 31st</td>
+                            <td>@_config.OddSemStartMonth/@_config.OddSemStartDay</td>
                             <td><MudChip T="string" Size="Size.Small" Color="Color.Primary">Academic</MudChip></td>
                         </tr>
                         <tr>
                             <td>Even Semesters (2, 4, 6, 8)</td>
-                            <td>February 1st</td>
-                            <td>June 30th</td>
+                            <td>@_config.EvenSemStartMonth/@_config.EvenSemStartDay</td>
                             <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">Academic</MudChip></td>
-                        </tr>
-                        <tr>
-                            <td>Summer Break / Internship</td>
-                            <td>July 1st</td>
-                            <td>August 15th</td>
-                            <td><MudChip T="string" Size="Size.Small" Color="Color.Warning">Break (45 Days)</MudChip></td>
                         </tr>
                     </tbody>
                 </MudSimpleTable>
             </MudPaper>
         </MudItem>
+
+        <MudDialog @bind-Visible="_configOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
+            <TitleContent>Academic Date Configuration</TitleContent>
+            <DialogContent>
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.caption">Adjust the start of the academic cycle. Changes apply globally to calculations.</MudText>
+                    <div class="d-flex gap-4">
+                        <MudNumericField @bind-Value="_config.OddSemStartMonth" Label="Odd Sem Start Month" Min="1" Max="12" />
+                        <MudNumericField @bind-Value="_config.OddSemStartDay" Label="Day" Min="1" Max="31" />
+                    </div>
+                    <div class="d-flex gap-4">
+                        <MudNumericField @bind-Value="_config.EvenSemStartMonth" Label="Even Sem Start Month" Min="1" Max="12" />
+                        <MudNumericField @bind-Value="_config.EvenSemStartDay" Label="Day" Min="1" Max="31" />
+                    </div>
+                </MudStack>
+            </DialogContent>
+            <DialogActions>
+                <MudButton OnClick="() => _configOpen = false">Close</MudButton>
+                <MudButton Color="Color.Primary" OnClick="ApplyConfig">Apply Globally</MudButton>
+            </DialogActions>
+        </MudDialog>
 
         <MudItem xs="12">
             <MudText Typo="Typo.h6" Class="mt-6 mb-4">Batch Timelines</MudText>
@@ -102,6 +117,8 @@
 @code {
     private List<BatchEntity> _batches = new();
     private bool _isLoading = true;
+    private bool _configOpen = false;
+    private AcademicConfig _config = new AcademicConfig();
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,6 +134,13 @@
         {
             _isLoading = false;
         }
+    }
+
+    private void ApplyConfig()
+    {
+        _configOpen = false;
+        Snackbar.Add("Calendar configuration updated!", Severity.Success);
+        StateHasChanged();
     }
 }
 

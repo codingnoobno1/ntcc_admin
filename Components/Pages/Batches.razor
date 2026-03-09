@@ -75,7 +75,7 @@
             </MudSelect>
             <div class="d-flex gap-4">
                 <MudNumericField @bind-Value="_newBatch.StartYear" Label="Start Year" ValueChanged="UpdateBatchYears" />
-                <MudNumericField @bind-Value="_newBatch.EndYear" Label="End Year (Graduation)" ReadOnly="true" />
+                <MudNumericField @bind-Value="_newBatch.EndYear" Label="End Year (Graduation)" />
             </div>
             <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
                 Program Duration: @(_newBatch.EndYear - _newBatch.StartYear) Years (@((_newBatch.EndYear - _newBatch.StartYear) * 2) Semesters)

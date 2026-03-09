@@ -101,7 +101,14 @@
                     <MudTd DataLabel="Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
                     <MudTd DataLabel="Batch">@GetBatchName(context.BatchId)</MudTd>
-                    <MudTd DataLabel="Semester">Sem @CalendarService.CalculateCurrentSemester(context.EnrollmentYear, 4)</MudTd>
+                    <MudTd DataLabel="Semester">
+                        @{
+                            var batch = batches.FirstOrDefault(b => b.Id == context.BatchId);
+                            int totalYears = batch != null ? (batch.EndYear - batch.StartYear) : 4;
+                            int currentSem = CalendarService.CalculateCurrentSemester(context.EnrollmentYear, totalYears);
+                        }
+                        Sem @currentSem
+                    </MudTd>
                     <MudTd DataLabel="GDrive">
                         @if (!string.IsNullOrEmpty(GetGDriveLink(context.Id)))
                         {
