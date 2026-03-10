@@ -22,9 +22,19 @@
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center">
                                 <MudText Typo="Typo.h6" Class="fw-bold">Batch @batch.Name</MudText>
-                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
-                                    @(batch.EndYear >= DateTime.Now.Year ? "ACTIVE" : "COMPLETED")
-                                </MudChip>
+                                <div class="d-flex flex-column align-end">
+                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
+                                        @(batch.EndYear >= DateTime.Now.Year ? "ACTIVE" : "COMPLETED")
+                                    </MudChip>
+                                    @{
+                                        int dur = batch.EndYear - batch.StartYear;
+                                        int current = CalendarService.CalculateCurrentSemester(batch.StartYear, dur);
+                                        if (current > 0 && current <= dur * 2)
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Primary" Class="fw-bold mt-1">SEM @current</MudText>
+                                        }
+                                    }
+                                </div>
                             </div>
                         </CardHeaderContent>
                     </MudCardHeader>
@@ -37,14 +47,15 @@
                                 @{
                                     int totalYears = batch.EndYear - batch.StartYear;
                                     int totalSems = totalYears * 2;
+                                    int currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
                                 }
-                                @for (int i = 1; i <= totalSems; i++)
+                                @for (int j = 1; j <= totalSems; j++)
                                 {
-                                    var currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
-                                    <MudTooltip Text="@($"Semester {i}: {CalendarService.GetSemesterDateRange(batch.StartYear, i).Start:MMM yyyy} - {CalendarService.GetSemesterDateRange(batch.StartYear, i).End:MMM yyyy}")">
-                                        <MudAvatar Color="@(i == currentSem ? Color.Primary : i < currentSem ? Color.Success : Color.Default)" 
+                                    int semIndex = j;
+                                    <MudTooltip Text="@($"Semester {semIndex}: {CalendarService.GetSemesterDateRange(batch.StartYear, semIndex).Start:MMM yyyy} - {CalendarService.GetSemesterDateRange(batch.StartYear, semIndex).End:MMM yyyy}")">
+                                        <MudAvatar Color="@(semIndex == currentSem ? Color.Primary : semIndex < currentSem ? Color.Success : Color.Default)" 
                                                    Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.7rem;">
-                                            @i
+                                            @semIndex
                                         </MudAvatar>
                                     </MudTooltip>
                                 }
@@ -67,6 +78,12 @@
     <DialogContent>
         <MudStack Spacing="4">
             <MudTextField @bind-Value="_newBatch.Name" Label="Batch Name" Placeholder="e.g. 2023-27" Required="true" />
+            <MudSelect T="string" Label="Program" Value="_newBatch.ProgramId" ValueChanged="OnProgramChanged" Required="true">
+                @foreach (var p in _programs)
+                {
+                    <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
+                }
+            </MudSelect>
             <MudSelect T="int" Label="Program Duration" Value="_selectedDuration" ValueChanged="OnDurationChanged">
                 <MudSelectItem Value="4">B.Tech (4 Years)</MudSelectItem>
                 <MudSelectItem Value="3">BCA / BSc (3 Years)</MudSelectItem>
@@ -94,12 +111,24 @@
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
     
     private List<BatchEntity> _batches = new();
+    private List<ProgramEntity> _programs = new();
     private BatchEntity _newBatch = new BatchEntity { StartYear = DateTime.Now.Year, EndYear = DateTime.Now.Year + 4 };
     private int _selectedDuration = 4;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadBatches();
+        await LoadData();
+    }
+
+    private void OnProgramChanged(string programId)
+    {
+        _newBatch.ProgramId = programId;
+        var program = _programs.FirstOrDefault(p => p.Id == programId);
+        if (program != null)
+        {
+            _selectedDuration = program.DurationYears;
+            UpdateBatchYears();
+        }
     }
 
     private void OnDurationChanged(int duration)
@@ -114,9 +143,10 @@
         _newBatch.Name = $"{_newBatch.StartYear}-{(_newBatch.EndYear % 100):D2}";
     }
 
-    private async Task LoadBatches()
+    private async Task LoadData()
     {
         _batches = await Supabase.GetAll<BatchEntity>();
+        _programs = await Supabase.GetAll<ProgramEntity>();
     }
 
     private async Task CreateBatch()
@@ -135,7 +165,7 @@
 
             Snackbar.Add($"Batch {savedBatch.Name} created with {totalYears * 2} semesters!", Severity.Success);
             _addBatchDialogOpen = false;
-            await LoadBatches();
+            await LoadData();
         }
         catch (Exception ex)
         {

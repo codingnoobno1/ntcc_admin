@@ -6,10 +6,15 @@ namespace ntcc_admin_blazor.Services
 {
     public class AcademicConfig
     {
-        public int OddSemStartMonth { get; set; } = 8; // Default Aug
+        public int OddSemStartMonth { get; set; } = 8;
         public int OddSemStartDay { get; set; } = 16;
-        public int EvenSemStartMonth { get; set; } = 2; // Default Feb
+        public int OddSemEndMonth { get; set; } = 1;
+        public int OddSemEndDay { get; set; } = 31;
+
+        public int EvenSemStartMonth { get; set; } = 2;
         public int EvenSemStartDay { get; set; } = 1;
+        public int EvenSemEndMonth { get; set; } = 6;
+        public int EvenSemEndDay { get; set; } = 30;
     }
 
     public interface IAcademicCalendarService
@@ -18,6 +23,7 @@ namespace ntcc_admin_blazor.Services
         List<BatchSemesterEntity> GenerateBatchTimeline(string batchId, int startYear, int totalYears, AcademicConfig? config = null);
         (DateTime Start, DateTime End) GetSemesterDateRange(int startYear, int semesterNumber, AcademicConfig? config = null);
         Task<AcademicStageRuleEntity?> GetActiveStage(string programId, int semesterNumber);
+        IEnumerable<(DateTime Start, DateTime End, string Type, int? SemNum)> GetFullTimeline(int startYear, int totalYears, AcademicConfig? config = null);
     }
 
     public class AcademicCalendarService : IAcademicCalendarService
@@ -40,24 +46,29 @@ namespace ntcc_admin_blazor.Services
             var now = DateTime.Now;
             int currentYear = now.Year;
             
-            int yearsPassed = currentYear - startYear;
-            if (yearsPassed < 0) return 0;
-
             // Determine if current date is in Even or Odd sem based on config
             DateTime evenStart = new DateTime(currentYear, config.EvenSemStartMonth, config.EvenSemStartDay);
             DateTime oddStart = new DateTime(currentYear, config.OddSemStartMonth, config.OddSemStartDay);
 
             bool isEvenSem;
+            int academicYearStart;
+
             if (config.EvenSemStartMonth < config.OddSemStartMonth)
             {
-                // Normal case: Feb < Aug
+                // Normal case: Even (Feb) < Odd (Aug)
                 isEvenSem = now >= evenStart && now < oddStart;
+                // If we are before Aug, we belong to the academic year that started in the PREVIOUS calendar year
+                academicYearStart = now < oddStart ? currentYear - 1 : currentYear;
             }
             else
             {
-                // Wrapped case (unlikely but handled)
+                // Wrapped case (Odd starts in middle, Even starts early next year - unusual)
                 isEvenSem = now >= evenStart || now < oddStart;
+                academicYearStart = now >= oddStart ? currentYear : currentYear - 1;
             }
+
+            int yearsPassed = academicYearStart - startYear;
+            if (yearsPassed < 0) return 0;
             
             int semester = (yearsPassed * 2) + (isEvenSem ? 2 : 1);
             return Math.Min(semester, totalYears * 2);
@@ -95,21 +106,44 @@ namespace ntcc_admin_blazor.Services
 
             if (isOdd)
             {
-                // Odd Sem Start
                 var start = new DateTime(currentYear, config.OddSemStartMonth, config.OddSemStartDay);
-                // Ends day before Even Sem Start of NEXT year if Wrapped, or SAME year
-                var endYear = (config.EvenSemStartMonth < config.OddSemStartMonth) ? currentYear + 1 : currentYear;
-                var end = new DateTime(endYear, config.EvenSemStartMonth, config.EvenSemStartDay).AddDays(-1);
+                var endYear = (config.OddSemEndMonth < config.OddSemStartMonth) ? currentYear + 1 : currentYear;
+                var end = new DateTime(endYear, config.OddSemEndMonth, config.OddSemEndDay);
                 return (start, end);
             }
             else
             {
-                // Even Sem Start
                 var start = new DateTime(currentYear, config.EvenSemStartMonth, config.EvenSemStartDay);
-                // Ends day before Odd Sem Start of SAME year
-                var end = new DateTime(currentYear, config.OddSemStartMonth, config.OddSemStartDay).AddDays(-1);
+                var endYear = (config.EvenSemEndMonth < config.EvenSemStartMonth) ? currentYear + 1 : currentYear;
+                var end = new DateTime(endYear, config.EvenSemEndMonth, config.EvenSemEndDay);
                 return (start, end);
             }
+        }
+
+        public IEnumerable<(DateTime Start, DateTime End, string Type, int? SemNum)> GetFullTimeline(int startYear, int totalYears, AcademicConfig? config = null)
+        {
+            config ??= new AcademicConfig();
+            var timeline = new List<(DateTime Start, DateTime End, string Type, int? SemNum)>();
+            int totalSems = totalYears * 2;
+
+            for (int i = 1; i <= totalSems; i++)
+            {
+                var semRange = GetSemesterDateRange(startYear, i, config);
+                
+                // Add break before if not the first and there's a gap
+                if (timeline.Any())
+                {
+                    var lastEnd = timeline.Last().End;
+                    if (semRange.Start > lastEnd.AddDays(1))
+                    {
+                        timeline.Add((lastEnd.AddDays(1), semRange.Start.AddDays(-1), "Break", null));
+                    }
+                }
+
+                timeline.Add((semRange.Start, semRange.End, "Semester", i));
+            }
+
+            return timeline;
         }
     }
 }

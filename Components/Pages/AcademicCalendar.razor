@@ -24,19 +24,19 @@
                     <thead>
                         <tr>
                             <th>Period</th>
-                            <th>Start (Standard)</th>
+                            <th>Range (Standard)</th>
                             <th>Type</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Odd Semesters (1, 3, 5, 7)</td>
-                            <td>@_config.OddSemStartMonth/@_config.OddSemStartDay</td>
+                            <td>Odd Semesters</td>
+                            <td>@_config.OddSemStartMonth/@_config.OddSemStartDay - @_config.OddSemEndMonth/@_config.OddSemEndDay</td>
                             <td><MudChip T="string" Size="Size.Small" Color="Color.Primary">Academic</MudChip></td>
                         </tr>
                         <tr>
-                            <td>Even Semesters (2, 4, 6, 8)</td>
-                            <td>@_config.EvenSemStartMonth/@_config.EvenSemStartDay</td>
+                            <td>Even Semesters</td>
+                            <td>@_config.EvenSemStartMonth/@_config.EvenSemStartDay - @_config.EvenSemEndMonth/@_config.EvenSemEndDay</td>
                             <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">Academic</MudChip></td>
                         </tr>
                     </tbody>
@@ -44,19 +44,35 @@
             </MudPaper>
         </MudItem>
 
-        <MudDialog @bind-Visible="_configOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
-            <TitleContent>Academic Date Configuration</TitleContent>
+        <MudDialog @bind-Visible="_configOpen" Options="new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true }">
+            <TitleContent>Academic Cycle Configuration</TitleContent>
             <DialogContent>
                 <MudStack Spacing="3">
-                    <MudText Typo="Typo.caption">Adjust the start of the academic cycle. Changes apply globally to calculations.</MudText>
-                    <div class="d-flex gap-4">
-                        <MudNumericField @bind-Value="_config.OddSemStartMonth" Label="Odd Sem Start Month" Min="1" Max="12" />
-                        <MudNumericField @bind-Value="_config.OddSemStartDay" Label="Day" Min="1" Max="31" />
-                    </div>
-                    <div class="d-flex gap-4">
-                        <MudNumericField @bind-Value="_config.EvenSemStartMonth" Label="Even Sem Start Month" Min="1" Max="12" />
-                        <MudNumericField @bind-Value="_config.EvenSemStartDay" Label="Day" Min="1" Max="31" />
-                    </div>
+                    <MudText Typo="Typo.caption">Gaps between these ranges will automatically appear as Breaks/Internships.</MudText>
+                    <MudGrid>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.subtitle2">Odd Semester</MudText>
+                            <div class="d-flex gap-2">
+                                <MudNumericField @bind-Value="_config.OddSemStartMonth" Label="Start Month" Min="1" Max="12" />
+                                <MudNumericField @bind-Value="_config.OddSemStartDay" Label="Day" Min="1" Max="31" />
+                            </div>
+                            <div class="d-flex gap-2">
+                                <MudNumericField @bind-Value="_config.OddSemEndMonth" Label="End Month" Min="1" Max="12" />
+                                <MudNumericField @bind-Value="_config.OddSemEndDay" Label="Day" Min="1" Max="31" />
+                            </div>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.subtitle2">Even Semester</MudText>
+                            <div class="d-flex gap-2">
+                                <MudNumericField @bind-Value="_config.EvenSemStartMonth" Label="Start Month" Min="1" Max="12" />
+                                <MudNumericField @bind-Value="_config.EvenSemStartDay" Label="Day" Min="1" Max="31" />
+                            </div>
+                            <div class="d-flex gap-2">
+                                <MudNumericField @bind-Value="_config.EvenSemEndMonth" Label="End Month" Min="1" Max="12" />
+                                <MudNumericField @bind-Value="_config.EvenSemEndDay" Label="Day" Min="1" Max="31" />
+                            </div>
+                        </MudItem>
+                    </MudGrid>
                 </MudStack>
             </DialogContent>
             <DialogActions>
@@ -78,28 +94,44 @@
                     {
                         <MudExpansionPanel Text="@($"Batch {batch.Name} ({batch.StartYear} - {batch.EndYear})")">
                             <TitleContent>
+                                @{
+                                    int totalYears = batch.EndYear - batch.StartYear;
+                                    int currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears, _config);
+                                }
                                 <div class="d-flex align-center">
                                     <MudIcon Icon="@Icons.Material.Filled.Groups" Class="mr-3" />
                                     <MudText>Batch <b>@batch.Name</b></MudText>
                                     <MudSpacer />
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">Sem @CalendarService.CalculateCurrentSemester(batch.StartYear, 4)</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">Sem @currentSem</MudChip>
                                 </div>
                             </TitleContent>
                             <ChildContent>
                                 <MudTimeline TimelinePosition="TimelinePosition.Start">
                                     @{
-                                        int totalYears = batch.EndYear - batch.StartYear;
-                                        int totalSems = totalYears * 2;
+                                        int totalYearsLocal = batch.EndYear - batch.StartYear;
+                                        int currentSemLocal = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYearsLocal, _config);
+                                        var fullTimeline = CalendarService.GetFullTimeline(batch.StartYear, totalYearsLocal, _config);
+                                        var now = DateTime.Now;
                                     }
-                                    @for (int i = 1; i <= totalSems; i++)
+                                    @foreach (var item in fullTimeline)
                                     {
-                                        var range = CalendarService.GetSemesterDateRange(batch.StartYear, i);
-                                        var currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
-                                        <MudTimelineItem Color="@(i == currentSem ? Color.Primary : i < currentSem ? Color.Success : Color.Default)">
+                                        bool isActive = now >= item.Start && now <= item.End;
+                                        bool isPast = now > item.End;
+
+                                        <MudTimelineItem Color="@(isActive ? Color.Primary : isPast ? Color.Success : Color.Default)"
+                                                        Variant="@(item.Type == "Break" ? Variant.Outlined : Variant.Filled)">
                                             <ItemContent>
-                                                <MudPaper Elevation="0" Class="pa-3 mud-background-gray rounded-lg">
-                                                    <MudText Typo="Typo.subtitle2" Class="fw-bold">Semester @i</MudText>
-                                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@range.Start.ToString("MMMM dd, yyyy") - @range.End.ToString("MMMM dd, yyyy")</MudText>
+                                                <MudPaper Elevation="0" Class="@($"pa-3 rounded-lg {(item.Type == "Break" ? "mud-alert-text-warning" : "mud-background-gray")}")">
+                                                    <div class="d-flex justify-space-between align-center">
+                                                        <MudText Typo="Typo.subtitle2" Class="fw-bold">
+                                                            @(item.Type == "Break" ? "Academic Break / Internship" : $"Semester {item.SemNum}")
+                                                        </MudText>
+                                                        @if (isActive)
+                                                        {
+                                                            <MudChip T="string" Color="Color.Primary" Size="Size.Small">CURRENT</MudChip>
+                                                        }
+                                                    </div>
+                                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@item.Start.ToString("MMMM dd, yyyy") - @item.End.ToString("MMMM dd, yyyy")</MudText>
                                                 </MudPaper>
                                             </ItemContent>
                                         </MudTimelineItem>
