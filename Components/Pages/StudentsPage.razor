@@ -100,11 +100,16 @@
                 <RowTemplate>
                     @{
                         var batch = batches.FirstOrDefault(b => b.Id == context.BatchId);
-                        int totalYears = batch != null ? (batch.EndYear - batch.StartYear) : 4;
-                        int currentSem = CalendarService.CalculateCurrentSemester(context.EnrollmentYear, totalYears);
+                        int admissionYear = batch?.StartYear ?? context.EnrollmentYear;
+                        int totalYears = (batch != null && batch.EndYear > batch.StartYear) ? (batch.EndYear - batch.StartYear) : 4;
+                        int currentSem = CalendarService.CalculateCurrentSemester(admissionYear, totalYears);
                         string programId = batch?.ProgramId ?? "";
                     }
-                    <MudTd DataLabel="Roll No"><MudText Typo="Typo.body2" Class="fw-bold">@context.RollNumber</MudText></MudTd>
+                    <MudTd DataLabel="Roll No">
+                        <MudText Typo="Typo.body2" Class="fw-bold">
+                            @(string.IsNullOrEmpty(context.RollNumber) ? context.EnrollmentNumber : context.RollNumber)
+                        </MudText>
+                    </MudTd>
                     <MudTd DataLabel="Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
                     <MudTd DataLabel="Batch">@GetBatchName(context.BatchId)</MudTd>

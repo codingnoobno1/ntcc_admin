@@ -18,6 +18,15 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("batch_id")]
         public string BatchId { get; set; } = string.Empty;
 
+        [Column("university_id")]
+        public string? UniversityId { get; set; }
+
+        [Column("enrollment_number")]
+        public string? EnrollmentNumber { get; set; }
+
+        [Column("section")]
+        public string? Section { get; set; }
+
         [Column("current_semester")]
         public int CurrentSemester { get; set; } = 1;
 

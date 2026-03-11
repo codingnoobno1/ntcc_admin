@@ -30,6 +30,8 @@
                             <MudTh>Semester</MudTh>
                             <MudTh>Stage Type</MudTh>
                             <MudTh>Display Name</MudTh>
+                            <MudTh>Visibility</MudTh>
+                            <MudTh>Status</MudTh>
                             <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
@@ -39,6 +41,12 @@
                                 <MudChip T="string" Color="Color.Info" Size="Size.Small">@context.StageType</MudChip>
                             </MudTd>
                             <MudTd DataLabel="Display Name">@context.StageName</MudTd>
+                            <MudTd DataLabel="Visibility">
+                                <MudChip T="string" Color="@(context.IsVisible ? Color.Success : Color.Error)" Size="Size.Small">@(context.IsVisible ? "Visible" : "Hidden")</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Color="@(context.Status == "ongoing" ? Color.Primary : Color.Default)" Size="Size.Small" Variant="Variant.Text">@context.Status.ToUpper()</MudChip>
+                            </MudTd>
                             <MudTd DataLabel="Actions">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditRule(context)" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteRule(context)" />
@@ -71,6 +79,14 @@
                 <MudSelectItem Value="@("summer_training")">Summer Training</MudSelectItem>
             </MudSelect>
             <MudTextField @bind-Value="_editRule.StageName" Label="Display Name" Placeholder="e.g. Minor Project Phase 1" Required="true" />
+            <MudTextField @bind-Value="_editRule.Description" Label="Course Description" Lines="3" Variant="Variant.Outlined" Placeholder="Enter course details, requirements, etc." />
+            <div class="d-flex align-center gap-4">
+                <MudSwitch @bind-Value="_editRule.IsVisible" Label="Visible to Students" Color="Color.Primary" />
+                <MudSelect T="string" Label="Status" @bind-Value="_editRule.Status" Dense="true" Class="flex-grow-1">
+                    <MudSelectItem Value="@("ongoing")">Ongoing</MudSelectItem>
+                    <MudSelectItem Value="@("closed")">Closed</MudSelectItem>
+                </MudSelect>
+            </div>
         </MudStack>
     </DialogContent>
     <DialogActions>

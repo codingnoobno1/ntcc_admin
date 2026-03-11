@@ -42,36 +42,21 @@ namespace ntcc_admin_blazor.Services
         }
         public int CalculateCurrentSemester(int startYear, int totalYears, AcademicConfig? config = null)
         {
-            config ??= new AcademicConfig();
             var now = DateTime.Now;
-            int currentYear = now.Year;
+            int yearsDiff = now.Year - startYear;
             
-            // Determine if current date is in Even or Odd sem based on config
-            DateTime evenStart = new DateTime(currentYear, config.EvenSemStartMonth, config.EvenSemStartDay);
-            DateTime oddStart = new DateTime(currentYear, config.OddSemStartMonth, config.OddSemStartDay);
-
-            bool isEvenSem;
-            int academicYearStart;
-
-            if (config.EvenSemStartMonth < config.OddSemStartMonth)
+            // Simple Logic:
+            // July-Dec (Month > 6) -> Odd Semester: (yearsDiff * 2) + 1
+            // Jan-June (Month <= 6) -> Even Semester: (yearsDiff * 2)
+            
+            int sem = (yearsDiff * 2);
+            if (now.Month > 6)
             {
-                // Normal case: Even (Feb) < Odd (Aug)
-                isEvenSem = now >= evenStart && now < oddStart;
-                // If we are before Aug, we belong to the academic year that started in the PREVIOUS calendar year
-                academicYearStart = now < oddStart ? currentYear - 1 : currentYear;
-            }
-            else
-            {
-                // Wrapped case (Odd starts in middle, Even starts early next year - unusual)
-                isEvenSem = now >= evenStart || now < oddStart;
-                academicYearStart = now >= oddStart ? currentYear : currentYear - 1;
+                sem += 1;
             }
 
-            int yearsPassed = academicYearStart - startYear;
-            if (yearsPassed < 0) return 0;
-            
-            int semester = (yearsPassed * 2) + (isEvenSem ? 2 : 1);
-            return Math.Min(semester, totalYears * 2);
+            // Clamping
+            return Math.Max(1, Math.Min(sem, totalYears * 2));
         }
 
         public List<BatchSemesterEntity> GenerateBatchTimeline(string batchId, int startYear, int totalYears, AcademicConfig? config = null)

@@ -76,5 +76,14 @@ namespace ntcc_admin_blazor.Domain.Entities
 
         [Column("stage_name")]
         public string StageName { get; set; } = string.Empty; // e.g., Minor Project
+
+        [Column("is_visible")]
+        public bool IsVisible { get; set; } = true;
+
+        [Column("status")]
+        public string Status { get; set; } = "ongoing"; // ongoing, closed
+
+        [Column("description")]
+        public string? Description { get; set; }
     }
 }
