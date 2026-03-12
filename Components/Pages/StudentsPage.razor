@@ -296,7 +296,7 @@
         (s.UniversityId?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
         (s.EnrollmentNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
 
-    string GetBatchName(string batchId) => batches.FirstOrDefault(b => b.Id == batchId)?.Name ?? "Batch A";
+    string GetBatchName(string batchId) => batches.FirstOrDefault(b => b.Id == batchId)?.Name ?? "Unassigned";
 
     Color GetStatusColor(string status) => status switch
     {

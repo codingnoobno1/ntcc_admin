@@ -108,6 +108,7 @@ app.MapGet("/api/auth/logout", async (HttpContext context) =>
 });
 
 // ─── Stage Engine API (Centralized Content Package) ────
+// This serves the student portal (Next.js)
 app.MapGet("/api/admin/stage-rules", async (SupabaseService supabase) =>
 {
     try
@@ -131,17 +132,6 @@ app.MapGet("/api/admin/stage-rules", async (SupabaseService supabase) =>
         return Results.Problem(ex.Message);
     }
 });
-
-// Backward compatibility or direct page request handling JSON
-app.MapGet("/admin/stage-engine", async (SupabaseService supabase, HttpContext context) =>
-{
-    if (context.Request.Headers["Accept"].ToString().Contains("application/json"))
-    {
-        var rules = await supabase.GetAll<AcademicStageRuleEntity>();
-        return Results.Ok(rules);
-    }
-    return Results.NotFound();
-}).ExcludeFromDescription();
 
 // ─── Blazor Routes ─────────────────────────────────────
 app.MapStaticAssets();
