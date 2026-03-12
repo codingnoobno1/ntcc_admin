@@ -73,9 +73,7 @@
     {
         try
         {
-            // Note: Replace with GetStudentById when it exists in StudentService
-            var allStudents = await StudentService.GetStudentsByBatch("default");
-            student = allStudents.FirstOrDefault(s => s.Id == StudentId);
+            student = await StudentService.GetStudentById(StudentId);
 
             if (student != null)
             {

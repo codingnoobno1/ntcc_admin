@@ -56,7 +56,13 @@
                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
             </MudItem>
             <MudItem xs="12" sm="3">
-                <MudSelect T="Guid?" Label="Batch" Value="filterBatch" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined" Dense="true" ValueChanged="BatchFilterChanged">
+                <MudSelect T="Guid?" 
+                           Label="Batch" 
+                           Value="filterBatch" 
+                           AnchorOrigin="Origin.BottomCenter" 
+                           Variant="Variant.Outlined" 
+                           Dense="true" 
+                           ValueChanged="BatchFilterChanged">
                     <MudSelectItem Value="@((Guid?)null)">All Batches</MudSelectItem>
                     @foreach (var b in batches)
                     {
@@ -65,7 +71,12 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" sm="3">
-                <MudSelect T="string" Label="Status" @bind-Value="filterStatus" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined" Dense="true">
+                <MudSelect T="string" 
+                           Label="Status" 
+                           @bind-Value="filterStatus" 
+                           AnchorOrigin="Origin.BottomCenter" 
+                           Variant="Variant.Outlined" 
+                           Dense="true">
                     <MudSelectItem Value="@((string?)null)">All Statuses</MudSelectItem>
                     <MudSelectItem Value="@("active")">Active</MudSelectItem>
                     <MudSelectItem Value="@("passed_out")">Passed Out</MudSelectItem>
@@ -168,17 +179,17 @@
         <MudText Typo="Typo.h6">@(isEdit ? "Update Student" : "Register Student")</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField @bind-Value="editStudent.FullName" Label="Full Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
-        <MudTextField @bind-Value="editStudent.RollNumber" Label="Roll Number" Variant="Variant.Outlined" Class="mb-3" />
-        <MudTextField @bind-Value="editStudent.Email" Label="Email Address" Required="true" Variant="Variant.Outlined" Class="mb-3" />
-        <MudSelect T="Guid?" Label="Batch" @bind-Value="editStudent.BatchId" Required="true" Variant="Variant.Outlined" Class="mb-3">
+        <MudTextField @bind-Value="editStudent.FullName" Label="Full Name" Required="true" Variant="Variant.Outlined" Class="mb-4" />
+        <MudTextField @bind-Value="editStudent.RollNumber" Label="Roll Number" Variant="Variant.Outlined" Class="mb-4" />
+        <MudTextField @bind-Value="editStudent.Email" Label="Email Address" Required="true" Variant="Variant.Outlined" Class="mb-4" />
+        <MudSelect T="Guid?" Label="Batch" @bind-Value="editStudent.BatchId" Required="true" Variant="Variant.Outlined" Class="mb-4">
             @foreach (var b in batches)
             {
                 <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudNumericField @bind-Value="editStudent.EnrollmentYear" Label="Enrollment Year" Variant="Variant.Outlined" Min="2010" Max="2030" Class="mb-3" />
-        <MudTextField T="string" Label="GDrive Project Link" @bind-Value="tempGDriveLink" Variant="Variant.Outlined" Placeholder="https://drive.google.com/..." Class="mb-3" />
+        <MudNumericField @bind-Value="editStudent.EnrollmentYear" Label="Enrollment Year" Variant="Variant.Outlined" Min="2010" Max="2030" Class="mb-4" />
+        <MudTextField T="string" Label="GDrive Project Link" @bind-Value="tempGDriveLink" Variant="Variant.Outlined" Placeholder="https://drive.google.com/..." Class="mb-4" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => dialogVisible = false">Cancel</MudButton>
@@ -324,7 +335,7 @@
     void OpenAddDialog()
     {
         isEdit = false;
-        editStudent = new StudentEntity { CurrentSemester = 1 };
+        editStudent = new StudentEntity { CurrentSemester = 1, Status = "active", EnrollmentYear = DateTime.Now.Year };
         dialogVisible = true;
     }
 
