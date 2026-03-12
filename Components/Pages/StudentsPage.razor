@@ -292,7 +292,9 @@
     bool SearchFilter(StudentEntity s) => 
         string.IsNullOrWhiteSpace(searchString) || 
         s.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-        (s.RollNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
+        (s.RollNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+        (s.UniversityId?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+        (s.EnrollmentNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
 
     string GetBatchName(string batchId) => batches.FirstOrDefault(b => b.Id == batchId)?.Name ?? "Batch A";
 

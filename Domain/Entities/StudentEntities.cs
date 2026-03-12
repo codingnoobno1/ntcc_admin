@@ -38,6 +38,9 @@ namespace ntcc_admin_blazor.Domain.Entities
 
         [Column("status")]
         public string Status { get; set; } = "active";
+
+        [Column("password_hash")]
+        public string? PasswordHash { get; set; }
     }
 
     [Table("student_stage_progress")]

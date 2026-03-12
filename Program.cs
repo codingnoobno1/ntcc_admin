@@ -6,6 +6,7 @@ using ntcc_admin_blazor.Components;
 using ntcc_admin_blazor.Services;
 using ntcc_admin_blazor.Models;
 using ntcc_admin_blazor.Application.Services;
+using ntcc_admin_blazor.Domain.Entities;
 using System.Security.Claims;
 using FluentValidation;
 using MediatR;
@@ -71,13 +72,8 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 // ─── Auth API Endpoints ────────────────────────────────
-// These handle cookie creation/destruction since HttpContext
-// is not available inside Blazor Server interactive components.
-
 app.MapGet("/api/auth/login", async (HttpContext context, string email, string role, string userId) =>
 {
-    Console.WriteLine($"[COOKIE] Creating session cookie for: {email} | Role: {role}");
-    
     var claims = new List<Claim>
     {
         new Claim(ClaimTypes.Name, email),
@@ -91,7 +87,6 @@ app.MapGet("/api/auth/login", async (HttpContext context, string email, string r
 
     await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
     
-    Console.WriteLine($"[COOKIE] Session cookie created. Redirecting for role: {role}");
     if (role == "admin" || role == "master")
     {
         context.Response.Redirect("/admin/dashboard");
@@ -107,11 +102,46 @@ app.MapGet("/api/auth/login", async (HttpContext context, string email, string r
 });
 
 app.MapGet("/api/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    context.Response.Redirect("/");
+});
+
+// ─── Stage Engine API (Centralized Content Package) ────
+app.MapGet("/api/admin/stage-rules", async (SupabaseService supabase) =>
+{
+    try
+    {
+        var rules = await supabase.GetAll<AcademicStageRuleEntity>();
+        var stages = await supabase.GetAll<NtccStage>();
+        var deadlines = await supabase.GetAll<StageDeadline>();
+        var requirements = await supabase.GetAll<StageRequirement>();
+
+        var package = rules.Select(r => new {
+            Rule = r,
+            Stage = stages.FirstOrDefault(s => s.Id == r.StageTypeId),
+            Deadlines = deadlines.Where(d => d.StageId == r.StageTypeId).OrderBy(d => d.OrderIndex).ToList(),
+            Requirements = requirements.Where(req => req.StageId == r.StageTypeId).ToList()
+        });
+
+        return Results.Ok(package);
+    }
     catch (Exception ex)
     {
         return Results.Problem(ex.Message);
     }
 });
+
+// Backward compatibility or direct page request handling JSON
+app.MapGet("/admin/stage-engine", async (SupabaseService supabase, HttpContext context) =>
+{
+    if (context.Request.Headers["Accept"].ToString().Contains("application/json"))
+    {
+        var rules = await supabase.GetAll<AcademicStageRuleEntity>();
+        return Results.Ok(rules);
+    }
+    return Results.NotFound();
+}).ExcludeFromDescription();
 
 // ─── Blazor Routes ─────────────────────────────────────
 app.MapStaticAssets();
