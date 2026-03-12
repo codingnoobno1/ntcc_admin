@@ -8,8 +8,8 @@ namespace ntcc_admin_blazor.Application.Services
     {
         Task<List<Profile>> GetAllFaculty();
         Task<bool> CreateFaculty(string email, string fullName, string department, List<string> roles);
-        Task<List<FacultyRole>> GetFacultyRoles(string facultyId);
-        Task<FacultyWorkloadEntity?> GetWorkload(string facultyId, string stageId);
+        Task<List<FacultyRole>> GetFacultyRoles(Guid facultyId);
+        Task<FacultyWorkloadEntity?> GetWorkload(Guid facultyId, Guid stageId);
     }
 
     public class FacultyAppService : IFacultyAppService
@@ -59,7 +59,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<List<FacultyRole>> GetFacultyRoles(string facultyId)
+        public async Task<List<FacultyRole>> GetFacultyRoles(Guid facultyId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<FacultyRole>()
@@ -68,7 +68,7 @@ namespace ntcc_admin_blazor.Application.Services
             return result.Models;
         }
 
-        public async Task<FacultyWorkloadEntity?> GetWorkload(string facultyId, string stageId)
+        public async Task<FacultyWorkloadEntity?> GetWorkload(Guid facultyId, Guid stageId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<FacultyWorkloadEntity>()

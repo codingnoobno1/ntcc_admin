@@ -198,7 +198,7 @@ namespace ntcc_admin_blazor.Services
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public async Task<string?> CreateFacultyAccount(string email, string password, string fullName, string department, List<string> roles)
+        public async Task<Guid?> CreateFacultyAccount(string email, string password, string fullName, string department, List<string> roles)
         {
             try
             {
@@ -223,8 +223,9 @@ namespace ntcc_admin_blazor.Services
                 };
                 
                 var response = await ((dynamic)adminClient.Auth).Admin.CreateUser(userAttributes);
-                var userId = (string)response?.Id;
-                if (string.IsNullOrEmpty(userId)) throw new Exception("Failed to create user in Auth");
+                var userIdStr = (string)response?.Id;
+                if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId)) 
+                    throw new Exception("Failed to create user in Auth or invalid ID format");
 
                 // 2. Create Profile
                 var profile = new Profile

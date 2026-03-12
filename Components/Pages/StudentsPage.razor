@@ -114,7 +114,7 @@
                         int admissionYear = batch?.StartYear ?? context.EnrollmentYear;
                         int totalYears = (batch != null && batch.EndYear > batch.StartYear) ? (batch.EndYear - batch.StartYear) : 4;
                         int currentSem = CalendarService.CalculateCurrentSemester(admissionYear, totalYears);
-                        string programId = batch?.ProgramId ?? "";
+                        Guid? programId = batch?.ProgramId;
                     }
                     <MudTd DataLabel="Roll No">
                         <MudText Typo="Typo.body2" Class="fw-bold">
@@ -298,7 +298,7 @@
         await LoadData();
     }
 
-    AcademicStageRuleEntity? GetActiveRule(string programId, int semester) => 
+    AcademicStageRuleEntity? GetActiveRule(Guid? programId, int semester) => 
         allStageRules.FirstOrDefault(r => r.ProgramId == programId && r.SemesterNumber == semester);
 
     string GetGDriveLink(Guid studentId) => projectLinks.GetValueOrDefault(studentId, "");

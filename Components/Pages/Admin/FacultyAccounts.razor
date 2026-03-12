@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @attribute [Authorize(Roles = "admin,master")]
+@inject IFacultyAppService FacultyService
+@inject ISnackbar Snackbar
 @rendermode InteractiveServer
 
 <PageTitle>Faculty Accounts - NTCC Admin</PageTitle>
@@ -67,7 +69,7 @@
 
     class FacultyItem
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
@@ -78,10 +80,32 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate API call to fetch real Faculty from Supabase Auth
-        await Task.Delay(400); // Remove when connected to DB
-        faculties = new List<FacultyItem>();
-        isLoading = false;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await FacultyService.GetAllFaculty();
+            faculties = result.Select(f => new FacultyItem
+            {
+                Id = f.Id,
+                Name = f.FullName,
+                Email = f.Email,
+                Role = f.Role,
+                Status = f.IsVerified ? "Active" : "Pending"
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading faculty: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private bool FilterFunc1(FacultyItem element) => FilterFunc(element, searchString1);
@@ -113,7 +137,30 @@
     private async Task OpenAddDialog()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        await DialogService.ShowAsync<ntcc_admin_blazor.Components.Pages.Admin.Dialogs.FacultyRegistrationDialog>("", options);
+        var dialog = await DialogService.ShowAsync<ntcc_admin_blazor.Components.Pages.Admin.Dialogs.FacultyRegistrationDialog>("", options);
+        var result = await dialog.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+            // Note: In a real app we'd use a strongly typed model, 
+            // but for now we access the data returned by the dialog.
+            var model = result.Data as dynamic;
+            var success = await FacultyService.CreateFaculty(
+                (string)model.Email, 
+                (string)model.FullName, 
+                (string)model.Department, 
+                new List<string> { (string)model.Role });
+
+            if (success)
+            {
+                Snackbar.Add("Faculty account created and invitation sent!", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("Failed to create faculty account", Severity.Error);
+            }
+        }
     }
 }
 
