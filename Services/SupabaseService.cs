@@ -160,7 +160,7 @@ namespace ntcc_admin_blazor.Services
 
         // ─── Specialized Domain Queries ──────────────────
 
-        public async Task<List<NtccStage>> GetStagesForFaculty(string facultyId, string? role = null)
+        public async Task<List<NtccStage>> GetStagesForFaculty(Guid facultyId, string? role = null)
         {
             await InitializeAsync();
             var facultyLinks = await Client.From<StageFaculty>().Where(x => x.FacultyId == facultyId).Get();
@@ -170,7 +170,7 @@ namespace ntcc_admin_blazor.Services
             return result.Models.Where(s => stageIds.Contains(s.Id)).ToList();
         }
 
-        public async Task<(List<StageDeadline> Deadlines, List<EvaluationCategory> Categories, List<StageRequirement> Requirements, List<StageSubmissionRule> SubmissionRules)> GetStageConfiguration(string stageId)
+        public async Task<(List<StageDeadline> Deadlines, List<EvaluationCategory> Categories, List<StageRequirement> Requirements, List<StageSubmissionRule> SubmissionRules)> GetStageConfiguration(Guid stageId)
         {
             await InitializeAsync();
             var deadlines = await Client.From<StageDeadline>().Where(x => x.StageId == stageId).Get();
@@ -181,7 +181,7 @@ namespace ntcc_admin_blazor.Services
             return (deadlines.Models, categories.Models, requirements.Models, submissionRules.Models);
         }
 
-        public async Task<List<EvaluationComponent>> GetEvaluationComponents(string categoryId)
+        public async Task<List<EvaluationComponent>> GetEvaluationComponents(Guid categoryId)
         {
             await InitializeAsync();
             var result = await Client.From<EvaluationComponent>().Where(x => x.CategoryId == categoryId).Get();
@@ -241,7 +241,7 @@ namespace ntcc_admin_blazor.Services
                 // 3. Assign Roles
                 foreach (var role in roles)
                 {
-                    await Insert(new FacultyRole { FacultyId = userId, Role = role.ToLower() });
+                    await Insert(new FacultyRole { FacultyId = Guid.Parse(userId), Role = role.ToLower() });
                 }
 
                 return userId;

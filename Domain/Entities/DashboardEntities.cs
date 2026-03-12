@@ -46,20 +46,20 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StepComponentEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("step_id")]
-        public string StepId { get; set; } = string.Empty;
+        public Guid StepId { get; set; }
 
         [Column("component_id")]
-        public string ComponentId { get; set; } = string.Empty;
+        public Guid ComponentId { get; set; }
     }
 
     [Table("component_registry")]
     public class ComponentRegistryEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("component_key")]
         public string ComponentKey { get; set; } = string.Empty;

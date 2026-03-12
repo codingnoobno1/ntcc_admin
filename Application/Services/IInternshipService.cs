@@ -8,15 +8,15 @@ namespace ntcc_admin_blazor.Application.Services
     {
         // Company Registry
         Task<List<CompanyEntity>> GetAllCompaniesAsync();
-        Task<CompanyEntity?> GetCompanyAsync(string id);
-        Task<string> AddCompanyAsync(CompanyEntity company);
+        Task<CompanyEntity?> GetCompanyAsync(Guid id);
+        Task<Guid> AddCompanyAsync(CompanyEntity company);
         Task<bool> UpdateCompanyAsync(CompanyEntity company);
 
         // Internships
         Task<List<InternshipEntity>> GetAllInternshipsAsync();
-        Task<List<InternshipEntity>> GetStudentInternshipsAsync(string studentId);
-        Task<InternshipEntity?> GetInternshipAsync(string id);
-        Task<string> ApplyForInternshipAsync(InternshipEntity internship);
-        Task<bool> UpdateInternshipStatusAsync(string internshipId, string newStatus);
+        Task<List<InternshipEntity>> GetStudentInternshipsAsync(Guid studentId);
+        Task<InternshipEntity?> GetInternshipAsync(Guid id);
+        Task<Guid> ApplyForInternshipAsync(InternshipEntity internship);
+        Task<bool> UpdateInternshipStatusAsync(Guid internshipId, string newStatus);
     }
 }

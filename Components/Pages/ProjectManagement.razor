@@ -115,8 +115,8 @@
         <MudSelect T="int" @bind-Value="editProject.Semester" Label="Semester" Variant="Variant.Outlined" Class="mb-3">
             @for (int i = 1; i <= 8; i++) { <MudSelectItem Value="@i">Semester @i</MudSelectItem> }
         </MudSelect>
-        <MudSelect T="string" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
-            @foreach (var b in batches) { <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem> }
+        <MudSelect T="Guid?" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
+            @foreach (var b in batches) { <MudSelectItem Value="@((Guid?)b.Id)">@b.Name</MudSelectItem> }
         </MudSelect>
         <MudSelect T="string" @bind-Value="editProject.Status" Label="Proposal Status" Variant="Variant.Outlined" Class="mb-3">
             <MudSelectItem Value="@("draft")">Draft</MudSelectItem>
@@ -142,10 +142,10 @@
 <MudDialog @bind-Visible="membersDialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
     <TitleContent><MudText Typo="Typo.h6">Manage Team — @selectedProject?.ProjectTitle</MudText></TitleContent>
     <DialogContent>
-        <MudSelect T="string" @bind-Value="newMemberStudentId" Label="Add Student" Variant="Variant.Outlined" Class="mb-3">
+        <MudSelect T="Guid?" @bind-Value="newMemberStudentId" Label="Add Student" Variant="Variant.Outlined" Class="mb-3">
             @foreach (var s in students.Where(s => !currentMembers.Any(m => m.StudentId == s.Id)))
             {
-                <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
+                <MudSelectItem Value="@((Guid?)s.Id)">@s.FullName (@s.RollNumber)</MudSelectItem>
             }
         </MudSelect>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="AddMember" Class="mb-4">Add to Team</MudButton>
@@ -173,7 +173,7 @@
     bool membersDialogVisible = false;
     bool isEdit = false;
     string? typeFilter;
-    string newMemberStudentId = "";
+    Guid? newMemberStudentId;
 
     List<ProjectGroupEntity> projects = new();
     List<GroupMemberEntity> projectMembers = new();
@@ -230,21 +230,21 @@
     {
         selectedProject = p;
         currentMembers = projectMembers.Where(m => m.GroupId == p.Id).ToList();
-        newMemberStudentId = "";
+        newMemberStudentId = null;
         membersDialogVisible = true;
     }
 
     async Task AddMember()
     {
-        if (string.IsNullOrEmpty(newMemberStudentId)) return;
+        if (newMemberStudentId == null) return;
         try
         {
-            var member = new GroupMemberEntity { GroupId = selectedProject!.Id, StudentId = newMemberStudentId, Role = currentMembers.Count == 0 ? "leader" : "member" };
+            var member = new GroupMemberEntity { GroupId = selectedProject!.Id, StudentId = newMemberStudentId.Value, Role = currentMembers.Count == 0 ? "leader" : "member" };
             await Supabase.Insert(member);
             Snackbar.Add("Member added!", Severity.Success);
             await LoadData();
-            currentMembers = projectMembers.Where(m => m.ProjectId == selectedProject.Id).ToList();
-            newMemberStudentId = "";
+            currentMembers = projectMembers.Where(m => m.GroupId == selectedProject.Id).ToList();
+            newMemberStudentId = null;
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }

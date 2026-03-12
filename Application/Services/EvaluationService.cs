@@ -12,18 +12,18 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<EvaluationRubricEntity?> GetRubricForStageTypeAsync(string stageTypeId, string examType)
+        public async Task<EvaluationRubricEntity?> GetRubricForStageTypeAsync(Guid stageTypeId, string examType)
         {
             var rubrics = await _supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", stageTypeId);
             return rubrics.FirstOrDefault(r => r.ExamType == examType);
         }
 
-        public async Task<List<RubricComponentEntity>> GetComponentsForRubricAsync(string rubricId)
+        public async Task<List<RubricComponentEntity>> GetComponentsForRubricAsync(Guid rubricId)
         {
             return await _supabase.GetWhere<RubricComponentEntity>("rubric_id", rubricId);
         }
 
-        public async Task<bool> SubmitStudentMarksAsync(string studentId, string componentId, decimal marks, string remarks)
+        public async Task<bool> SubmitStudentMarksAsync(Guid studentId, Guid componentId, decimal marks, string remarks)
         {
             var evaluation = new StudentEvaluationEntity
             {
@@ -31,14 +31,14 @@ namespace ntcc_admin_blazor.Application.Services
                 RubricComponentId = componentId,
                 Marks = marks,
                 Remarks = remarks,
-                EvaluatorId = "faculty-1" // Mocked
+                EvaluatorId = Guid.Empty // Mocked
             };
 
             await _supabase.Upsert(evaluation);
             return true;
         }
 
-        public async Task<decimal> CalculateTotalScoreAsync(string studentId, string rubricId)
+        public async Task<decimal> CalculateTotalScoreAsync(Guid studentId, Guid rubricId)
         {
             var components = await GetComponentsForRubricAsync(rubricId);
             var evaluations = await _supabase.GetWhere<StudentEvaluationEntity>("student_id", studentId);
@@ -53,7 +53,7 @@ namespace ntcc_admin_blazor.Application.Services
             return total;
         }
 
-        public async Task<bool> IsEvaluationCompleteAsync(string studentId, string rubricId)
+        public async Task<bool> IsEvaluationCompleteAsync(Guid studentId, Guid rubricId)
         {
             var components = await GetComponentsForRubricAsync(rubricId);
             var evaluations = await _supabase.GetWhere<StudentEvaluationEntity>("student_id", studentId);

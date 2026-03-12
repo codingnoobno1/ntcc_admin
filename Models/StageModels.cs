@@ -9,7 +9,7 @@ namespace ntcc_admin_blazor.Models
     public class NtccStage : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -40,10 +40,10 @@ namespace ntcc_admin_blazor.Models
     public class StageDeadline : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("milestone_name")]
         public string MilestoneName { get; set; } = string.Empty;
@@ -62,13 +62,13 @@ namespace ntcc_admin_blazor.Models
     public class StageSubmissionRule : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("milestone_id")]
-        public string MilestoneId { get; set; } = string.Empty;
+        public Guid MilestoneId { get; set; }
 
         [Column("file_type")]
         public string FileType { get; set; } = "PDF";
@@ -84,10 +84,10 @@ namespace ntcc_admin_blazor.Models
     public class EvaluationCategory : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -103,10 +103,10 @@ namespace ntcc_admin_blazor.Models
     public class EvaluationComponent : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("category_id")]
-        public string CategoryId { get; set; } = string.Empty;
+        public Guid CategoryId { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -119,10 +119,10 @@ namespace ntcc_admin_blazor.Models
     public class StageRequirement : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("requirement_type")]
         public string RequirementType { get; set; } = string.Empty;
@@ -137,7 +137,7 @@ namespace ntcc_admin_blazor.Models
     public class Profile : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
 
         [Column("full_name")]
         public string FullName { get; set; } = string.Empty;
@@ -159,7 +159,7 @@ namespace ntcc_admin_blazor.Models
     public class Batch : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -178,7 +178,7 @@ namespace ntcc_admin_blazor.Models
     public class Student : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("full_name")]
         public string FullName { get; set; } = string.Empty;
@@ -190,7 +190,7 @@ namespace ntcc_admin_blazor.Models
         public string Email { get; set; } = string.Empty;
 
         [Column("batch_id")]
-        public string BatchId { get; set; } = string.Empty;
+        public Guid BatchId { get; set; }
 
         [Column("program")]
         public string Program { get; set; } = "B.Tech CSE";
@@ -212,13 +212,13 @@ namespace ntcc_admin_blazor.Models
     public class Internship : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("company_name")]
         public string CompanyName { get; set; } = string.Empty;
@@ -248,7 +248,7 @@ namespace ntcc_admin_blazor.Models
         public string ReportUrl { get; set; } = string.Empty;
 
         [Column("faculty_mentor_id")]
-        public string FacultyMentorId { get; set; } = string.Empty;
+        public Guid FacultyMentorId { get; set; }
 
         [Column("evaluation_score")]
         public decimal? EvaluationScore { get; set; }
@@ -267,7 +267,7 @@ namespace ntcc_admin_blazor.Models
     public class Project : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("title")]
         public string Title { get; set; } = string.Empty;
@@ -279,13 +279,13 @@ namespace ntcc_admin_blazor.Models
         public string ProjectType { get; set; } = "minor";
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("batch_id")]
-        public string BatchId { get; set; } = string.Empty;
+        public Guid BatchId { get; set; }
 
         [Column("faculty_mentor_id")]
-        public string FacultyMentorId { get; set; } = string.Empty;
+        public Guid FacultyMentorId { get; set; }
 
         [Column("proposal_status")]
         public string ProposalStatus { get; set; } = "draft";
@@ -307,13 +307,13 @@ namespace ntcc_admin_blazor.Models
     public class ProjectMember : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("project_id")]
-        public string ProjectId { get; set; } = string.Empty;
+        public Guid ProjectId { get; set; }
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("role")]
         public string Role { get; set; } = "member";
@@ -323,19 +323,19 @@ namespace ntcc_admin_blazor.Models
     public class EvaluationScore : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("category_id")]
-        public string CategoryId { get; set; } = string.Empty;
+        public Guid CategoryId { get; set; }
 
         [Column("evaluator_id")]
-        public string EvaluatorId { get; set; } = string.Empty;
+        public Guid EvaluatorId { get; set; }
 
         [Column("score")]
         public decimal Score { get; set; }
@@ -354,13 +354,13 @@ namespace ntcc_admin_blazor.Models
     public class StageFaculty : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public Guid FacultyId { get; set; }
 
         [Column("role")]
         public string Role { get; set; } = "evaluator";
@@ -369,10 +369,10 @@ namespace ntcc_admin_blazor.Models
     public class FacultyRole : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public Guid FacultyId { get; set; }
 
         [Column("role")]
         public string Role { get; set; } = string.Empty; // 'host', 'mentor', 'evaluator'
@@ -385,13 +385,13 @@ namespace ntcc_admin_blazor.Models
     public class FacultyStageAssignment : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public Guid FacultyId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("role")]
         public string Role { get; set; } = string.Empty; // 'host', 'mentor', 'evaluator'

@@ -7,7 +7,7 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StageTypeEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_key")]
         public string StageKey { get; set; } = string.Empty; // e.g., minor_project
@@ -19,17 +19,17 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string? Description { get; set; }
 
         [Column("program_id")]
-        public string ProgramId { get; set; } = string.Empty;
+        public Guid ProgramId { get; set; }
     }
 
     [Table("workflow_stages")]
     public class WorkflowStageEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_type_id")]
-        public string StageTypeId { get; set; } = string.Empty;
+        public Guid StageTypeId { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -45,10 +45,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class WorkflowStepEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("workflow_stage_id")]
-        public string WorkflowStageId { get; set; } = string.Empty;
+        public Guid WorkflowStageId { get; set; }
 
         [Column("step_key")]
         public string StepKey { get; set; } = string.Empty;
@@ -76,10 +76,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StageRequirementEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_type_id")]
-        public string StageTypeId { get; set; } = string.Empty;
+        public Guid StageTypeId { get; set; }
 
         [Column("required_meetings")]
         public int RequiredMeetings { get; set; } = 0;
@@ -98,13 +98,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StudentWorkflowStepEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("workflow_step_id")]
-        public string WorkflowStepId { get; set; } = string.Empty;
+        public Guid WorkflowStepId { get; set; }
 
         [Column("status")]
         public string Status { get; set; } = "pending"; // pending, submitted, approved, rejected

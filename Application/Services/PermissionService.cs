@@ -24,7 +24,7 @@ namespace ntcc_admin_blazor.Application.Services
             return permissions.Contains(permissionKey);
         }
 
-        public async Task<bool> HasWorkflowActionAsync(long stageId, string action)
+        public async Task<bool> HasWorkflowActionAsync(Guid stageId, string action)
         {
             var userId = await GetUserIdAsync();
             if (userId == null) return false;

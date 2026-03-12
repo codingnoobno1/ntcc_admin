@@ -16,7 +16,7 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task LogActivityAsync(string studentId, string action, string metadata = "{}")
+        public async Task LogActivityAsync(Guid studentId, string action, string metadata = "{}")
         {
             try
             {
@@ -34,7 +34,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<List<StudentActivityLogEntity>> GetStudentTimelineAsync(string studentId)
+        public async Task<List<StudentActivityLogEntity>> GetStudentTimelineAsync(Guid studentId)
         {
             try
             {

@@ -7,7 +7,7 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StudentEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = string.Empty; // Maps to Profile ID / Auth ID
+        public Guid Id { get; set; }
 
         [Column("full_name")]
         public string FullName { get; set; } = string.Empty;
@@ -47,19 +47,19 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StudentStageProgress : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("status")]
         public string Status { get; set; } = "enrolled";
 
         [Column("mentor_approved")]
-        public bool MentorApproved { get; set; } = false;
+        public bool MentorApproved { get; set; }
 
         [Column("midterm_score")]
         public decimal? MidtermScore { get; set; }
@@ -68,6 +68,6 @@ namespace ntcc_admin_blazor.Domain.Entities
         public decimal? EndtermScore { get; set; }
 
         [Column("is_completed")]
-        public bool IsCompleted { get; set; } = false;
+        public bool IsCompleted { get; set; }
     }
 }

@@ -8,16 +8,16 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class GroupMemberEntity : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("group_id")]
-        public string GroupId { get; set; } = string.Empty;
+        public Guid GroupId { get; set; }
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("project_id")]
-        public string ProjectId { get; set; } = string.Empty;
+        public Guid ProjectId { get; set; }
 
         // leader, member
         [Column("role")]

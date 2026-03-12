@@ -66,7 +66,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public long RoleId { get; set; }
 
         [Column("stage_id")]
-        public long StageId { get; set; }
+        public Guid StageId { get; set; }
 
         [Column("action")]
         public string Action { get; set; }

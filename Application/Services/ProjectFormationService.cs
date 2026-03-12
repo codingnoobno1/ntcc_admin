@@ -16,18 +16,18 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<ProjectGroupEntity?> GetGroupAsync(string groupId)
+        public async Task<ProjectGroupEntity?> GetGroupAsync(Guid groupId)
         {
             var groups = await _supabase.GetWhere<ProjectGroupEntity>("id", groupId);
             return groups.FirstOrDefault();
         }
 
-        public async Task<List<ProjectGroupEntity>> GetGroupsForStageAsync(string stageId)
+        public async Task<List<ProjectGroupEntity>> GetGroupsForStageAsync(Guid stageId)
         {
             return await _supabase.GetWhere<ProjectGroupEntity>("stage_id", stageId);
         }
 
-        public async Task<ProjectGroupEntity?> GetStudentActiveGroupAsync(string studentId, string stageId)
+        public async Task<ProjectGroupEntity?> GetStudentActiveGroupAsync(Guid studentId, Guid stageId)
         {
             var memberships = await _supabase.GetWhere<GroupMemberEntity>("student_id", studentId);
             var activeMember = memberships.FirstOrDefault(m => m.Status == "accepted" || m.Role == "leader");
@@ -37,7 +37,7 @@ namespace ntcc_admin_blazor.Application.Services
             return (group != null && group.StageId == stageId) ? group : null;
         }
 
-        public async Task<string> CreateGroupAsync(ProjectGroupEntity group, string leaderStudentId)
+        public async Task<Guid> CreateGroupAsync(ProjectGroupEntity group, Guid leaderStudentId)
         {
             // 1. Conflict Check: Is leader already in a group for this stage?
             var existingGroup = await GetStudentActiveGroupAsync(leaderStudentId, group.StageId);
@@ -61,7 +61,7 @@ namespace ntcc_admin_blazor.Application.Services
             return createdGroup.Id;
         }
 
-        public async Task<bool> InviteMemberAsync(string groupId, string studentId)
+        public async Task<bool> InviteMemberAsync(Guid groupId, Guid studentId)
         {
             var existingMembership = await _supabase.GetWhere<GroupMemberEntity>("student_id", studentId);
             if (existingMembership.Any(m => m.GroupId == groupId))
@@ -82,7 +82,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<bool> RespondToInviteAsync(string groupId, string studentId, bool accept)
+        public async Task<bool> RespondToInviteAsync(Guid groupId, Guid studentId, bool accept)
         {
             var memberships = await _supabase.GetWhere<GroupMemberEntity>("student_id", studentId);
             var invite = memberships.FirstOrDefault(m => m.GroupId == groupId && m.Status == "invited");
@@ -110,7 +110,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<bool> SubmitProposalAsync(string groupId)
+        public async Task<bool> SubmitProposalAsync(Guid groupId)
         {
             var group = await GetGroupAsync(groupId);
             if (group == null) return false;
@@ -124,7 +124,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<bool> VetProposalAsync(string groupId, string facultyId, bool isApproved, string remarks)
+        public async Task<bool> VetProposalAsync(Guid groupId, Guid facultyId, bool isApproved, string remarks)
         {
             var group = await GetGroupAsync(groupId);
             if (group == null) return false;

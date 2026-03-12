@@ -14,7 +14,7 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<List<WidgetDto>> GetWidgetsForStepAsync(long stepId, string role)
+        public async Task<List<WidgetDto>> GetWidgetsForStepAsync(Guid stepId, string role)
         {
             var widgets = new List<WidgetDto>();
 

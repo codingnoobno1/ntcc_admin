@@ -6,15 +6,15 @@ namespace ntcc_admin_blazor.Application.Services
 {
     public interface IProjectFormationService
     {
-        Task<ProjectGroupEntity?> GetGroupAsync(string groupId);
-        Task<List<ProjectGroupEntity>> GetGroupsForStageAsync(string stageId);
-        Task<ProjectGroupEntity?> GetStudentActiveGroupAsync(string studentId, string stageId);
+        Task<ProjectGroupEntity?> GetGroupAsync(Guid groupId);
+        Task<List<ProjectGroupEntity>> GetGroupsForStageAsync(Guid stageId);
+        Task<ProjectGroupEntity?> GetStudentActiveGroupAsync(Guid studentId, Guid stageId);
         
-        Task<string> CreateGroupAsync(ProjectGroupEntity group, string leaderStudentId);
-        Task<bool> InviteMemberAsync(string groupId, string studentId);
-        Task<bool> RespondToInviteAsync(string groupId, string studentId, bool accept);
+        Task<Guid> CreateGroupAsync(ProjectGroupEntity group, Guid leaderStudentId);
+        Task<bool> InviteMemberAsync(Guid groupId, Guid studentId);
+        Task<bool> RespondToInviteAsync(Guid groupId, Guid studentId, bool accept);
         
-        Task<bool> SubmitProposalAsync(string groupId);
-        Task<bool> VetProposalAsync(string groupId, string facultyId, bool isApproved, string remarks);
+        Task<bool> SubmitProposalAsync(Guid groupId);
+        Task<bool> VetProposalAsync(Guid groupId, Guid facultyId, bool isApproved, string remarks);
     }
 }

@@ -7,11 +7,11 @@ namespace ntcc_admin_blazor.Application.Services
     public interface IStageAppService
     {
         Task<List<NtccStage>> GetAllStages();
-        Task<NtccStage?> GetStageById(string id);
+        Task<NtccStage?> GetStageById(Guid id);
         Task<bool> CreateStage(NtccStage stage);
-        Task<bool> UpdateStageSettings(string stageId, Dictionary<string, string> settings);
-        Task<List<StageDeadline>> GetDeadlines(string stageId);
-        Task<List<EvaluationCategory>> GetEvaluationRubric(string stageId);
+        Task<bool> UpdateStageSettings(Guid stageId, Dictionary<string, string> settings);
+        Task<List<StageDeadline>> GetDeadlines(Guid stageId);
+        Task<List<EvaluationCategory>> GetEvaluationRubric(Guid stageId);
     }
 
     public class StageAppService : IStageAppService
@@ -30,7 +30,7 @@ namespace ntcc_admin_blazor.Application.Services
             return await _supabase.GetAll<NtccStage>();
         }
 
-        public async Task<NtccStage?> GetStageById(string id)
+        public async Task<NtccStage?> GetStageById(Guid id)
         {
             return await _supabase.GetById<NtccStage>(id);
         }
@@ -58,7 +58,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<bool> UpdateStageSettings(string stageId, Dictionary<string, string> settings)
+        public async Task<bool> UpdateStageSettings(Guid stageId, Dictionary<string, string> settings)
         {
             try
             {
@@ -81,7 +81,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<List<StageDeadline>> GetDeadlines(string stageId)
+        public async Task<List<StageDeadline>> GetDeadlines(Guid stageId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<StageDeadline>()
@@ -90,7 +90,7 @@ namespace ntcc_admin_blazor.Application.Services
             return result.Models;
         }
 
-        public async Task<List<EvaluationCategory>> GetEvaluationRubric(string stageId)
+        public async Task<List<EvaluationCategory>> GetEvaluationRubric(Guid stageId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<EvaluationCategory>()

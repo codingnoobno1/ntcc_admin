@@ -7,13 +7,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class SubmissionEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("type")]
         public string Type { get; set; } = string.Empty; // proposal, draft_report, etc.
@@ -25,7 +25,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string? FileUrl { get; set; }
 
         [Column("reviewed_by")]
-        public string? ReviewedBy { get; set; }
+        public Guid? ReviewedBy { get; set; }
 
         [Column("submitted_at")]
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
@@ -35,10 +35,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class ActivityLogEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("user_id")]
-        public string? UserId { get; set; }
+        public Guid? UserId { get; set; }
 
         [Column("action")]
         public string Action { get; set; } = string.Empty;
@@ -47,7 +47,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string Entity { get; set; } = string.Empty;
 
         [Column("entity_id")]
-        public string? EntityId { get; set; }
+        public Guid? EntityId { get; set; }
 
         [Column("metadata")]
         public string? Metadata { get; set; } // JSON string
@@ -57,10 +57,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class NotificationEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("user_id")]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
 
         [Column("message")]
         public string Message { get; set; } = string.Empty;
@@ -77,13 +77,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class SupervisorMeetingEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public Guid FacultyId { get; set; }
 
         [Column("meeting_date")]
         public DateTime MeetingDate { get; set; } = DateTime.UtcNow;
@@ -99,10 +99,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class MeetingReportEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("meeting_id")]
-        public string MeetingId { get; set; } = string.Empty;
+        public Guid MeetingId { get; set; }
 
         [Column("report_url")]
         public string? ReportUrl { get; set; }
@@ -115,13 +115,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class WorkflowSubmissionEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("workflow_step_id")]
-        public string WorkflowStepId { get; set; } = string.Empty;
+        public Guid WorkflowStepId { get; set; }
 
         [Column("file_url")]
         public string? FileUrl { get; set; }

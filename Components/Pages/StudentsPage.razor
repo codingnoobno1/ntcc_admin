@@ -185,7 +185,7 @@
         <MudSelect T="Guid?" Label="Batch" @bind-Value="editStudent.BatchId" Required="true" Variant="Variant.Outlined" Class="mb-4">
             @foreach (var b in batches)
             {
-                <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
+                <MudSelectItem Value="@((Guid?)b.Id)">@b.Name</MudSelectItem>
             }
         </MudSelect>
         <MudNumericField @bind-Value="editStudent.EnrollmentYear" Label="Enrollment Year" Variant="Variant.Outlined" Min="2010" Max="2030" Class="mb-4" />
@@ -251,7 +251,7 @@
     StudentEntity? selectedStudent;
     List<StudentStageProgress>? studentProgress;
     string tempGDriveLink = "";
-    Dictionary<string, string> projectLinks = new(); // studentId -> gdriveLink
+    Dictionary<Guid, string> projectLinks = new(); // studentId -> gdriveLink
 
     protected override async Task OnInitializedAsync()
     {
@@ -301,7 +301,7 @@
     AcademicStageRuleEntity? GetActiveRule(string programId, int semester) => 
         allStageRules.FirstOrDefault(r => r.ProgramId == programId && r.SemesterNumber == semester);
 
-    string GetGDriveLink(string studentId) => projectLinks.GetValueOrDefault(studentId, "");
+    string GetGDriveLink(Guid studentId) => projectLinks.GetValueOrDefault(studentId, "");
 
     IEnumerable<StudentEntity> filteredStudents => students
         .Where(s => string.IsNullOrEmpty(filterStatus) || s.Status == filterStatus);
@@ -313,7 +313,7 @@
         (s.UniversityId?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
         (s.EnrollmentNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
 
-    string GetBatchName(Guid? batchId) => batches.FirstOrDefault(b => b.Id == batchId?.ToString())?.Name ?? "Unassigned";
+    string GetBatchName(Guid? batchId) => batches.FirstOrDefault(b => b.Id == batchId)?.Name ?? "Unassigned";
 
     Color GetStatusColor(string status) => status switch
     {
@@ -330,7 +330,7 @@
         _ => Color.Default
     };
 
-    string GetStageName(string stageId) => stages.FirstOrDefault(s => s.Id == stageId)?.Name ?? "NTCC Stage";
+    string GetStageName(Guid stageId) => stages.FirstOrDefault(s => s.Id == stageId)?.Name ?? "NTCC Stage";
 
     void OpenAddDialog()
     {

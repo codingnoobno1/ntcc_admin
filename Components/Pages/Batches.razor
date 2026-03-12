@@ -178,10 +178,10 @@
     <DialogContent>
         <MudStack Spacing="4">
             <MudTextField @bind-Value="_newBatch.Name" Label="Batch Name" Placeholder="e.g. 2023-27" Required="true" />
-            <MudSelect T="string" Label="Program" Value="_newBatch.ProgramId" ValueChanged="OnProgramChanged" Required="true">
+            <MudSelect T="Guid?" Label="Program" Value="_newBatch.ProgramId" ValueChanged="OnProgramChanged" Required="true">
                 @foreach (var p in _programs)
                 {
-                    <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
+                    <MudSelectItem Value="@((Guid?)p.Id)">@p.Name</MudSelectItem>
                 }
             </MudSelect>
             <MudSelect T="int" Label="Program Duration" Value="_selectedDuration" ValueChanged="OnDurationChanged">
@@ -232,14 +232,14 @@
         await LoadData();
     }
 
-    private string GetProgramName(string? programId) => _programs.FirstOrDefault(p => p.Id == programId)?.Name ?? "Academic Program";
+    private string GetProgramName(Guid? programId) => _programs.FirstOrDefault(p => p.Id == programId)?.Name ?? "Academic Program";
     
     private int GetStudentCount(Guid batchId)
     {
         return _allStudents.Count(s => s.BatchId == batchId);
     }
 
-    private void OnProgramChanged(string programId)
+    private void OnProgramChanged(Guid? programId)
     {
         _newBatch.ProgramId = programId;
         var program = _programs.FirstOrDefault(p => p.Id == programId);
@@ -286,7 +286,7 @@
     {
         try
         {
-            if (string.IsNullOrEmpty(_newBatch.ProgramId) && _programs.Any())
+            if (_newBatch.ProgramId == null && _programs.Any())
                 _newBatch.ProgramId = _programs.First().Id;
 
             var savedBatch = await Supabase.Insert(_newBatch);

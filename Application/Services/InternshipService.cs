@@ -23,13 +23,13 @@ namespace ntcc_admin_blazor.Application.Services
             return companies.OrderBy(c => c.Name).ToList();
         }
 
-        public async Task<CompanyEntity?> GetCompanyAsync(string id)
+        public async Task<CompanyEntity?> GetCompanyAsync(Guid id)
         {
-            var res = await _supabase.GetWhere<CompanyEntity>("id", id);
+            var res = await _supabase.GetWhere<CompanyEntity>("id", id.ToString());
             return res.FirstOrDefault();
         }
 
-        public async Task<string> AddCompanyAsync(CompanyEntity company)
+        public async Task<Guid> AddCompanyAsync(CompanyEntity company)
         {
             var created = await _supabase.Insert(company);
             return created.Id;
@@ -47,34 +47,46 @@ namespace ntcc_admin_blazor.Application.Services
             return internships.OrderByDescending(i => i.CreatedAt).ToList();
         }
 
-        public async Task<List<InternshipEntity>> GetStudentInternshipsAsync(string studentId)
+        public async Task<List<InternshipEntity>> GetStudentInternshipsAsync(Guid studentId)
         {
-            var internships = await _supabase.GetWhere<InternshipEntity>("student_id", studentId);
+            var internships = await _supabase.GetWhere<InternshipEntity>("student_id", studentId.ToString());
             return internships.OrderByDescending(i => i.CreatedAt).ToList();
         }
 
-        public async Task<InternshipEntity?> GetInternshipAsync(string id)
+        public async Task<InternshipEntity?> GetInternshipAsync(Guid id)
         {
-            var res = await _supabase.GetWhere<InternshipEntity>("id", id);
+            var res = await _supabase.GetWhere<InternshipEntity>("id", id.ToString());
             return res.FirstOrDefault();
         }
 
-        public async Task<string> ApplyForInternshipAsync(InternshipEntity internship)
+        public async Task<Guid> ApplyForInternshipAsync(InternshipEntity internship)
         {
             var created = await _supabase.Insert(internship);
-            await _activityLog.LogActivityAsync(internship.StudentId, "internship_applied", $"{{\"internship_id\":\"{created.Id}\"}}");
+
+            await _activityLog.LogActivityAsync(
+                internship.StudentId,
+                "internship_applied",
+                $"{{\"internship_id\":\"{created.Id}\"}}"
+            );
+
             return created.Id;
         }
 
-        public async Task<bool> UpdateInternshipStatusAsync(string internshipId, string newStatus)
+        public async Task<bool> UpdateInternshipStatusAsync(Guid internshipId, string newStatus)
         {
             var internship = await GetInternshipAsync(internshipId);
             if (internship == null) return false;
 
             internship.Status = newStatus;
+
             await _supabase.Update(internship);
-            
-            await _activityLog.LogActivityAsync(internship.StudentId, "internship_updated", $"{{\"status\":\"{newStatus}\"}}");
+
+            await _activityLog.LogActivityAsync(
+                internship.StudentId,
+                "internship_updated",
+                $"{{\"status\":\"{newStatus}\"}}"
+            );
+
             return true;
         }
     }

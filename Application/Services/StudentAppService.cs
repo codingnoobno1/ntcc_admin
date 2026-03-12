@@ -7,10 +7,10 @@ namespace ntcc_admin_blazor.Application.Services
     public interface IStudentAppService
     {
         Task<List<StudentEntity>> GetStudentsByBatch(Guid batchId);
-        Task<StudentEntity?> GetStudentById(string id);
-        Task<bool> EnrollStudentInStage(string studentId, string stageId);
-        Task<bool> UpdateProgressStatus(string progressId, string status);
-        Task<List<StudentStageProgress>> GetStudentProgress(string studentId);
+        Task<StudentEntity?> GetStudentById(Guid id);
+        Task<bool> EnrollStudentInStage(Guid studentId, Guid stageId);
+        Task<bool> UpdateProgressStatus(Guid progressId, string status);
+        Task<List<StudentStageProgress>> GetStudentProgress(Guid studentId);
     }
 
     public class StudentAppService : IStudentAppService
@@ -33,12 +33,12 @@ namespace ntcc_admin_blazor.Application.Services
             return result.Models;
         }
 
-        public async Task<StudentEntity?> GetStudentById(string id)
+        public async Task<StudentEntity?> GetStudentById(Guid id)
         {
             return await _supabase.GetById<StudentEntity>(id);
         }
 
-        public async Task<bool> EnrollStudentInStage(string studentId, string stageId)
+        public async Task<bool> EnrollStudentInStage(Guid studentId, Guid stageId)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<bool> UpdateProgressStatus(string progressId, string status)
+        public async Task<bool> UpdateProgressStatus(Guid progressId, string status)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace ntcc_admin_blazor.Application.Services
             }
         }
 
-        public async Task<List<StudentStageProgress>> GetStudentProgress(string studentId)
+        public async Task<List<StudentStageProgress>> GetStudentProgress(Guid studentId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<StudentStageProgress>()

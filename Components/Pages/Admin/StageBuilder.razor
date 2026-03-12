@@ -11,12 +11,18 @@
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-6" Elevation="4" Style="border-radius: 16px; min-height: 80vh;">
                 <MudText Typo="Typo.h5" Class="fw-bold mb-4">Stages</MudText>
-                <MudList T="WorkflowStageEntity" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStageSelected">
+
+                <MudList T="WorkflowStageEntity"
+                         SelectionMode="SelectionMode.SingleSelection"
+                         SelectedValueChanged="OnStageSelected">
+
                     @foreach (var stage in _stages)
                     {
                         <MudListItem Value="@stage">
                             <div class="d-flex align-center">
-                                <MudIcon Icon="@Icons.Custom.Uncategorized.AlertSuccess" Color="Color.Primary" Class="me-3" />
+                                <MudIcon Icon="@Icons.Custom.Uncategorized.AlertSuccess"
+                                         Color="Color.Primary"
+                                         Class="me-3" />
                                 <div>
                                     <MudText Typo="Typo.body1" Class="fw-bold">@stage.Name</MudText>
                                     <MudText Typo="Typo.caption">B.Tech CSE - Semester 6</MudText>
@@ -25,8 +31,13 @@
                         </MudListItem>
                     }
                 </MudList>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" Class="mt-4" 
-                           StartIcon="@Icons.Material.Filled.Add" OnClick="AddNewStage">
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Class="mt-4"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="AddNewStage">
                     New Stage
                 </MudButton>
             </MudPaper>
@@ -37,38 +48,70 @@
                 @if (_selectedStage == null)
                 {
                     <div class="d-flex flex-column align-center justify-center" style="height: 60vh;">
-                        <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Large" Color="Color.Default" Style="font-size: 5rem" />
-                        <MudText Typo="Typo.h6" Color="Color.Default">Select a stage to configure workflow</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.AccountTree"
+                                 Size="Size.Large"
+                                 Color="Color.Default"
+                                 Style="font-size: 5rem" />
+                        <MudText Typo="Typo.h6" Color="Color.Default">
+                            Select a stage to configure workflow
+                        </MudText>
                     </div>
                 }
                 else
                 {
                     <div class="d-flex justify-space-between align-center mb-6">
-                        <MudText Typo="Typo.h5" Class="fw-bold">Workflow Editor: @_selectedStage.StageKey</MudText>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveWorkflow">Save Workflow</MudButton>
+                        <MudText Typo="Typo.h5" Class="fw-bold">
+                            Workflow Editor: @_selectedStage.StageKey
+                        </MudText>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   OnClick="SaveWorkflow">
+                            Save Workflow
+                        </MudButton>
                     </div>
 
-                    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+                    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical"
+                                 TimelinePosition="TimelinePosition.Start">
+
                         @foreach (var step in _steps.OrderBy(s => s.OrderIndex))
                         {
                             <MudTimelineItem Color="Color.Primary" Elevation="2">
                                 <ItemContent>
-                                    <MudPaper Class="pa-4 flex-grow-1" Style="background: rgba(0,0,0,0.02)">
+                                    <MudPaper Class="pa-4 flex-grow-1"
+                                              Style="background: rgba(0,0,0,0.02)">
                                         <div class="d-flex justify-space-between align-center">
-                                            <MudTextField @bind-Value="step.StepKey" Label="Step Label" Variant="Variant.Text" />
+
+                                            <MudTextField @bind-Value="step.StepKey"
+                                                          Label="Step Label"
+                                                          Variant="Variant.Text" />
+
                                             <div class="d-flex">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Settings"
+                                                               Size="Size.Small" />
+
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                               Color="Color.Error"
+                                                               Size="Size.Small" />
                                             </div>
                                         </div>
-                                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Class="mt-2">@($"{step.OrderIndex + 1}. Current Step")</MudChip>
+
+                                        <MudChip T="string"
+                                                 Color="Color.Info"
+                                                 Size="Size.Small"
+                                                 Class="mt-2">
+                                            @($"{step.OrderIndex + 1}. Current Step")
+                                        </MudChip>
                                     </MudPaper>
                                 </ItemContent>
                             </MudTimelineItem>
                         }
                     </MudTimeline>
 
-                    <MudButton StartIcon="@Icons.Material.Filled.AddCircle" Color="Color.Primary" Class="mt-4" OnClick="AddStep">
+                    <MudButton StartIcon="@Icons.Material.Filled.AddCircle"
+                               Color="Color.Primary"
+                               Class="mt-4"
+                               OnClick="AddStep">
                         Add Workflow Step
                     </MudButton>
                 }
@@ -78,8 +121,9 @@
 </MudContainer>
 
 @code {
+
     private List<WorkflowStageEntity> _stages = new();
-    private WorkflowStageEntity _selectedStage;
+    private WorkflowStageEntity? _selectedStage;
     private List<WorkflowStepEntity> _steps = new();
 
     protected override async Task OnInitializedAsync()
@@ -90,7 +134,12 @@
     private async Task OnStageSelected(WorkflowStageEntity stage)
     {
         _selectedStage = stage;
-        _steps = await Supabase.GetWhere<WorkflowStepEntity>("stage_id", stage.Id);
+
+        // Guid → string conversion for Supabase filter
+        _steps = await Supabase.GetWhere<WorkflowStepEntity>(
+            "stage_id",
+            stage.Id.ToString()
+        );
     }
 
     private void AddNewStage()
@@ -100,7 +149,11 @@
 
     private void AddStep()
     {
-        _steps.Add(new WorkflowStepEntity { OrderIndex = _steps.Count, StepKey = "New Step" });
+        _steps.Add(new WorkflowStepEntity
+        {
+            OrderIndex = _steps.Count,
+            StepKey = "New Step"
+        });
     }
 
     private void SaveWorkflow()

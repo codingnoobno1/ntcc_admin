@@ -21,13 +21,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class FacultyWorkloadEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public Guid FacultyId { get; set; }
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("students_assigned")]
         public int StudentsAssigned { get; set; } = 0;

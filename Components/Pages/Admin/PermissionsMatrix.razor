@@ -41,16 +41,16 @@
             </MudAlert>
             <MudGrid>
                 <MudItem xs="12" md="4">
-                    <MudSelect T="string" Label="Select Stage" @bind-Value="_selectedStageId">
+                    <MudSelect T="Guid?" Label="Select Stage" @bind-Value="_selectedStageId">
                         @foreach (var stage in _stages)
                         {
-                            <MudSelectItem Value="@stage.Id.ToString()">@stage.Name</MudSelectItem>
+                            <MudSelectItem Value="@((Guid?)stage.Id)">@stage.Name</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
             </MudGrid>
             
-            @if (!string.IsNullOrEmpty(_selectedStageId))
+            @if (_selectedStageId != null)
             {
                 <MudTable Items="@_stageActions" Class="mt-4" Elevation="0">
                     <HeaderContent>
@@ -86,7 +86,7 @@
 @code {
     private List<RoleEntity> _roles = new();
     private List<WorkflowStageEntity> _stages = new();
-    private string _selectedStageId;
+    private Guid? _selectedStageId;
     private string[] _stageActions = { "Apply", "Approve Title", "Submit Proposal", "Mid-Term Evaluate", "Final Evaluate", "Submit Report" };
 
     protected override async Task OnInitializedAsync()

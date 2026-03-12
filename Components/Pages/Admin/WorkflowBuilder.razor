@@ -28,7 +28,7 @@
                         <MudText Typo="Typo.h6" Class="fw-bold">Workflow Stages</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddStageDialog" />
                     </div>
-                    <MudList T="string" SelectedValue="_selectedStageId" Color="Color.Primary" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStageSelected">
+                    <MudList T="Guid?" SelectedValue="_selectedStageId" Color="Color.Primary" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStageSelected">
                         @foreach (var stage in _stages)
                         {
                             <MudListItem Value="@stage.Id">
@@ -44,7 +44,7 @@
 
             <MudItem xs="12" md="8">
                 <MudPaper Class="pa-6 rounded-xl" Elevation="4">
-                    @if (string.IsNullOrEmpty(_selectedStageId))
+                    @if (_selectedStageId == null)
                     {
                         <div class="d-flex flex-column align-center justify-center py-16">
                             <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Large" Color="Color.Default" Class="mb-4" />
@@ -150,7 +150,7 @@
     private List<WorkflowStageEntity> _stages = new();
     private List<WorkflowStepEntity> _steps = new();
     private bool _isLoading = true;
-    private string _selectedStageId = string.Empty;
+    private Guid? _selectedStageId;
 
     // Dialogs
     private bool _stageDialogVisible = false, _isEditStage = false;
@@ -187,7 +187,7 @@
 
     private string GetSelectedStageName() => _stages.FirstOrDefault(s => s.Id == _selectedStageId)?.Name ?? "";
 
-    private void OnStageSelected(string id)
+    private void OnStageSelected(Guid? id)
     {
         _selectedStageId = id;
     }
@@ -221,7 +221,7 @@
     private void OpenAddStepDialog()
     {
         _isEditStep = false;
-        _editStep = new WorkflowStepEntity { WorkflowStageId = _selectedStageId, OrderIndex = _steps.Count(s => s.WorkflowStageId == _selectedStageId) + 1 };
+        _editStep = new WorkflowStepEntity { WorkflowStageId = _selectedStageId ?? Guid.Empty, OrderIndex = _steps.Count(s => s.WorkflowStageId == _selectedStageId) + 1 };
         _stepDialogVisible = true;
     }
 

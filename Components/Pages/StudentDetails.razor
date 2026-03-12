@@ -73,11 +73,14 @@
     {
         try
         {
-            student = await StudentService.GetStudentById(StudentId);
-
-            if (student != null)
+            if (Guid.TryParse(StudentId, out var studentGuid))
             {
-                activityLogs = await ActivityLogService.GetStudentTimelineAsync(StudentId);
+                student = await StudentService.GetStudentById(studentGuid);
+
+                if (student != null)
+                {
+                    activityLogs = await ActivityLogService.GetStudentTimelineAsync(studentGuid);
+                }
             }
         }
         catch (Exception ex)

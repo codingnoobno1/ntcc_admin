@@ -7,10 +7,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class EvaluationRubricEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_type_id")]
-        public string StageTypeId { get; set; } = string.Empty;
+        public Guid StageTypeId { get; set; }
 
         [Column("exam_type")]
         public string ExamType { get; set; } = string.Empty; // midterm, endterm
@@ -23,10 +23,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class RubricComponentEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("rubric_id")]
-        public string RubricId { get; set; } = string.Empty;
+        public Guid RubricId { get; set; }
 
         [Column("component_name")]
         public string ComponentName { get; set; } = string.Empty;
@@ -39,16 +39,16 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class StudentEvaluationEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("student_id")]
-        public string StudentId { get; set; } = string.Empty;
+        public Guid StudentId { get; set; }
 
         [Column("rubric_component_id")]
-        public string RubricComponentId { get; set; } = string.Empty;
+        public Guid RubricComponentId { get; set; }
 
         [Column("evaluator_id")]
-        public string? EvaluatorId { get; set; }
+        public Guid? EvaluatorId { get; set; }
 
         [Column("marks")]
         public decimal Marks { get; set; }

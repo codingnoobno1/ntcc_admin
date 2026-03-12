@@ -9,10 +9,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class ProjectGroupEntity : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        public Guid StageId { get; set; }
 
         [Column("project_title")]
         public string ProjectTitle { get; set; } = string.Empty;
@@ -31,7 +31,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public int Semester { get; set; }
 
         [Column("batch_id")]
-        public string BatchId { get; set; } = string.Empty;
+        public Guid BatchId { get; set; }
 
         [Column("submission_status")]
         public string SubmissionStatus { get; set; } = "pending";
@@ -41,7 +41,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string Status { get; set; } = "draft";
 
         [Column("mentor_id")]
-        public string? MentorId { get; set; }
+        public Guid? MentorId { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

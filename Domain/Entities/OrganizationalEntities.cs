@@ -7,13 +7,13 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class ProgramEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
 
         [Column("department_id")]
-        public string? DepartmentId { get; set; }
+        public Guid? DepartmentId { get; set; }
 
         [Column("duration_years")]
         public int DurationYears { get; set; } = 4;
@@ -23,10 +23,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class BatchEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
         [Column("program_id")]
-        public string? ProgramId { get; set; }
+        public Guid? ProgramId { get; set; }
 
         [Column("name")]
         public string Name { get; set; } = string.Empty;
@@ -37,11 +37,12 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("end_year")]
         public int EndYear { get; set; }
     }
+
     [Table("batch_semesters")]
     public class BatchSemesterEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
         [Column("batch_id")]
         public Guid BatchId { get; set; }
@@ -63,16 +64,16 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class AcademicStageRuleEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; }
 
         [Column("program_id")]
-        public string? ProgramId { get; set; }
+        public Guid? ProgramId { get; set; }
 
         [Column("semester_number")]
         public int SemesterNumber { get; set; }
 
         [Column("stage_type_id")]
-        public string StageTypeId { get; set; } = string.Empty;
+        public Guid StageTypeId { get; set; }
 
         [Column("stage_type")]
         public string StageType { get; set; } = "Minor";
@@ -84,6 +85,6 @@ namespace ntcc_admin_blazor.Domain.Entities
         public bool IsVisible { get; set; } = true;
 
         [Column("status")]
-        public string Status { get; set; } = "active"; // active, closed
+        public string Status { get; set; } = "active";
     }
 }
