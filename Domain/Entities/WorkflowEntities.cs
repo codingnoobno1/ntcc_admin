@@ -3,59 +3,95 @@ using Postgrest.Models;
 
 namespace ntcc_admin_blazor.Domain.Entities
 {
+    [Table("stage_types")]
+    public class StageTypeEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("stage_key")]
+        public string StageKey { get; set; } = string.Empty; // e.g., minor_project
+
+        [Column("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [Column("description")]
+        public string? Description { get; set; }
+
+        [Column("program_id")]
+        public string ProgramId { get; set; } = string.Empty;
+    }
+
     [Table("workflow_stages")]
     public class WorkflowStageEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public long Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Column("stage_key")]
-        public string StageKey { get; set; }
+        [Column("stage_type_id")]
+        public string StageTypeId { get; set; } = string.Empty;
+
+        [Column("name")]
+        public string Name { get; set; } = string.Empty;
 
         [Column("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
+
+        [Column("stage_key")]
+        public string StageKey { get; set; } = string.Empty;
     }
 
     [Table("workflow_steps")]
     public class WorkflowStepEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public long Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Column("stage_id")]
-        public long StageId { get; set; }
+        [Column("workflow_stage_id")]
+        public string WorkflowStageId { get; set; } = string.Empty;
 
         [Column("step_key")]
-        public string StepKey { get; set; }
+        public string StepKey { get; set; } = string.Empty;
 
-        [Column("order_index")]
+        [Column("step_name")]
+        public string StepName { get; set; } = string.Empty;
+
+        [Column("step_order")]
         public int OrderIndex { get; set; }
+
+        [Column("requires_submission")]
+        public bool RequiresSubmission { get; set; } = false;
+
+        [Column("requires_meeting")]
+        public bool RequiresMeeting { get; set; } = false;
+
+        [Column("requires_report")]
+        public bool RequiresReport { get; set; } = false;
+
+        [Column("requires_ppt")]
+        public bool RequiresPpt { get; set; } = false;
     }
 
-    [Table("step_components")]
-    public class StepComponentEntity : BaseModel
-    {
-        [Column("step_id")]
-        public long StepId { get; set; }
-
-        [Column("component_id")]
-        public long ComponentId { get; set; }
-    }
-
-    [Table("components_registry")]
-    public class ComponentRegistryEntity : DomainBase
+    [Table("stage_requirements")]
+    public class StageRequirementEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public long Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Column("component_key")]
-        public string ComponentKey { get; set; }
+        [Column("stage_type_id")]
+        public string StageTypeId { get; set; } = string.Empty;
 
-        [Column("type")]
-        public string Type { get; set; } // metric, visualization, academic, evaluation, productivity
+        [Column("required_meetings")]
+        public int RequiredMeetings { get; set; } = 0;
 
-        [Column("description")]
-        public string Description { get; set; }
+        [Column("required_reports")]
+        public int RequiredReports { get; set; } = 0;
+
+        [Column("required_presentations")]
+        public int RequiredPresentations { get; set; } = 0;
+
+        [Column("required_publications")]
+        public int RequiredPublications { get; set; } = 0;
     }
 
     [Table("student_workflow_steps")]
@@ -67,8 +103,8 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("student_id")]
         public string StudentId { get; set; } = string.Empty;
 
-        [Column("step_id")]
-        public long StepId { get; set; }
+        [Column("workflow_step_id")]
+        public string WorkflowStepId { get; set; } = string.Empty;
 
         [Column("status")]
         public string Status { get; set; } = "pending"; // pending, submitted, approved, rejected

@@ -1,0 +1,140 @@
+@page "/student/meeting-log"
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@inject IWorkflowService WorkflowService
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Meeting Log - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <div class="d-flex align-center justify-space-between mb-6">
+        <div class="d-flex align-center">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" href="/student/project" Class="mr-4" />
+            <div>
+                <MudText Typo="Typo.h4" Class="fw-bold">Meeting <span class="text-primary">Logs</span></MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Review your supervisor interactions and progress</MudText>
+            </div>
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenLogMeetingDialog">Log New Meeting</MudButton>
+    </div>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var meeting in _meetings)
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-6 rounded-xl shadow-sm border-l-4" Style="@($"border-left-color: {GetScoreColor(meeting.ProgressScore)}")" Elevation="0">
+                        <div class="d-flex justify-space-between align-start">
+                            <div>
+                                <div class="d-flex align-center gap-2 mb-1">
+                                    <MudText Typo="Typo.h6" Class="fw-bold">@(((DateTime)meeting.MeetingDate).ToString("MMMM dd, yyyy"))</MudText>
+                                    <MudRating ReadOnly="true" SelectedValue="@meeting.ProgressScore" MaxValue="5" Size="Size.Small" Color="Color.Warning" />
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">Supervisor: Prof. Amit Kumar</MudText>
+                                <MudText Typo="Typo.body1">@meeting.Summary</MudText>
+                            </div>
+                            @if (!string.IsNullOrEmpty(meeting.ReportUrl))
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Attachment" Target="_blank" href="@meeting.ReportUrl">View Report</MudButton>
+                            }
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+            
+            @if (!_meetings.Any())
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="rounded-xl">No meetings logged yet. Start by logging your first interaction!</MudAlert>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@* Log Meeting Dialog *@
+<MudDialog @bind-Visible="_logDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Log Supervisor Meeting</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudDatePicker @bind-Date="_newMeeting.MeetingDate" Label="Meeting Date" Required="true" />
+            <MudText Typo="Typo.caption">Progress Score (Self-Assessment)</MudText>
+            <MudRating @bind-SelectedValue="_newMeeting.ProgressScore" MaxValue="5" />
+            <MudTextField @bind-Value="_newMeeting.Summary" Label="Meeting Summary & Future Goals" Lines="4" Variant="Variant.Outlined" Required="true" />
+            <MudTextField @bind-Value="_newMeeting.ReportUrl" Label="Report Link (Drive/Doc)" Placeholder="https://..." />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _logDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveMeeting">Log Meeting</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _isLoading = true;
+    private List<SupervisorMeetingDto> _meetings = new();
+    private string _studentId = "stud-123";
+
+    // Dialog Logic
+    private bool _logDialogVisible = false;
+    private SupervisorMeetingDto _newMeeting = new();
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            _meetings = await WorkflowService.GetStudentMeetingsAsync(_studentId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading meetings: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetScoreColor(int score) => score switch
+    {
+        >= 4 => "var(--mud-palette-success)",
+        >= 2 => "var(--mud-palette-warning)",
+        _ => "var(--mud-palette-error)"
+    };
+
+    private void OpenLogMeetingDialog()
+    {
+        _newMeeting = new SupervisorMeetingDto { MeetingDate = DateTime.Today, StudentId = _studentId, FacultyId = "fac-1" };
+        _logDialogVisible = true;
+    }
+
+    private async Task SaveMeeting()
+    {
+        await WorkflowService.LogMeetingAsync(_newMeeting);
+        Snackbar.Add("Meeting logged successfully!", Severity.Success);
+        _logDialogVisible = false;
+        await LoadData();
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .rounded-xl { border-radius: 16px !important; }
+    .shadow-sm { box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important; }
+    .border-l-4 { border-left-width: 6px !important; }
+</style>

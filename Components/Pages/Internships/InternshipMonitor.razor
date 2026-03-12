@@ -17,7 +17,7 @@
         </MudButton>
     </div>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="px-0 py-6" Class="rounded-xl">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" ContentClass="px-0 py-6" Class="rounded-xl">
         <MudTabPanel Text="Active Placements" Icon="@Icons.Material.Filled.BusinessCenter">
              <MudTable Items="@interns" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@isLoading" Elevation="0">
                 <HeaderContent>
@@ -45,11 +45,11 @@
                     <MudTd DataLabel="Status">
                         @if(context.Status == "Verified")
                         {
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.CheckCircle">Verified</MudChip>
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled" Icon="@Icons.Material.Filled.CheckCircle">Verified</MudChip>
                         }
                         else
                         {
-                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Pending">Pending NOC</MudChip>
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Pending">Pending NOC</MudChip>
                         }
                     </MudTd>
                     <MudTd DataLabel="Faculty Guide">@context.Guide</MudTd>

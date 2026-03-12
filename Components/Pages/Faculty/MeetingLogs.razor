@@ -1,0 +1,194 @@
+@page "/faculty/meeting-logs"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@inject IWorkflowService WorkflowService
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Meeting Logs - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Class="fw-bold">Supervisor <span class="text-primary">Meeting Logs</span></MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Review student interactions and progress scores</MudText>
+    </div>
+
+    <MudGrid>
+        @* Student Selector *@
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 rounded-xl shadow-sm" Elevation="0">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-4">Select Student</MudText>
+                <MudTextField @bind-Value="_searchQuery" Placeholder="Search by name or enrolment..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-4" />
+                
+                <MudList T="string" SelectedValue="_selectedStudentId" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStudentSelected">
+                    @foreach (var student in _filteredStudents)
+                    {
+                        <MudListItem Value="@student.Id">
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-3">@student.Name[0]</MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@student.Name</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@student.Enrolment</MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        </MudItem>
+
+        @* Meeting History *@
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6 rounded-xl shadow-sm border-0" Elevation="0" MinHeight="500px">
+                @if (string.IsNullOrEmpty(_selectedStudentId))
+                {
+                    <div class="d-flex flex-column align-center justify-center py-16">
+                        <MudIcon Icon="@Icons.Material.Filled.Forum" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+                        <MudText Typo="Typo.body1" Class="mud-text-secondary">Select a student to view meeting history</MudText>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-space-between align-center mb-6">
+                        <MudText Typo="Typo.h6" Class="fw-bold">Meeting History - @GetSelectedStudentName()</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddMeetingDialog">Add Meeting</MudButton>
+                    </div>
+
+                    @if (_isMeetingsLoading)
+                    {
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudTable Items="_meetings" Hover="true" Elevation="0" Class="mud-table-transparent">
+                            <HeaderContent>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Notes</MudTh>
+                                <MudTh>Score</MudTh>
+                                <MudTh>Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@(((DateTime)context.MeetingDate).ToString("MMM dd, yyyy"))</MudTd>
+                                <MudTd>
+                                    <MudText Typo="Typo.body2" Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@context.Summary</MudText>
+                                </MudTd>
+                                <MudTd>
+                                    <MudRating ReadOnly="true" SelectedValue="@context.ProgressScore" MaxValue="5" Size="Size.Small" />
+                                </MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Attachment" Color="@(string.IsNullOrEmpty(context.ReportUrl) ? Color.Default : Color.Info)" Size="Size.Small" Href="@context.ReportUrl" Target="_blank" />
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        
+                        @if (!_meetings.Any())
+                        {
+                            <MudText Typo="Typo.body1" Class="mud-text-secondary py-8 text-center">No meetings logged for this student yet.</MudText>
+                        }
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@* Add Meeting Dialog *@
+<MudDialog @bind-Visible="_dialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Log Interaction</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudDatePicker @bind-Date="_newMeeting.MeetingDate" Label="Date" />
+            <MudText Typo="Typo.caption">Progress Score</MudText>
+            <MudRating @bind-SelectedValue="_newMeeting.ProgressScore" MaxValue="5" />
+            <MudTextField @bind-Value="_newMeeting.Summary" Label="Meeting Notes" Lines="3" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_newMeeting.ReportUrl" Label="Report Link" Placeholder="Google Drive URL..." />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _dialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveMeeting">Save Log</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _isLoading = true;
+    private bool _isMeetingsLoading = false;
+    private string _searchQuery = "";
+    private string _selectedStudentId = "";
+    private List<StudentMinDto> _students = new();
+    private List<SupervisorMeetingDto> _meetings = new();
+    
+    private bool _dialogVisible = false;
+    private SupervisorMeetingDto _newMeeting = new();
+
+    private IEnumerable<StudentMinDto> _filteredStudents => 
+        string.IsNullOrWhiteSpace(_searchQuery) 
+        ? _students 
+        : _students.Where(s => s.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || s.Enrolment.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudents();
+    }
+
+    private async Task LoadStudents()
+    {
+        _isLoading = true;
+        // Mocking student list for demo
+        _students = new List<StudentMinDto>
+        {
+            new() { Id = "stud-01", Name = "Rahul Sharma", Enrolment = "A2305221001" },
+            new() { Id = "stud-02", Name = "Priya V", Enrolment = "A2305221005" },
+            new() { Id = "stud-03", Name = "Aman Gupta", Enrolment = "A2305221009" }
+        };
+        _isLoading = false;
+    }
+
+    private async Task OnStudentSelected(string studentId)
+    {
+        _selectedStudentId = studentId;
+        _isMeetingsLoading = true;
+        try
+        {
+            _meetings = await WorkflowService.GetStudentMeetingsAsync(studentId);
+        }
+        finally
+        {
+            _isMeetingsLoading = false;
+        }
+    }
+
+    private string GetSelectedStudentName() => _students.FirstOrDefault(s => s.Id == _selectedStudentId)?.Name ?? "";
+
+    private void OpenAddMeetingDialog()
+    {
+        _newMeeting = new SupervisorMeetingDto() { MeetingDate = DateTime.Today, StudentId = _selectedStudentId, FacultyId = "fac-1" };
+        _dialogVisible = true;
+    }
+
+    private async Task SaveMeeting()
+    {
+        await WorkflowService.LogMeetingAsync(_newMeeting);
+        Snackbar.Add("Meeting logged!", Severity.Success);
+        _dialogVisible = false;
+        await OnStudentSelected(_selectedStudentId);
+    }
+
+    public class StudentMinDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Enrolment { get; set; }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .rounded-xl { border-radius: 16px !important; }
+    .shadow-sm { box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important; }
+</style>

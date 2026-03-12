@@ -11,14 +11,14 @@
         <MudItem xs="12" md="4">
             <MudPaper Class="pa-6" Elevation="4" Style="border-radius: 16px; min-height: 80vh;">
                 <MudText Typo="Typo.h5" Class="fw-bold mb-4">Stages</MudText>
-                <MudList T="WorkflowStageEntity" Clickable="true" @bind-SelectedValue="_selectedStage">
+                <MudList T="WorkflowStageEntity" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStageSelected">
                     @foreach (var stage in _stages)
                     {
                         <MudListItem Value="@stage">
                             <div class="d-flex align-center">
                                 <MudIcon Icon="@Icons.Custom.Uncategorized.AlertSuccess" Color="Color.Primary" Class="me-3" />
                                 <div>
-                                    <MudText Typo="Typo.body1" Class="fw-bold">@stage.StageKey</MudText>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">@stage.Name</MudText>
                                     <MudText Typo="Typo.caption">B.Tech CSE - Semester 6</MudText>
                                 </div>
                             </div>

@@ -1,0 +1,214 @@
+@page "/student/project"
+@using MudBlazor
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@inject IWorkflowService WorkflowService
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>My Project - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (_dashboard == null)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="rounded-xl">
+            No active stage found for your current semester. Please contact your coordinator.
+        </MudAlert>
+    }
+    else
+    {
+        <div class="mb-6">
+            <MudText Typo="Typo.h4" Class="fw-bold">My <span class="text-primary">@_dashboard.StageName</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Track your progress and submit artefacts</MudText>
+        </div>
+
+        <MudGrid>
+            @* Progress Overview *@
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-6 rounded-xl mb-6 shadow-sm" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Workflow Steps</MudText>
+                    <MudTimeline TimelinePosition="TimelinePosition.Start">
+                        @foreach (var step in _dashboard.Steps)
+                        {
+                            <MudTimelineItem Color="@GetStepColor(step.Status)" Size="Size.Medium">
+                                <ItemContent>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@step.Name</MudText>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@GetStepStatusText(step)</MudText>
+                                        </div>
+                                        @if (step.Status == Domain.Enums.StepStatus.Pending || step.Status == Domain.Enums.StepStatus.Rejected)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenSubmission(step)">
+                                                @((step.RequiresSubmission) ? "Submit" : "Mark Done")
+                                            </MudButton>
+                                        }
+                                    </div>
+                                </ItemContent>
+                            </MudTimelineItem>
+                        }
+                    </MudTimeline>
+                </MudPaper>
+            </MudItem>
+
+            @* Right Sidebar: Stats & Meetings *@
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-6 rounded-xl mb-6 bg-primary mud-text-white shadow-sm" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">Completion Status</MudText>
+                    <div class="d-flex align-center gap-4">
+                        <MudProgressCircular Color="Color.Inherit" Value="@CalculateProgress()" Size="Size.Large" StrokeWidth="4" />
+                        <div>
+                            <MudText Typo="Typo.h4">@CalculateProgress()%</MudText>
+                            <MudText Typo="Typo.body2">Overall Progress</MudText>
+                        </div>
+                    </div>
+                </MudPaper>
+
+                <MudPaper Class="pa-6 rounded-xl mb-6 shadow-sm" Elevation="0">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="fw-bold">Supervisor Meetings</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" href="/student/meeting-log" />
+                    </div>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-space-between">
+                            <MudText Typo="Typo.body2">Required</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_dashboard.RequiredMeetings</MudText>
+                        </div>
+                        <div class="d-flex justify-space-between">
+                            <MudText Typo="Typo.body2">Logged</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_dashboard.LoggedMeetings</MudText>
+                        </div>
+                        <MudProgressLinear Color="@(_dashboard.LoggedMeetings >= _dashboard.RequiredMeetings ? Color.Success : Color.Warning)" 
+                                          Value="@((double)_dashboard.LoggedMeetings / _dashboard.RequiredMeetings * 100)" 
+                                          Size="Size.Medium" Class="rounded-pill" />
+                    </div>
+                </MudPaper>
+
+                <MudPaper Class="pa-6 rounded-xl shadow-sm" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Artefacts</MudText>
+                    <div class="d-flex flex-column gap-2">
+                         <div class="d-flex justify-space-between">
+                            <MudText Typo="Typo.body2">Required Reports</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_dashboard.RequiredReports</MudText>
+                        </div>
+                         <div class="d-flex justify-space-between">
+                            <MudText Typo="Typo.body2">Submitted</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_dashboard.SubmittedReports</MudText>
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@* Submission Dialog *@
+<MudDialog @bind-Visible="_subDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Submit @_selectedStep?.Name</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudAlert Severity="Severity.Info">Please provide your report link (Google Drive / GitHub) or upload the file.</MudAlert>
+            <MudTextField @bind-Value="_submissionUrl" Label="Document Link" Placeholder="https://drive.google.com/..." Required="true" />
+            <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" for="artefact-upload">
+                Upload Report
+            </MudButton>
+            <InputFile id="artefact-upload" OnChange="OnFilesChanged" hidden />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _subDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitStep">Submit Now</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _isLoading = true;
+    private StageDashboardDto? _dashboard;
+    private string _studentId = "stud-123"; // Logic to get from Auth
+
+    // Submission Logic
+    private bool _subDialogVisible = false;
+    private WorkflowStepDto? _selectedStep;
+    private string _submissionUrl = "";
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            // Resolve program and sem from student profile (mocked)
+            _dashboard = await WorkflowService.GetStageDashboardAsync(_studentId, "prog-1", 6);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading dashboard: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private Color GetStepColor(Domain.Enums.StepStatus status) => status switch
+    {
+        Domain.Enums.StepStatus.Approved => Color.Success,
+        Domain.Enums.StepStatus.Submitted => Color.Info,
+        Domain.Enums.StepStatus.Rejected => Color.Error,
+        _ => Color.Default
+    };
+
+    private string GetStepStatusText(WorkflowStepDto step) => step.Status switch
+    {
+        Domain.Enums.StepStatus.Approved => "Approved on " + step.SubmittedAt?.ToShortDateString(),
+        Domain.Enums.StepStatus.Submitted => "Under review",
+        Domain.Enums.StepStatus.Rejected => "Requires Resubmission",
+        _ => "Pending"
+    };
+
+    private int CalculateProgress()
+    {
+        if (_dashboard == null || !_dashboard.Steps.Any()) return 0;
+        return (int)((double)_dashboard.Steps.Count(s => s.Status == Domain.Enums.StepStatus.Approved) / _dashboard.Steps.Count * 100);
+    }
+
+    private void OpenSubmission(WorkflowStepDto step)
+    {
+        _selectedStep = step;
+        _submissionUrl = "";
+        _subDialogVisible = true;
+    }
+
+    private void OnFilesChanged(InputFileChangeEventArgs e)
+    {
+        // Handle file upload
+    }
+
+    private async Task SubmitStep()
+    {
+        if (_selectedStep == null) return;
+        
+        await WorkflowService.SubmitStepArtefactAsync(_studentId, _selectedStep.Id, _submissionUrl, "");
+        Snackbar.Add("Submitted successfully!", Severity.Success);
+        _subDialogVisible = false;
+        await LoadData();
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .rounded-xl { border-radius: 16px !important; }
+    .bg-primary { background-color: var(--mud-palette-primary) !important; }
+    .shadow-sm { box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important; }
+</style>

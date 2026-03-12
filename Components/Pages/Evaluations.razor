@@ -34,7 +34,7 @@
                 <MudSelect T="string" Label="Active Stage" @bind-Value="selectedStageId" Variant="Variant.Outlined" Dense="true" Class="rounded-lg">
                     @foreach (var s in stages)
                     {
-                        <MudSelectItem Value="@s.Id">@s.Name (@s.Program)</MudSelectItem>
+                        <MudSelectItem Value="@s.Id">@s.Name (@s.ProgramId)</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -81,11 +81,11 @@
                     <MudTd DataLabel="Student Name">@context.FullName</MudTd>
                     <MudTd DataLabel="Max Marks">100</MudTd>
                     <MudTd DataLabel="Score">
-                        <MudNumericField T="decimal?" Value="@GetScore(context.Id)" Disabled="true" Variant="Variant.Text" Margin="Margin.None" Class="score-display" />
+                        <MudNumericField T="decimal?" Value="@((decimal?)GetMarks(context.Id))" Disabled="true" Variant="Variant.Text" Margin="Margin.None" Class="score-display" />
                     </MudTd>
                     <MudTd DataLabel="Status">
-                        <MudChip T="string" Color="@(GetScore(context.Id).HasValue ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Text">
-                            @(GetScore(context.Id).HasValue ? "Evaluated" : "Pending")
+                        <MudChip T="string" Color="@(GetMarks(context.Id).HasValue ? Color.Success : Color.Warning)" Size="Size.Small" Variant="Variant.Text">
+                            @(GetMarks(context.Id).HasValue ? "Evaluated" : "Pending")
                         </MudChip>
                     </MudTd>
                     <MudTd>
@@ -108,7 +108,7 @@
         @if (selectedStudent != null)
         {
             <MudText Typo="Typo.subtitle1" Class="fw-bold mb-4">@selectedStudent.FullName (@selectedStudent.RollNumber)</MudText>
-            <MudNumericField @bind-Value="currentScore" Label="Score (Marks)" Min="0" Max="100" Step="0.5m" Variant="Variant.Outlined" Class="mb-4" />
+            <MudNumericField T="decimal" @bind-Value="currentScore" Label="Score (Marks)" Min="0" Max="100" Step="0.5m" Variant="Variant.Outlined" Class="mb-4" />
             <MudTextField @bind-Value="currentRemarks" Label="Feedback / Remarks" Lines="3" Placeholder="Enter constructive feedback..." Variant="Variant.Outlined" Class="mb-4" />
         }
     </DialogContent>
@@ -124,17 +124,17 @@
     string? selectedStageId;
     string? selectedCategoryId;
     
-    List<NtccStage> stages = new();
-    List<StudentEntity> studentList = new();
-    List<EvaluationScoreEntity> scores = new();
+    List<StageTypeEntity> stages = new();
+    List<StudentMinDto> studentList = new();
+    List<StudentEvaluationEntity> scores = new();
     
-    StudentEntity? selectedStudent;
+    StudentMinDto? selectedStudent;
     decimal currentScore;
     string? currentRemarks;
 
     protected override async Task OnInitializedAsync()
     {
-        stages = await StageService.GetAllStages();
+        stages = await Supabase.GetAll<StageTypeEntity>();
     }
 
     async Task LoadEvaluationList()
@@ -148,11 +148,9 @@
         isLoading = true;
         try
         {
-            studentList = await Supabase.GetAll<StudentEntity>();
-            scores = await Supabase.GetAll<EvaluationScoreEntity>();
-            
-            // Filter scores by stage if possible, or just let UI handle it via GetScore
-            scores = scores.Where(x => x.StageId == selectedStageId).ToList();
+            var studentEntities = await Supabase.GetAll<StudentEntity>();
+            studentList = studentEntities.Select(s => new StudentMinDto { Id = s.Id, Name = s.FullName, Enrolment = s.RollNumber ?? "" }).ToList();
+            scores = await Supabase.GetAll<StudentEvaluationEntity>();
         }
         catch (Exception ex)
         {
@@ -164,12 +162,12 @@
         }
     }
 
-    decimal? GetScore(string studentId) => scores.FirstOrDefault(s => s.StudentId == studentId)?.Score;
+    decimal? GetMarks(string studentId) => scores.FirstOrDefault(s => s.StudentId == studentId)?.Marks;
 
-    void OpenScoring(StudentEntity s)
+    void OpenScoring(StudentMinDto s)
     {
         selectedStudent = s;
-        currentScore = GetScore(s.Id) ?? 0;
+        currentScore = GetMarks(s.Id) ?? 0;
         currentRemarks = scores.FirstOrDefault(x => x.StudentId == s.Id)?.Remarks;
         scoringVisible = true;
     }
@@ -178,20 +176,28 @@
     {
         if (selectedStudent != null)
         {
-            var existing = scores.FirstOrDefault(x => x.StudentId == selectedStudent.Id);
-            if (existing != null) 
-            {
-                existing.Score = currentScore;
-                existing.Remarks = currentRemarks;
-            }
-            else
-            {
-                scores.Add(new EvaluationScoreEntity { StudentId = selectedStudent.Id, Score = currentScore, Remarks = currentRemarks });
-            }
+            var eval = new StudentEvaluationEntity 
+            { 
+                StudentId = selectedStudent.Id, 
+                Marks = currentScore, 
+                Remarks = currentRemarks,
+                EvaluatorId = "faculty-1"
+            };
             
+            await Supabase.Upsert(eval);
             Snackbar.Add("Grading saved successfully!", Severity.Success);
             scoringVisible = false;
+            await LoadEvaluationList();
         }
+    }
+
+    public class StudentMinDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Enrolment { get; set; }
+        public string FullName => Name;
+        public string RollNumber => Enrolment;
     }
 }
 

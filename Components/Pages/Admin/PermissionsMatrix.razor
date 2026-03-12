@@ -9,10 +9,10 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <MudText Typo="Typo.h4" GutterBottom="true" Color="Color.Primary" Class="fw-bold mb-6">
-        <MudIcon Icon="@Icons.Material.Filled.Shield" Class="me-2" /> Role & Permission Matrix
+        <MudIcon Icon="@Icons.Material.Filled.Forum" Size="Size.Large" Color="Color.Default" Class="mb-4" /> Role & Permission Matrix
     </MudText>
 
-    <MudTabs Elevation="4" Rounded="true" Color="Color.Primary" PanelClass="pa-6" Class="permission-tabs">
+    <MudTabs Elevation="4" Rounded="true" Color="Color.Primary" ContentClass="pa-6" Class="permission-tabs">
         <MudTabPanel Text="Global Permissions">
             <MudTable Items="@_roles" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
                 <HeaderContent>
@@ -41,16 +41,16 @@
             </MudAlert>
             <MudGrid>
                 <MudItem xs="12" md="4">
-                    <MudSelect T="long" Label="Select Stage" @bind-Value="_selectedStageId">
+                    <MudSelect T="string" Label="Select Stage" @bind-Value="_selectedStageId">
                         @foreach (var stage in _stages)
                         {
-                            <MudSelectItem Value="@stage.Id">@stage.StageKey</MudSelectItem>
+                            <MudSelectItem Value="@stage.Id.ToString()">@stage.Name</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
             </MudGrid>
             
-            @if (_selectedStageId > 0)
+            @if (!string.IsNullOrEmpty(_selectedStageId))
             {
                 <MudTable Items="@_stageActions" Class="mt-4" Elevation="0">
                     <HeaderContent>
@@ -86,7 +86,7 @@
 @code {
     private List<RoleEntity> _roles = new();
     private List<WorkflowStageEntity> _stages = new();
-    private long _selectedStageId;
+    private string _selectedStageId;
     private string[] _stageActions = { "Apply", "Approve Title", "Submit Proposal", "Mid-Term Evaluate", "Final Evaluate", "Submit Report" };
 
     protected override async Task OnInitializedAsync()

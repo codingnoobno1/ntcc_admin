@@ -38,7 +38,7 @@ namespace ntcc_admin_blazor.Services
         public async Task<AcademicStageRuleEntity?> GetActiveStage(string programId, int semesterNumber)
         {
             var rules = await _supabase.GetWhere<AcademicStageRuleEntity>("program_id", programId);
-            return rules.FirstOrDefault(r => r.SemesterNumber == semesterNumber);
+            return rules.FirstOrDefault(r => r.SemesterNumber == semesterNumber && r.Status == "active");
         }
         public int CalculateCurrentSemester(int startYear, int totalYears, AcademicConfig? config = null)
         {

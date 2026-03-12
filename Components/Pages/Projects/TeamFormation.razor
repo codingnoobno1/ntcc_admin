@@ -31,7 +31,7 @@
                 <MudTextField @bind-Value="searchString" Placeholder="Search students..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" Class="mb-4" Variant="Variant.Outlined"></MudTextField>
                 
                 <div class="flex-grow-1 overflow-y-auto pr-2">
-                    <MudList T="string" Dense="true" Hover="true">
+                    <MudList T="string" Dense="true">
                         <MudListItem Class="border-solid border-1 mud-border-lines-default rounded px-3 py-2 mb-2 draggable-item">
                              <div class="d-flex align-center cursor-move">
                                  <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Class="mr-2 mud-text-secondary" Size="Size.Small"/>
@@ -74,7 +74,7 @@
                              </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent Class="pt-4">
-                            <MudList T="string" Dense="true" DisablePadding="true">
+                            <MudList T="string" Dense="true">
                                 <MudListItem Class="px-0 py-1">
                                     <div class="d-flex align-center">
                                         <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-3">A</MudAvatar>
@@ -109,7 +109,7 @@
                              </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent Class="pt-4">
-                            <MudList T="string" Dense="true" DisablePadding="true" Class="mb-4">
+                            <MudList T="string" Dense="true" Class="mb-4">
                                 <MudListItem Class="px-0 py-1">
                                     <div class="d-flex align-center">
                                         <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-3">S</MudAvatar>

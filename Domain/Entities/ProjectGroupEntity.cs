@@ -21,6 +21,21 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("project_description")]
         public string ProjectDescription { get; set; } = string.Empty;
 
+        [Column("project_type")]
+        public string ProjectType { get; set; } = "Minor";
+
+        [Column("description")]
+        public string Description { get; set; } = string.Empty;
+
+        [Column("semester")]
+        public int Semester { get; set; }
+
+        [Column("batch_id")]
+        public string BatchId { get; set; } = string.Empty;
+
+        [Column("submission_status")]
+        public string SubmissionStatus { get; set; } = "pending";
+
         // pending, approved, rejected, draft
         [Column("status")]
         public string Status { get; set; } = "draft";
@@ -33,5 +48,8 @@ namespace ntcc_admin_blazor.Domain.Entities
 
         [Column("updated_at")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("gdrive_link")]
+        public string? GDriveLink { get; set; }
     }
 }

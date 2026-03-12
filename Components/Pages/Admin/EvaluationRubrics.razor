@@ -1,0 +1,263 @@
+@page "/admin/evaluation-rubrics/{StageTypeId}"
+@using ntcc_admin_blazor.Domain.Entities
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Evaluation Rubrics - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex align-center mb-6">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" href="/admin/stage-engine" Class="mr-4" />
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Evaluation <span class="text-primary">Rubrics</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Define grading criteria and marks for @(_stageType?.Name ?? "Loading...")</MudText>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-6 rounded-xl" Elevation="4">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="fw-bold">Exam Types</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddRubricDialog" />
+                    </div>
+                    <MudList T="string" SelectedValue="_selectedRubricId" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnRubricSelected">
+                        @foreach (var rubric in _rubrics)
+                        {
+                            <MudListItem Value="@rubric.Id">
+                                <div class="d-flex justify-space-between align-center w-100">
+                                    <div>
+                                        <MudText>@rubric.ExamType.ToUpper()</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Total: @rubric.TotalMarks</MudText>
+                                    </div>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => EditRubric(rubric)" />
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudPaper>
+
+                @* Stage Requirements Card *@
+                <MudPaper Class="pa-6 rounded-xl mt-6" Elevation="4">
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-4">Global Requirements</MudText>
+                    <MudNumericField @bind-Value="_requirement.RequiredMeetings" Label="Required Meetings" Min="0" Class="mb-4" />
+                    <MudNumericField @bind-Value="_requirement.RequiredReports" Label="Required Reports" Min="0" Class="mb-4" />
+                    <MudNumericField @bind-Value="_requirement.RequiredPresentations" Label="Required Presentations" Min="0" Class="mb-4" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SaveRequirements">Save Requirements</MudButton>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-6 rounded-xl" Elevation="4" MinHeight="400px">
+                    @if (string.IsNullOrEmpty(_selectedRubricId))
+                    {
+                        <div class="d-flex flex-column align-center justify-center py-16">
+                            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+                            <MudText Typo="Typo.body1" Class="mud-text-secondary">Select an exam type to define rubric components</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-space-between align-center mb-6">
+                            <MudText Typo="Typo.h6" Class="fw-bold">Components for @GetSelectedRubricName()</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddComponentDialog">Add Component</MudButton>
+                        </div>
+
+                        <MudTable Items="_components.Where(c => c.RubricId == _selectedRubricId)" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Criterion</MudTh>
+                                <MudTh>Max Marks</MudTh>
+                                <MudTh>Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">@context.ComponentName</MudText>
+                                </MudTd>
+                                <MudTd>@context.MaxMarks</MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditComponent(context)" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteComponent(context)" />
+                                </MudTd>
+                            </RowTemplate>
+                            <FooterContent>
+                                <MudTFootRow>
+                                    <MudTd Class="fw-bold">Total Weightage</MudTd>
+                                    <MudTd Class="fw-bold">@_components.Where(c => c.RubricId == _selectedRubricId).Sum(c => c.MaxMarks)</MudTd>
+                                    <MudTd />
+                                </MudTFootRow>
+                            </FooterContent>
+                        </MudTable>
+                        
+                        @if (_components.Where(c => c.RubricId == _selectedRubricId).Sum(c => c.MaxMarks) != GetSelectedRubricTotal())
+                        {
+                            <MudAlert Severity="Severity.Warning" Class="mt-4">The sum of component marks does not match the total marks defined for this rubric.</MudAlert>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@* Rubric Dialog *@
+<MudDialog @bind-Visible="_rubricDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditRubric ? "Update Rubric" : "Add Rubric")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_editRubric.ExamType" Label="Exam Type" Placeholder="e.g. midterm, endterm" Required="true" />
+            <MudNumericField @bind-Value="_editRubric.TotalMarks" Label="Total Marks" Min="1" Required="true" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _rubricDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveRubric">Save Rubric</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Component Dialog *@
+<MudDialog @bind-Visible="_componentDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditComponent ? "Update Component" : "Add Component")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_editComponent.ComponentName" Label="Component Name" Placeholder="e.g. Analysis, Viva" Required="true" />
+            <MudNumericField @bind-Value="_editComponent.MaxMarks" Label="Max Marks" Min="1" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _componentDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveComponent">Save Component</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string StageTypeId { get; set; } = string.Empty;
+
+    private StageTypeEntity? _stageType;
+    private List<EvaluationRubricEntity> _rubrics = new();
+    private List<RubricComponentEntity> _components = new();
+    private StageRequirementEntity _requirement = new();
+    private bool _isLoading = true;
+    private string _selectedRubricId = string.Empty;
+
+    // Dialogs
+    private bool _rubricDialogVisible = false, _isEditRubric = false;
+    private EvaluationRubricEntity _editRubric = new();
+    
+    private bool _componentDialogVisible = false, _isEditComponent = false;
+    private RubricComponentEntity _editComponent = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            var types = await Supabase.GetWhere<StageTypeEntity>("id", StageTypeId);
+            _stageType = types.FirstOrDefault();
+            
+            _rubrics = await Supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", StageTypeId);
+            _components = await Supabase.GetAll<RubricComponentEntity>(); // Optimization: fetch filtered in real app
+
+            var reqs = await Supabase.GetWhere<StageRequirementEntity>("stage_type_id", StageTypeId);
+            _requirement = reqs.FirstOrDefault() ?? new StageRequirementEntity { StageTypeId = StageTypeId };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading rubrics: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetSelectedRubricName() => _rubrics.FirstOrDefault(r => r.Id == _selectedRubricId)?.ExamType.ToUpper() ?? "";
+    private int GetSelectedRubricTotal() => _rubrics.FirstOrDefault(r => r.Id == _selectedRubricId)?.TotalMarks ?? 0;
+
+    private void OnRubricSelected(string id)
+    {
+        _selectedRubricId = id;
+    }
+
+    // Rubric CRUD
+    private void OpenAddRubricDialog()
+    {
+        _isEditRubric = false;
+        _editRubric = new EvaluationRubricEntity { StageTypeId = StageTypeId };
+        _rubricDialogVisible = true;
+    }
+
+    private void EditRubric(EvaluationRubricEntity rubric)
+    {
+        _isEditRubric = true;
+        _editRubric = rubric;
+        _rubricDialogVisible = true;
+    }
+
+    private async Task SaveRubric()
+    {
+        if (_isEditRubric) await Supabase.Update(_editRubric);
+        else await Supabase.Insert(_editRubric);
+        
+        Snackbar.Add("Rubric saved!", Severity.Success);
+        _rubricDialogVisible = false;
+        await LoadData();
+    }
+
+    // Component CRUD
+    private void OpenAddComponentDialog()
+    {
+        _isEditComponent = false;
+        _editComponent = new RubricComponentEntity { RubricId = _selectedRubricId };
+        _componentDialogVisible = true;
+    }
+
+    private void EditComponent(RubricComponentEntity component)
+    {
+        _isEditComponent = true;
+        _editComponent = component;
+        _componentDialogVisible = true;
+    }
+
+    private async Task SaveComponent()
+    {
+        if (_isEditComponent) await Supabase.Update(_editComponent);
+        else await Supabase.Insert(_editComponent);
+        
+        Snackbar.Add("Component saved!", Severity.Success);
+        _componentDialogVisible = false;
+        await LoadData();
+    }
+
+    private async Task DeleteComponent(RubricComponentEntity component)
+    {
+        await Supabase.Delete(component);
+        Snackbar.Add("Component deleted", Severity.Info);
+        await LoadData();
+    }
+
+    private async Task SaveRequirements()
+    {
+        await Supabase.Upsert(_requirement);
+        Snackbar.Add("Requirements saved", Severity.Success);
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+</style>

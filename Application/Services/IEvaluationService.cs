@@ -4,11 +4,11 @@ namespace ntcc_admin_blazor.Application.Services
 {
     public interface IEvaluationService
     {
-        Task<EvaluationSchemeEntity?> GetSchemeForStageAsync(long stageId);
-        Task<List<EvaluationCategoryEntity>> GetCategoriesForSchemeAsync(long schemeId);
-        Task<List<EvaluationComponentEntity>> GetComponentsForCategoryAsync(long categoryId);
-        Task<bool> SubmitScoreAsync(string studentId, long componentId, int marks);
-        Task<int> CalculateTotalScoreAsync(string studentId, long stageId);
-        Task<bool> LockEvaluationAsync(string studentId, long stageId);
+        Task<EvaluationRubricEntity?> GetRubricForStageTypeAsync(string stageTypeId, string examType);
+        Task<List<RubricComponentEntity>> GetComponentsForRubricAsync(string rubricId);
+        Task<bool> SubmitStudentMarksAsync(string studentId, string componentId, decimal marks, string remarks);
+        Task<decimal> CalculateTotalScoreAsync(string studentId, string rubricId);
+        Task<bool> IsEvaluationCompleteAsync(string studentId, string rubricId);
+        
     }
 }

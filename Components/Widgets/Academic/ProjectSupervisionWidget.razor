@@ -1,6 +1,5 @@
-@using MudBlazor
-@using ntcc_admin_blazor.Services
-@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
 @inject SupabaseService Supabase
 
 <MudPaper Class="pa-6 proj-supervision-widget d-flex flex-column" Elevation="4" Style="height: 100%;">
@@ -73,9 +72,9 @@
     {
         try
         {
-            var projects = await Supabase.GetAll<Project>();
+            var projects = await Supabase.GetAll<ProjectGroupEntity>();
             GroupsCount = projects.Count;
-            ActionReqCount = projects.Count(p => p.SubmissionStatus == "pending" || p.ProposalStatus == "draft");
+            ActionReqCount = projects.Count(p => p.SubmissionStatus == "pending" || p.Status == "draft");
             OnTrackCount = GroupsCount - ActionReqCount;
         }
         catch { }

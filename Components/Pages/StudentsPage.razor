@@ -116,10 +116,11 @@
                     <MudTd DataLabel="Semester">Sem @currentSem</MudTd>
                     <MudTd DataLabel="Active Module">
                         @{
-                            var activeStage = GetActiveStageForRule(programId, currentSem);
-                            if (activeStage != null)
+                            var activeRule = GetActiveRule(programId, currentSem);
+                            if (activeRule != null)
                             {
-                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">@activeStage.StageName</MudChip>
+                                var stageName = stages.FirstOrDefault(s => s.Id == activeRule.StageTypeId)?.Name ?? "Assigned";
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">@stageName</MudChip>
                             }
                             else
                             {
@@ -202,7 +203,7 @@
             }
             else
             {
-                <MudTimeline TimelinePosition="TimelinePosition.Start" Dense="true">
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
                     @foreach (var stage in studentProgress)
                     {
                         <MudTimelineItem Color="@GetProgressColor(stage.Status)" Size="Size.Small">
@@ -261,11 +262,11 @@
                 students = await StudentService.GetStudentsByBatch(filterBatch);
 
             // Fetch Project Links (Simplified for now: find first project per student)
-            var allProjects = await Supabase.GetAll<ProjectEntity>();
-            var allMembers = await Supabase.GetAll<ProjectMemberEntity>();
+            var allProjects = await Supabase.GetAll<ProjectGroupEntity>();
+            var allMembers = await Supabase.GetAll<GroupMemberEntity>();
             
             projectLinks = allMembers
-                .Join(allProjects, m => m.ProjectId, p => p.Id, (m, p) => new { m.StudentId, p.GDriveLink })
+                .Join(allProjects, m => m.GroupId, p => p.Id, (m, p) => new { m.StudentId, p.GDriveLink })
                 .Where(x => !string.IsNullOrEmpty(x.GDriveLink))
                 .GroupBy(x => x.StudentId)
                 .ToDictionary(g => g.Key, g => g.First().GDriveLink!);
@@ -280,7 +281,7 @@
         }
     }
 
-     AcademicStageRuleEntity? GetActiveStageForRule(string programId, int semester) => 
+     AcademicStageRuleEntity? GetActiveRule(string programId, int semester) => 
         allStageRules.FirstOrDefault(r => r.ProgramId == programId && r.SemesterNumber == semester);
 
     string GetGDriveLink(string studentId) => projectLinks.GetValueOrDefault(studentId, "");

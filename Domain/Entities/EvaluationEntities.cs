@@ -3,53 +3,40 @@ using Postgrest.Models;
 
 namespace ntcc_admin_blazor.Domain.Entities
 {
-    [Table("evaluation_schemes")]
-    public class EvaluationSchemeEntity : DomainBase
+    [Table("evaluation_rubrics")]
+    public class EvaluationRubricEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public long Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Column("stage_id")]
-        public long StageId { get; set; }
+        [Column("stage_type_id")]
+        public string StageTypeId { get; set; } = string.Empty;
 
-        [Column("name")]
-        public string Name { get; set; }
+        [Column("exam_type")]
+        public string ExamType { get; set; } = string.Empty; // midterm, endterm
+
+        [Column("total_marks")]
+        public int TotalMarks { get; set; }
     }
 
-    [Table("evaluation_categories")]
-    public class EvaluationCategoryEntity : DomainBase
+    [Table("rubric_components")]
+    public class RubricComponentEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public long Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Column("scheme_id")]
-        public long SchemeId { get; set; }
+        [Column("rubric_id")]
+        public string RubricId { get; set; } = string.Empty;
 
-        [Column("category")]
-        public string Category { get; set; }
+        [Column("component_name")]
+        public string ComponentName { get; set; } = string.Empty;
 
-        [Column("weight")]
-        public int Weight { get; set; }
+        [Column("max_marks")]
+        public int MaxMarks { get; set; }
     }
 
-    [Table("evaluation_components")]
-    public class EvaluationComponentEntity : DomainBase
-    {
-        [PrimaryKey("id", false)]
-        public long Id { get; set; }
-
-        [Column("category_id")]
-        public long CategoryId { get; set; }
-
-        [Column("component")]
-        public string Component { get; set; }
-
-        [Column("marks")]
-        public int Marks { get; set; }
-    }
-
-    [Table("evaluation_scores")]
-    public class EvaluationScoreEntity : DomainBase
+    [Table("student_evaluations")]
+    public class StudentEvaluationEntity : DomainBase
     {
         [PrimaryKey("id", false)]
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -57,25 +44,16 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("student_id")]
         public string StudentId { get; set; } = string.Empty;
 
-        [Column("stage_id")]
-        public string StageId { get; set; } = string.Empty;
+        [Column("rubric_component_id")]
+        public string RubricComponentId { get; set; } = string.Empty;
 
-        [Column("component_id")]
-        public long? ComponentId { get; set; }
-
-        [Column("score")]
-        public decimal Score { get; set; }
+        [Column("evaluator_id")]
+        public string? EvaluatorId { get; set; }
 
         [Column("marks")]
-        public int Marks { get; set; }
-
-        [Column("faculty_id")]
-        public string FacultyId { get; set; } = string.Empty;
+        public decimal Marks { get; set; }
 
         [Column("remarks")]
         public string? Remarks { get; set; }
-
-        [Column("is_locked")]
-        public bool IsLocked { get; set; }
     }
 }

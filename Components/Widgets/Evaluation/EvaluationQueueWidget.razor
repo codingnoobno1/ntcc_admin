@@ -1,6 +1,5 @@
-@using MudBlazor
-@using ntcc_admin_blazor.Services
-@using ntcc_admin_blazor.Models
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
 @inject SupabaseService Supabase
 
 <MudPaper Class="pa-6 eval-queue-widget" Elevation="4">
@@ -56,14 +55,14 @@
     {
         try
         {
-            var projects = await Supabase.GetAll<Project>();
-            var pending = projects.Where(p => p.SubmissionStatus == "pending" || p.ProposalStatus == "draft").Take(3).ToList();
+            var projects = await Supabase.GetAll<ProjectGroupEntity>();
+            var pending = projects.Where(p => p.SubmissionStatus == "pending" || p.Status == "draft").Take(3).ToList();
 
             foreach(var p in pending)
             {
                 Evaluations.Add(new EvalItem 
                 { 
-                    Group = string.IsNullOrWhiteSpace(p.Title) ? "Untitled Group" : p.Title, 
+                    Group = string.IsNullOrWhiteSpace(p.ProjectTitle) ? "Untitled Group" : p.ProjectTitle, 
                     Type = p.SubmissionStatus == "pending" ? "Submission" : "Proposal", 
                     DaysLeft = 0 
                 });

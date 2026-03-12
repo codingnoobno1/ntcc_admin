@@ -16,6 +16,9 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("student_id")]
         public string StudentId { get; set; } = string.Empty;
 
+        [Column("project_id")]
+        public string ProjectId { get; set; } = string.Empty;
+
         // leader, member
         [Column("role")]
         public string Role { get; set; } = "member";

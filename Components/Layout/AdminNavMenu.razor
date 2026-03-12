@@ -12,27 +12,17 @@
         </PermissionView>
     </MudNavGroup>
 
-    <MudNavGroup Title="Projects" Icon="@Icons.Material.Filled.AccountTree" Expanded="true">
-        <PermissionView Permission="manage_projects">
-            <MudNavLink href="projects/minor/stages" Icon="@Icons.Material.Filled.LinearScale">Stage Engine</MudNavLink>
-            <MudNavLink href="projects/minor/documents" Icon="@Icons.Material.Filled.Description">Document Vault</MudNavLink>
-            <MudNavLink href="projects/minor/groups" Icon="@Icons.Material.Filled.GroupWork">Team Formation</MudNavLink>
-            <MudNavLink href="projects/minor/supervisors" Icon="@Icons.Material.Filled.SupervisorAccount">Mentorship Sync</MudNavLink>
-            <MudNavLink href="projects/minor/weekly-reports" Icon="@Icons.Material.Filled.Assessment">Weekly Logs</MudNavLink>
-        </PermissionView>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Internships" Icon="@Icons.Material.Filled.BusinessCenter" Expanded="true">
-        <PermissionView Permission="manage_internships">
-            <MudNavLink href="internships" Icon="@Icons.Material.Filled.TrackChanges">Internship Monitor</MudNavLink>
-            <MudNavLink href="admin/companies" Icon="@Icons.Material.Filled.Business">Company Registry</MudNavLink>
+    <MudNavGroup Title="Stage Templates" Icon="@Icons.Material.Filled.AccountTree" Expanded="false">
+        <PermissionView Permission="configure_stages">
+            <MudNavLink href="admin/stage-engine" Icon="@Icons.Material.Filled.SettingsSuggest">Manage Templates</MudNavLink>
+            <MudNavLink href="admin/academic-calendar" Icon="@Icons.Material.Filled.CalendarMonth">Academic Rules</MudNavLink>
         </PermissionView>
     </MudNavGroup>
 
     <MudNavGroup Title="Evaluations" Icon="@Icons.Material.Filled.FactCheck" Expanded="true">
         <PermissionView Permission="evaluate_submission">
-            <MudNavLink href="projects/minor/evaluation-rules" Icon="@Icons.Material.Filled.SettingsSuggest">Rubric Engine</MudNavLink>
-            <MudNavLink href="projects/minor/evaluation" Icon="@Icons.Material.Filled.Grading">Workspace</MudNavLink>
+            <MudNavLink href="faculty/student-progress" Icon="@Icons.Material.Filled.Grading">Evaluation Workspace</MudNavLink>
+            <MudNavLink href="faculty/meeting-logs" Icon="@Icons.Material.Filled.Forum">Meeting Logs</MudNavLink>
         </PermissionView>
     </MudNavGroup>
 

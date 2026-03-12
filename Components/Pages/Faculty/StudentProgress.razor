@@ -1,0 +1,149 @@
+@page "/faculty/student-progress"
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.DTOs
+@using ntcc_admin_blazor.Application.Services
+@inject IWorkflowService WorkflowService
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Student Progress - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Class="fw-bold">Student <span class="text-primary">Progress Workspace</span></MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Monitor development, verify artefacts, and evaluate performance</MudText>
+    </div>
+
+    <MudPaper Class="pa-4 rounded-xl mb-6 shadow-sm" Elevation="0">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" Label="Program" @bind-Value="_selectedProgramId" AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="@("prog-1")">B.Tech CSE</MudSelectItem>
+                    <MudSelectItem Value="@("prog-2")">B.Tech ECE</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="int" Label="Semester" @bind-Value="_selectedSemester" AnchorOrigin="Origin.BottomCenter">
+                    @for (int i = 1; i <= 8; i++)
+                    {
+                        <MudSelectItem Value="@i">Semester @i</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" Label="Stage" @bind-Value="_selectedStageType" AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="@("minor_project")">Minor Project</MudSelectItem>
+                    <MudSelectItem Value="@("major_project")">Major Project</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="LoadData">Filter</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-6 rounded-xl shadow-sm" Elevation="0">
+                <MudTable Items="_students" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Student</MudTh>
+                        <MudTh>Proposal</MudTh>
+                        <MudTh>Midterm</MudTh>
+                        <MudTh>Draft</MudTh>
+                        <MudTh>Meetings</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Student">
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-3">@context.Name[0]</MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Enrolment</MudText>
+                                </div>
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Proposal">
+                            <MudIcon Icon="@(context.SubmissionsCount >= 1 ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.RadioButtonUnchecked)" 
+                                     Color="@(context.SubmissionsCount >= 1 ? Color.Success : Color.Default)" Size="Size.Small" />
+                        </MudTd>
+                        <MudTd DataLabel="Midterm">
+                            <MudChip T="string" Size="Size.Small" Color="@(context.OverallProgress > 50 ? Color.Success : Color.Warning)">
+                                @(context.OverallProgress > 50 ? "Done" : context.OverallProgress > 20 ? "Pending" : "Locked")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Draft">
+                            <MudIcon Icon="@(context.OverallProgress >= 80 ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Lock)" 
+                                     Color="@(context.OverallProgress >= 80 ? Color.Success : Color.Default)" Size="Size.Small" />
+                        </MudTd>
+                        <MudTd DataLabel="Meetings">
+                             <MudChip T="string" Color="@(context.MeetingsCount >= 4 ? Color.Success : Color.Warning)" Size="Size.Small">@context.MeetingsCount / 6</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.FactCheck" 
+                                      Href="@($"/faculty/evaluation-panel/{context.Id}/{_currentStageTypeId}")">Evaluate</MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private bool _isLoading = true;
+    private List<StudentTrackerDto> _students = new();
+    private string _currentStageTypeId = "minor-project-v1";
+    
+    // Filters
+    private string _selectedProgramId = "prog-1";
+    private int _selectedSemester = 6;
+    private string _selectedStageType = "minor_project";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            // Mock data for demo
+            _students = new List<StudentTrackerDto>
+            {
+                new() { Id = "stud-01", Name = "Rahul Sharma", Enrolment = "A2305221001", Program = "B.Tech CSE", MeetingsCount = 5, SubmissionsCount = 3, OverallProgress = 80 },
+                new() { Id = "stud-02", Name = "Priya V", Enrolment = "A2305221005", Program = "B.Tech CSE", MeetingsCount = 2, SubmissionsCount = 1, OverallProgress = 30 },
+                new() { Id = "stud-03", Name = "Aman Gupta", Enrolment = "A2305221009", Program = "B.Tech CSE", MeetingsCount = 6, SubmissionsCount = 4, OverallProgress = 100 }
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading progress: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    public class StudentTrackerDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Enrolment { get; set; }
+        public string Program { get; set; }
+        public int MeetingsCount { get; set; }
+        public int SubmissionsCount { get; set; }
+        public int OverallProgress { get; set; }
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+    .rounded-xl { border-radius: 16px !important; }
+    .shadow-sm { box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important; }
+</style>

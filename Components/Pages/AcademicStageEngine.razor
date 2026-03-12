@@ -4,104 +4,194 @@
 @inject ISnackbar Snackbar
 @rendermode InteractiveServer
 
-<PageTitle>Academic Stage Engine - NTCC</PageTitle>
+<PageTitle>Stage Engine - NTCC</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <div class="d-flex justify-space-between align-center mb-6">
-        <div>
-            <MudText Typo="Typo.h4" Class="fw-bold">Academic <span class="text-primary">Stage Engine</span></MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">Map semesters to specific academic activities and modules</MudText>
-        </div>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">Add New Rule</MudButton>
-    </div>
+    <MudTabs Elevation="1" Rounded="true" Color="Color.Primary" ContentClass="pa-6" Class="mt-2">
+        <MudTabPanel Text="Academic Rules">
+            <div class="d-flex justify-space-between align-center mb-6">
+                <div>
+                    <MudText Typo="Typo.h5" Class="fw-bold">Academic <span class="text-primary">Stage Rules</span></MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Map semesters to specific stage templates</MudText>
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddRuleDialog">Add New Rule</MudButton>
+            </div>
 
-    <MudGrid>
-        <MudItem xs="12">
-            <MudPaper Class="pa-6 glass-card">
-                @if (_isLoading)
+            @if (_isLoading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            }
+            else
+            {
+                <MudTable Items="_rules" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Class="mud-table-transparent">
+                    <HeaderContent>
+                        <MudTh>Program</MudTh>
+                        <MudTh>Semester</MudTh>
+                        <MudTh>Stage Template</MudTh>
+                        <MudTh>Visibility</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Program">@GetProgramName(context.ProgramId)</MudTd>
+                        <MudTd DataLabel="Semester">Semester @context.SemesterNumber</MudTd>
+                        <MudTd DataLabel="Stage Template">
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small">@GetStageTypeName(context.StageTypeId)</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Visibility">
+                            <MudChip T="string" Color="@(context.IsVisible ? Color.Success : Color.Error)" Size="Size.Small">@(context.IsVisible ? "Visible" : "Hidden")</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.Status == "active" ? Color.Primary : Color.Default)" Size="Size.Small" Variant="Variant.Text">@context.Status.ToUpper()</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditRule(context)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteRule(context)" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Stage Templates">
+            <div class="d-flex justify-space-between align-center mb-6">
+                <div>
+                    <MudText Typo="Typo.h5" Class="fw-bold">Stage <span class="text-primary">Templates</span></MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Define reusable workflow types (Minor, Major, Internship, etc.)</MudText>
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddTypeDialog">Create Template</MudButton>
+            </div>
+
+            <MudGrid>
+                @foreach (var type in _stageTypes)
                 {
-                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="pa-4 glass-card h-100 d-flex flex-column">
+                            <div class="d-flex justify-space-between align-start mb-2">
+                                <MudText Typo="Typo.h6" Class="fw-bold">@type.Name</MudText>
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">@type.StageKey</MudChip>
+                            </div>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary flex-grow-1">@type.Description</MudText>
+                            <div class="mt-4 d-flex gap-2">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Build" Href="@($"/admin/workflow-builder/{type.Id}")">Builder</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Assessment" Href="@($"/admin/evaluation-rubrics/{type.Id}")">Rubrics</MudButton>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => EditType(type)" />
+                            </div>
+                        </MudPaper>
+                    </MudItem>
                 }
-                else
-                {
-                    <MudTable Items="_rules" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Class="mud-table-transparent">
-                        <HeaderContent>
-                            <MudTh>Program</MudTh>
-                            <MudTh>Semester</MudTh>
-                            <MudTh>Stage Type</MudTh>
-                            <MudTh>Display Name</MudTh>
-                            <MudTh>Visibility</MudTh>
-                            <MudTh>Status</MudTh>
-                            <MudTh>Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Program">@GetProgramName(context.ProgramId)</MudTd>
-                            <MudTd DataLabel="Semester">Semester @context.SemesterNumber</MudTd>
-                            <MudTd DataLabel="Stage Type">
-                                <MudChip T="string" Color="Color.Info" Size="Size.Small">@context.StageType</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Display Name">@context.StageName</MudTd>
-                            <MudTd DataLabel="Visibility">
-                                <MudChip T="string" Color="@(context.IsVisible ? Color.Success : Color.Error)" Size="Size.Small">@(context.IsVisible ? "Visible" : "Hidden")</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Status">
-                                <MudChip T="string" Color="@(context.Status == "ongoing" ? Color.Primary : Color.Default)" Size="Size.Small" Variant="Variant.Text">@context.Status.ToUpper()</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Actions">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditRule(context)" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteRule(context)" />
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            </MudGrid>
+        </MudTabPanel>
+    </MudTabs>
 </MudContainer>
 
-<MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
+@* Rule Dialog *@
+<MudDialog @bind-Visible="_ruleDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">@(_isEdit ? "Update Rule" : "Add Stage Rule")</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="4">
-            <MudSelect T="string" Label="Program" @bind-Value="_editRule.ProgramId" Required="true">
-                @foreach (var p in _programs)
+            <MudSelect T="string" Label="Program" @bind-Value="_editRule.ProgramId" Required="true" AnchorOrigin="Origin.BottomCenter">
+                @foreach (var p in _combinedPrograms)
                 {
                     <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
                 }
             </MudSelect>
+            @if (_editRule.ProgramId == "other")
+            {
+                <MudTextField @bind-Value="_customProgramName" Label="Custom Program Name" Required="true" />
+            }
+
             <MudNumericField @bind-Value="_editRule.SemesterNumber" Label="Semester Number" Min="1" Max="10" Required="true" />
-            <MudSelect T="string" Label="Stage Type" @bind-Value="_editRule.StageType" Required="true">
-                <MudSelectItem Value="@("minor_project")">Minor Project</MudSelectItem>
-                <MudSelectItem Value="@("major_project")">Major Project</MudSelectItem>
-                <MudSelectItem Value="@("internship")">Internship</MudSelectItem>
-                <MudSelectItem Value="@("summer_training")">Summer Training</MudSelectItem>
+
+            <MudSelect T="string" Label="Stage Template" @bind-Value="_editRule.StageTypeId" Required="true" AnchorOrigin="Origin.BottomCenter">
+                @foreach (var st in _combinedStageTypes)
+                {
+                    <MudSelectItem Value="@st.Id">@st.Name</MudSelectItem>
+                }
             </MudSelect>
-            <MudTextField @bind-Value="_editRule.StageName" Label="Display Name" Placeholder="e.g. Minor Project Phase 1" Required="true" />
-            <MudTextField @bind-Value="_editRule.Description" Label="Course Description" Lines="3" Variant="Variant.Outlined" Placeholder="Enter course details, requirements, etc." />
+            @if (_editRule.StageTypeId == "other")
+            {
+                <MudTextField @bind-Value="_customStageTypeName" Label="Custom Template Name" Required="true" />
+            }
+
             <div class="d-flex align-center gap-4">
                 <MudSwitch @bind-Value="_editRule.IsVisible" Label="Visible to Students" Color="Color.Primary" />
                 <MudSelect T="string" Label="Status" @bind-Value="_editRule.Status" Dense="true" Class="flex-grow-1">
-                    <MudSelectItem Value="@("ongoing")">Ongoing</MudSelectItem>
+                    <MudSelectItem Value="@("active")">Active</MudSelectItem>
                     <MudSelectItem Value="@("closed")">Closed</MudSelectItem>
                 </MudSelect>
             </div>
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="() => _dialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="() => _ruleDialogVisible = false">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveRule">Save Rule</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Type Dialog *@
+<MudDialog @bind-Visible="_typeDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditType ? "Update Template" : "Create Template")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_editType.StageKey" Label="Template Key" Placeholder="e.g. minor_project" Required="true" />
+            <MudTextField @bind-Value="_editType.Name" Label="Template Name" Placeholder="e.g. Minor Project" Required="true" />
+            <MudTextField @bind-Value="_editType.Description" Label="Description" Lines="3" Variant="Variant.Outlined" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _typeDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="SaveType">Save Template</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     private List<AcademicStageRuleEntity> _rules = new();
     private List<ProgramEntity> _programs = new();
+    private List<StageTypeEntity> _stageTypes = new();
     private bool _isLoading = true;
-    private bool _dialogVisible = false;
+    
+    // Hard-coded defaults
+    private List<ProgramEntity> _defaultPrograms = new()
+    {
+        new ProgramEntity { Id = "78901234-5678-9012-3456-789012345678", Name = "B.Tech CSE" },
+        new ProgramEntity { Id = "89012345-6789-0123-4567-890123456789", Name = "B.Tech ECE" },
+        new ProgramEntity { Id = "90123456-7890-1234-5678-901234567890", Name = "M.Tech CSE" }
+    };
+
+    private List<StageTypeEntity> _defaultStageTypes = new()
+    {
+        new StageTypeEntity { Id = "12345678-1234-1234-1234-123456789012", Name = "Minor Project", StageKey = "minor" },
+        new StageTypeEntity { Id = "23456789-2345-2345-2345-234567890123", Name = "Major Project", StageKey = "major" },
+        new StageTypeEntity { Id = "34567890-3456-3456-3456-345678901234", Name = "Internship", StageKey = "internship" }
+    };
+
+    private List<ProgramEntity> _combinedPrograms => _programs.Any() 
+        ? _programs.Concat(new[] { new ProgramEntity { Id = "other", Name = "Other" } }).ToList()
+        : _defaultPrograms.Concat(new[] { new ProgramEntity { Id = "other", Name = "Other" } }).ToList();
+
+    private List<StageTypeEntity> _combinedStageTypes => _stageTypes.Any()
+        ? _stageTypes.Concat(new[] { new StageTypeEntity { Id = "other", Name = "Other" } }).ToList()
+        : _defaultStageTypes.Concat(new[] { new StageTypeEntity { Id = "other", Name = "Other" } }).ToList();
+
+    private string? _customProgramName;
+    private string? _customStageTypeName;
+
+    // Rules State
+    private bool _ruleDialogVisible = false;
     private bool _isEdit = false;
     private AcademicStageRuleEntity _editRule = new();
+    
+    // Types State
+    private bool _typeDialogVisible = false;
+    private bool _isEditType = false;
+    private StageTypeEntity _editType = new();
+
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
@@ -116,10 +206,11 @@
         {
             _rules = await Supabase.GetAll<AcademicStageRuleEntity>();
             _programs = await Supabase.GetAll<ProgramEntity>();
+            _stageTypes = await Supabase.GetAll<StageTypeEntity>();
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Error loading rules: " + ex.Message, Severity.Error);
+            Snackbar.Add("Error loading data: " + ex.Message, Severity.Error);
         }
         finally
         {
@@ -127,33 +218,72 @@
         }
     }
 
-    private string GetProgramName(string id) => _programs.FirstOrDefault(p => p.Id == id)?.Name ?? "Internal Program";
+    private string GetProgramName(string? id) 
+    {
+        if (string.IsNullOrEmpty(id)) return "No Program";
+        var prog = _combinedPrograms.FirstOrDefault(p => p.Id == id);
+        return prog?.Name ?? id;
+    }
 
-    private void OpenAddDialog()
+    private string GetStageTypeName(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return "No Template";
+        var type = _combinedStageTypes.FirstOrDefault(st => st.Id == id);
+        return type?.Name ?? id;
+    }
+
+    private void OpenAddRuleDialog()
     {
         _isEdit = false;
-        _editRule = new AcademicStageRuleEntity();
-        _dialogVisible = true;
+        _editRule = new AcademicStageRuleEntity { Status = "active", IsVisible = true };
+        _customProgramName = null;
+        _customStageTypeName = null;
+        _ruleDialogVisible = true;
     }
 
     private void EditRule(AcademicStageRuleEntity rule)
     {
         _isEdit = true;
         _editRule = rule;
-        _dialogVisible = true;
+        
+        // Handle Program selection
+        if (_combinedPrograms.Take(_combinedPrograms.Count - 1).All(p => p.Id != rule.ProgramId))
+        {
+            _customProgramName = rule.ProgramId;
+            _editRule.ProgramId = "other";
+        }
+        else _customProgramName = null;
+
+        // Handle Stage Type selection
+        if (_combinedStageTypes.Take(_combinedStageTypes.Count - 1).All(st => st.Id != rule.StageTypeId))
+        {
+            _customStageTypeName = rule.StageTypeId;
+            _editRule.StageTypeId = "other";
+        }
+        else _customStageTypeName = null;
+
+        _ruleDialogVisible = true;
     }
 
     private async Task SaveRule()
     {
         try
         {
-            if (_isEdit)
-                await Supabase.Update(_editRule);
-            else
-                await Supabase.Insert(_editRule);
+            // Prepare values if "Other" was selected
+            var finalProgramId = _editRule.ProgramId == "other" ? _customProgramName : _editRule.ProgramId;
+            var finalStageTypeId = _editRule.StageTypeId == "other" ? _customStageTypeName : _editRule.StageTypeId;
+
+            // Update the entity with final values before saving
+            _editRule.ProgramId = finalProgramId;
+            _editRule.StageTypeId = finalStageTypeId ?? _editRule.StageTypeId;
+            _editRule.StageType = GetStageTypeName(_editRule.StageTypeId);
+            _editRule.StageName = $"{GetProgramName(_editRule.ProgramId)} - {_editRule.StageType}";
+
+            if (_isEdit) await Supabase.Update(_editRule);
+            else await Supabase.Insert(_editRule);
 
             Snackbar.Add("Rule saved successfully!", Severity.Success);
-            _dialogVisible = false;
+            _ruleDialogVisible = false;
             await LoadData();
         }
         catch (Exception ex)
@@ -175,7 +305,49 @@
             Snackbar.Add("Error deleting rule: " + ex.Message, Severity.Error);
         }
     }
+
+    private void OpenAddTypeDialog()
+    {
+        _isEditType = false;
+        _editType = new StageTypeEntity();
+        _typeDialogVisible = true;
+    }
+
+    private void EditType(StageTypeEntity type)
+    {
+        _isEditType = true;
+        _editType = type;
+        _typeDialogVisible = true;
+    }
+
+    private async Task SaveType()
+    {
+        try
+        {
+            if (_isEditType) await Supabase.Update(_editType);
+            else await Supabase.Insert(_editType);
+
+            Snackbar.Add("Template saved successfully!", Severity.Success);
+            _typeDialogVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error saving template: " + ex.Message, Severity.Error);
+        }
+    }
 }
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px !important;
+    }
+    .fw-bold { font-weight: 700; }
+    .mud-table-transparent { background: transparent !important; }
+</style>
 
 <style>
     .glass-card {

@@ -12,68 +12,54 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<EvaluationSchemeEntity?> GetSchemeForStageAsync(long stageId)
+        public async Task<EvaluationRubricEntity?> GetRubricForStageTypeAsync(string stageTypeId, string examType)
         {
-            var schemes = await _supabase.GetWhere<EvaluationSchemeEntity>("stage_id", stageId);
-            return schemes.FirstOrDefault();
+            var rubrics = await _supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", stageTypeId);
+            return rubrics.FirstOrDefault(r => r.ExamType == examType);
         }
 
-        public async Task<List<EvaluationCategoryEntity>> GetCategoriesForSchemeAsync(long schemeId)
+        public async Task<List<RubricComponentEntity>> GetComponentsForRubricAsync(string rubricId)
         {
-            return await _supabase.GetWhere<EvaluationCategoryEntity>("scheme_id", schemeId);
+            return await _supabase.GetWhere<RubricComponentEntity>("rubric_id", rubricId);
         }
 
-        public async Task<List<EvaluationComponentEntity>> GetComponentsForCategoryAsync(long categoryId)
+        public async Task<bool> SubmitStudentMarksAsync(string studentId, string componentId, decimal marks, string remarks)
         {
-            return await _supabase.GetWhere<EvaluationComponentEntity>("category_id", categoryId);
-        }
-
-        public async Task<bool> SubmitScoreAsync(string studentId, long componentId, int marks)
-        {
-            var score = new EvaluationScoreEntity
+            var evaluation = new StudentEvaluationEntity
             {
                 StudentId = studentId,
-                ComponentId = componentId,
+                RubricComponentId = componentId,
                 Marks = marks,
-                IsLocked = false,
-                UpdatedAt = DateTime.UtcNow
+                Remarks = remarks,
+                EvaluatorId = "faculty-1" // Mocked
             };
 
-            await _supabase.Upsert(score);
+            await _supabase.Upsert(evaluation);
             return true;
         }
 
-        public async Task<int> CalculateTotalScoreAsync(string studentId, long stageId)
+        public async Task<decimal> CalculateTotalScoreAsync(string studentId, string rubricId)
         {
-            var scheme = await GetSchemeForStageAsync(stageId);
-            if (scheme == null) return 0;
-
-            var categories = await GetCategoriesForSchemeAsync(scheme.Id);
-            int total = 0;
-
-            foreach (var cat in categories)
+            var components = await GetComponentsForRubricAsync(rubricId);
+            var evaluations = await _supabase.GetWhere<StudentEvaluationEntity>("student_id", studentId);
+            
+            decimal total = 0;
+            foreach (var comp in components)
             {
-                var components = await GetComponentsForCategoryAsync(cat.Id);
-                int catScore = 0;
-
-                foreach (var comp in components)
-                {
-                    var scores = await _supabase.GetWhere<EvaluationScoreEntity>("student_id", studentId);
-                    var score = scores.FirstOrDefault(s => s.ComponentId == comp.Id);
-                    if (score != null) catScore += score.Marks;
-                }
-
-                // Apply category weight logic if needed
-                total += catScore;
+                var ev = evaluations.FirstOrDefault(e => e.RubricComponentId == comp.Id);
+                if (ev != null) total += ev.Marks;
             }
 
             return total;
         }
 
-        public async Task<bool> LockEvaluationAsync(string studentId, long stageId)
+        public async Task<bool> IsEvaluationCompleteAsync(string studentId, string rubricId)
         {
-            // Logic to mark all scores for this student/stage as IsLocked = true
-            return true;
+            var components = await GetComponentsForRubricAsync(rubricId);
+            var evaluations = await _supabase.GetWhere<StudentEvaluationEntity>("student_id", studentId);
+            
+            return components.All(c => evaluations.Any(e => e.RubricComponentId == c.Id));
         }
+
     }
 }

@@ -72,48 +72,64 @@ namespace ntcc_admin_blazor.Domain.Entities
         public bool IsRead { get; set; } = false;
     }
 
-    [Table("projects")]
-    public class ProjectEntity : DomainBase
+
+    [Table("supervisor_meetings")]
+    public class SupervisorMeetingEntity : DomainBase
     {
         [PrimaryKey("id", false)]
         public string Id { get; set; } = Guid.NewGuid().ToString();
-
-        [Column("title")]
-        public string Title { get; set; } = string.Empty;
-
-        [Column("description")]
-        public string Description { get; set; } = string.Empty;
-
-        [Column("project_type")]
-        public string ProjectType { get; set; } = "minor";
-
-        [Column("stage_id")]
-        public string? StageId { get; set; }
-
-        [Column("faculty_mentor_id")]
-        public string? FacultyMentorId { get; set; }
-
-        [Column("proposal_status")]
-        public string ProposalStatus { get; set; } = "draft";
-
-        [Column("gdrive_link")]
-        public string? GDriveLink { get; set; }
-    }
-
-    [Table("project_members")]
-    public class ProjectMemberEntity : DomainBase
-    {
-        [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
-        [Column("project_id")]
-        public string ProjectId { get; set; } = string.Empty;
 
         [Column("student_id")]
         public string StudentId { get; set; } = string.Empty;
 
-        [Column("role")]
-        public string Role { get; set; } = "member";
+        [Column("faculty_id")]
+        public string FacultyId { get; set; } = string.Empty;
+
+        [Column("meeting_date")]
+        public DateTime MeetingDate { get; set; } = DateTime.UtcNow;
+
+        [Column("summary")]
+        public string? Summary { get; set; }
+
+        [Column("progress_score")]
+        public int ProgressScore { get; set; } // weekly log score
     }
 
+    [Table("meeting_reports")]
+    public class MeetingReportEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("meeting_id")]
+        public string MeetingId { get; set; } = string.Empty;
+
+        [Column("report_url")]
+        public string? ReportUrl { get; set; }
+
+        [Column("remarks")]
+        public string? Remarks { get; set; }
+    }
+
+    [Table("workflow_submissions")]
+    public class WorkflowSubmissionEntity : DomainBase
+    {
+        [PrimaryKey("id", false)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Column("student_id")]
+        public string StudentId { get; set; } = string.Empty;
+
+        [Column("workflow_step_id")]
+        public string WorkflowStepId { get; set; } = string.Empty;
+
+        [Column("file_url")]
+        public string? FileUrl { get; set; }
+
+        [Column("gdrive_link")]
+        public string? GDriveLink { get; set; }
+
+        [Column("submitted_at")]
+        public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+    }
 }

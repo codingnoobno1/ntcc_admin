@@ -1,6 +1,6 @@
 @page "/projects"
-@using ntcc_admin_blazor.Models
-@using ntcc_admin_blazor.Services
+@using ntcc_admin_blazor.Domain.Entities
+@using ntcc_admin_blazor.Application.Services
 @using Microsoft.AspNetCore.Authorization
 @using MudBlazor
 @inject SupabaseService Supabase
@@ -47,13 +47,13 @@
                     <MudCard Elevation="2" Style="border-radius:12px;height:100%;">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.h6" Class="fw-bold">@project.Title</MudText>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@project.ProjectTitle</MudText>
                                 <div class="d-flex gap-2 mt-1">
                                     <MudChip T="string" Size="Size.Small" Color="@(project.ProjectType == "major" ? Color.Error : Color.Info)">
                                         @project.ProjectType.ToUpper()
                                     </MudChip>
-                                    <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(project.ProposalStatus)">
-                                        @project.ProposalStatus
+                                    <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(project.Status)">
+                                        @project.Status
                                     </MudChip>
                                 </div>
                             </CardHeaderContent>
@@ -69,7 +69,7 @@
                             <MudDivider Class="my-2" />
                             <MudText Typo="Typo.caption" Class="fw-bold mb-1">Team Members</MudText>
                             @{
-                                var members = projectMembers.Where(m => m.ProjectId == project.Id).ToList();
+                                var members = projectMembers.Where(m => m.GroupId == project.Id).ToList();
                             }
                             @if (members.Any())
                             {
@@ -105,9 +105,8 @@
 
 <!-- Add/Edit Project Dialog -->
 <MudDialog @bind-Visible="dialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
-    <TitleContent><MudText Typo="Typo.h6">@(isEdit ? "Edit Project" : "New Project")</MudText></TitleContent>
-    <DialogContent>
-        <MudTextField @bind-Value="editProject.Title" Label="Project Title" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+    <TitleContent><MudText Typo="Typo.h6">@(isEdit ? "Edit Project" : "New Project")</MudText></TitleContent>    <DialogContent>
+        <MudTextField @bind-Value="editProject.ProjectTitle" Label="Project Title" Required="true" Variant="Variant.Outlined" Class="mb-3" />
         <MudTextField @bind-Value="editProject.Description" Label="Description" Variant="Variant.Outlined" Lines="3" Class="mb-3" />
         <MudSelect T="string" @bind-Value="editProject.ProjectType" Label="Type" Variant="Variant.Outlined" Class="mb-3">
             <MudSelectItem Value="@("minor")">Minor Project</MudSelectItem>
@@ -119,7 +118,7 @@
         <MudSelect T="string" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
             @foreach (var b in batches) { <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem> }
         </MudSelect>
-        <MudSelect T="string" @bind-Value="editProject.ProposalStatus" Label="Proposal Status" Variant="Variant.Outlined" Class="mb-3">
+        <MudSelect T="string" @bind-Value="editProject.Status" Label="Proposal Status" Variant="Variant.Outlined" Class="mb-3">
             <MudSelectItem Value="@("draft")">Draft</MudSelectItem>
             <MudSelectItem Value="@("submitted")">Submitted</MudSelectItem>
             <MudSelectItem Value="@("approved")">Approved</MudSelectItem>
@@ -132,6 +131,7 @@
             <MudSelectItem Value="@("approved")">Approved</MudSelectItem>
         </MudSelect>
     </DialogContent>
+
     <DialogActions>
         <MudButton OnClick="() => dialogVisible = false">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveProject">@(isEdit ? "Update" : "Create")</MudButton>
@@ -140,7 +140,7 @@
 
 <!-- Manage Members Dialog -->
 <MudDialog @bind-Visible="membersDialogVisible" Options="new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true }">
-    <TitleContent><MudText Typo="Typo.h6">Manage Team — @selectedProject?.Title</MudText></TitleContent>
+    <TitleContent><MudText Typo="Typo.h6">Manage Team — @selectedProject?.ProjectTitle</MudText></TitleContent>
     <DialogContent>
         <MudSelect T="string" @bind-Value="newMemberStudentId" Label="Add Student" Variant="Variant.Outlined" Class="mb-3">
             @foreach (var s in students.Where(s => !currentMembers.Any(m => m.StudentId == s.Id)))
@@ -175,15 +175,15 @@
     string? typeFilter;
     string newMemberStudentId = "";
 
-    List<Project> projects = new();
-    List<ProjectMember> projectMembers = new();
-    List<ntcc_admin_blazor.Models.Student> students = new();
-    List<Batch> batches = new();
-    Project editProject = new();
-    Project? selectedProject;
-    List<ProjectMember> currentMembers = new();
+    List<ProjectGroupEntity> projects = new();
+    List<GroupMemberEntity> projectMembers = new();
+    List<StudentEntity> students = new();
+    List<BatchEntity> batches = new();
+    ProjectGroupEntity editProject = new();
+    ProjectGroupEntity? selectedProject;
+    List<GroupMemberEntity> currentMembers = new();
 
-    IEnumerable<Project> filteredProjects => projects
+    IEnumerable<ProjectGroupEntity> filteredProjects => projects
         .Where(p => string.IsNullOrEmpty(typeFilter) || p.ProjectType == typeFilter);
 
     protected override async Task OnInitializedAsync() => await LoadData();
@@ -193,10 +193,10 @@
         isLoading = true;
         try
         {
-            projects = await Supabase.GetAll<Project>();
-            projectMembers = await Supabase.GetAll<ProjectMember>();
-            students = await Supabase.GetAll<ntcc_admin_blazor.Models.Student>();
-            batches = await Supabase.GetAll<Batch>();
+            projects = await Supabase.GetAll<ProjectGroupEntity>();
+            projectMembers = await Supabase.GetAll<GroupMemberEntity>();
+            students = await Supabase.GetAll<StudentEntity>();
+            batches = await Supabase.GetAll<BatchEntity>();
         }
         catch (Exception ex) { Console.WriteLine($"[PROJECTS] Load error: {ex.Message}"); }
         finally { isLoading = false; }
@@ -205,11 +205,11 @@
     Color GetProposalColor(string s) => s switch { "approved" => Color.Success, "submitted" => Color.Info, "rejected" => Color.Error, _ => Color.Default };
     Color GetSubmissionColor(string s) => s switch { "approved" => Color.Success, "submitted" => Color.Info, "under_review" => Color.Warning, _ => Color.Default };
 
-    void OpenAddDialog() { isEdit = false; editProject = new Project(); dialogVisible = true; }
-    void OpenEditDialog(Project p)
+    void OpenAddDialog() { isEdit = false; editProject = new ProjectGroupEntity(); dialogVisible = true; }
+    void OpenEditDialog(ProjectGroupEntity p)
     {
         isEdit = true;
-        editProject = new Project { Id = p.Id, Title = p.Title, Description = p.Description, ProjectType = p.ProjectType, Semester = p.Semester, BatchId = p.BatchId, ProposalStatus = p.ProposalStatus, SubmissionStatus = p.SubmissionStatus };
+        editProject = new ProjectGroupEntity { Id = p.Id, ProjectTitle = p.ProjectTitle, Description = p.Description, ProjectType = p.ProjectType, Semester = p.Semester, BatchId = p.BatchId, Status = p.Status, SubmissionStatus = p.SubmissionStatus };
         dialogVisible = true;
     }
 
@@ -226,10 +226,10 @@
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }
 
-    void OpenMembersDialog(Project p)
+    void OpenMembersDialog(ProjectGroupEntity p)
     {
         selectedProject = p;
-        currentMembers = projectMembers.Where(m => m.ProjectId == p.Id).ToList();
+        currentMembers = projectMembers.Where(m => m.GroupId == p.Id).ToList();
         newMemberStudentId = "";
         membersDialogVisible = true;
     }
@@ -239,7 +239,7 @@
         if (string.IsNullOrEmpty(newMemberStudentId)) return;
         try
         {
-            var member = new ProjectMember { ProjectId = selectedProject!.Id, StudentId = newMemberStudentId, Role = currentMembers.Count == 0 ? "leader" : "member" };
+            var member = new GroupMemberEntity { GroupId = selectedProject!.Id, StudentId = newMemberStudentId, Role = currentMembers.Count == 0 ? "leader" : "member" };
             await Supabase.Insert(member);
             Snackbar.Add("Member added!", Severity.Success);
             await LoadData();
@@ -249,14 +249,14 @@
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }
 
-    async Task RemoveMember(ProjectMember m)
+    async Task RemoveMember(GroupMemberEntity m)
     {
         try
         {
             await Supabase.Delete(m);
             Snackbar.Add("Member removed.", Severity.Info);
             await LoadData();
-            currentMembers = projectMembers.Where(pm => pm.ProjectId == selectedProject!.Id).ToList();
+            currentMembers = projectMembers.Where(pm => pm.GroupId == selectedProject!.Id).ToList();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }

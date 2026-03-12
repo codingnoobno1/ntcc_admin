@@ -1,0 +1,255 @@
+@page "/admin/workflow-builder/{StageTypeId}"
+@using ntcc_admin_blazor.Domain.Entities
+@inject SupabaseService Supabase
+@inject ISnackbar Snackbar
+@rendermode InteractiveServer
+
+<PageTitle>Workflow Builder - NTCC</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <div class="d-flex align-center mb-6">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" href="/admin/stage-engine" Class="mr-4" />
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Workflow <span class="text-primary">Builder</span></MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Define stages and steps for @(_stageType?.Name ?? "Loading...")</MudText>
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-6 rounded-xl" Elevation="4">
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6" Class="fw-bold">Workflow Stages</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="OpenAddStageDialog" />
+                    </div>
+                    <MudList T="string" SelectedValue="_selectedStageId" Color="Color.Primary" SelectionMode="SelectionMode.SingleSelection" SelectedValueChanged="OnStageSelected">
+                        @foreach (var stage in _stages)
+                        {
+                            <MudListItem Value="@stage.Id">
+                                <div class="d-flex justify-space-between align-center w-100">
+                                    <MudText>@stage.Name</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => EditStage(stage)" />
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-6 rounded-xl" Elevation="4">
+                    @if (string.IsNullOrEmpty(_selectedStageId))
+                    {
+                        <div class="d-flex flex-column align-center justify-center py-16">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+                            <MudText Typo="Typo.body1" Class="mud-text-secondary">Select a stage to define its steps</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-space-between align-center mb-6">
+                            <MudText Typo="Typo.h6" Class="fw-bold">Steps for @GetSelectedStageName()</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddStepDialog">Add Step</MudButton>
+                        </div>
+
+                        <MudTable Items="_steps.Where(s => s.WorkflowStageId == _selectedStageId).OrderBy(s => s.OrderIndex)" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Order</MudTh>
+                                <MudTh>Step Name</MudTh>
+                                <MudTh>Requirements</MudTh>
+                                <MudTh>Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.OrderIndex</MudTd>
+                                <MudTd>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">@context.StepName</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.StepKey</MudText>
+                                </MudTd>
+                                <MudTd>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (context.RequiresSubmission) { <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">Submission</MudChip> }
+                                        @if (context.RequiresMeeting) { <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Meeting</MudChip> }
+                                        @if (context.RequiresReport) { <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">Report</MudChip> }
+                                        @if (context.RequiresPpt) { <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">PPT</MudChip> }
+                                    </div>
+                                </MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => EditStep(context)" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteStep(context)" />
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@* Stage Dialog *@
+<MudDialog @bind-Visible="_stageDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditStage ? "Update Stage" : "Add Stage")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_editStage.Name" Label="Stage Name" Placeholder="e.g. Planning Phase" Required="true" />
+            <MudTextField @bind-Value="_editStage.Description" Label="Description" Lines="3" Variant="Variant.Outlined" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _stageDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveStage">Save Stage</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Step Dialog *@
+<MudDialog @bind-Visible="_stepDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditStep ? "Update Step" : "Add Step")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudTextField @bind-Value="_editStep.StepName" Label="Step Name" Placeholder="e.g. Proposal Submission" Required="true" />
+            <MudTextField @bind-Value="_editStep.StepKey" Label="Step Key" Placeholder="e.g. proposal_sub" Required="true" />
+            <MudNumericField @bind-Value="_editStep.OrderIndex" Label="Order Index" Min="1" />
+            
+            <MudText Typo="Typo.subtitle2" Class="mt-2">Artefact Requirements</MudText>
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudCheckBox @bind-Value="_editStep.RequiresSubmission" Label="Requires Submission" Color="Color.Primary" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudCheckBox @bind-Value="_editStep.RequiresMeeting" Label="Requires Meeting" Color="Color.Primary" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudCheckBox @bind-Value="_editStep.RequiresReport" Label="Requires Report" Color="Color.Primary" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudCheckBox @bind-Value="_editStep.RequiresPpt" Label="Requires PPT" Color="Color.Primary" />
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _stepDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveStep">Save Step</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string StageTypeId { get; set; } = string.Empty;
+
+    private StageTypeEntity? _stageType;
+    private List<WorkflowStageEntity> _stages = new();
+    private List<WorkflowStepEntity> _steps = new();
+    private bool _isLoading = true;
+    private string _selectedStageId = string.Empty;
+
+    // Dialogs
+    private bool _stageDialogVisible = false, _isEditStage = false;
+    private WorkflowStageEntity _editStage = new();
+    
+    private bool _stepDialogVisible = false, _isEditStep = false;
+    private WorkflowStepEntity _editStep = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            var types = await Supabase.GetWhere<StageTypeEntity>("id", StageTypeId);
+            _stageType = types.FirstOrDefault();
+            
+            _stages = await Supabase.GetWhere<WorkflowStageEntity>("stage_type_id", StageTypeId);
+            _steps = await Supabase.GetAll<WorkflowStepEntity>(); // Optimization: fetch filtered in real app
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error loading workflow: " + ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetSelectedStageName() => _stages.FirstOrDefault(s => s.Id == _selectedStageId)?.Name ?? "";
+
+    private void OnStageSelected(string id)
+    {
+        _selectedStageId = id;
+    }
+
+    // Stage CRUD
+    private void OpenAddStageDialog()
+    {
+        _isEditStage = false;
+        _editStage = new WorkflowStageEntity { StageTypeId = StageTypeId };
+        _stageDialogVisible = true;
+    }
+
+    private void EditStage(WorkflowStageEntity stage)
+    {
+        _isEditStage = true;
+        _editStage = stage;
+        _stageDialogVisible = true;
+    }
+
+    private async Task SaveStage()
+    {
+        if (_isEditStage) await Supabase.Update(_editStage);
+        else await Supabase.Insert(_editStage);
+        
+        Snackbar.Add("Stage saved!", Severity.Success);
+        _stageDialogVisible = false;
+        await LoadData();
+    }
+
+    // Step CRUD
+    private void OpenAddStepDialog()
+    {
+        _isEditStep = false;
+        _editStep = new WorkflowStepEntity { WorkflowStageId = _selectedStageId, OrderIndex = _steps.Count(s => s.WorkflowStageId == _selectedStageId) + 1 };
+        _stepDialogVisible = true;
+    }
+
+    private void EditStep(WorkflowStepEntity step)
+    {
+        _isEditStep = true;
+        _editStep = step;
+        _stepDialogVisible = true;
+    }
+
+    private async Task SaveStep()
+    {
+        if (_isEditStep) await Supabase.Update(_editStep);
+        else await Supabase.Insert(_editStep);
+        
+        Snackbar.Add("Step saved!", Severity.Success);
+        _stepDialogVisible = false;
+        await LoadData();
+    }
+
+    private async Task DeleteStep(WorkflowStepEntity step)
+    {
+        await Supabase.Delete(step);
+        Snackbar.Add("Step deleted", Severity.Info);
+        await LoadData();
+    }
+}
+
+<style>
+    .fw-bold { font-weight: 700; }
+</style>

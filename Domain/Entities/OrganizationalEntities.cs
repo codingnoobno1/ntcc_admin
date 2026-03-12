@@ -71,19 +71,19 @@ namespace ntcc_admin_blazor.Domain.Entities
         [Column("semester_number")]
         public int SemesterNumber { get; set; }
 
+        [Column("stage_type_id")]
+        public string StageTypeId { get; set; } = string.Empty;
+
         [Column("stage_type")]
-        public string StageType { get; set; } = string.Empty; // e.g., minor_project
+        public string StageType { get; set; } = "Minor";
 
         [Column("stage_name")]
-        public string StageName { get; set; } = string.Empty; // e.g., Minor Project
+        public string StageName { get; set; } = "Minor Project";
 
         [Column("is_visible")]
         public bool IsVisible { get; set; } = true;
 
         [Column("status")]
-        public string Status { get; set; } = "ongoing"; // ongoing, closed
-
-        [Column("description")]
-        public string? Description { get; set; }
+        public string Status { get; set; } = "active"; // active, closed
     }
 }

@@ -32,13 +32,13 @@
                     <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count</MudText>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Active Groups</MudText>
                 </div>
-                <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Primary" Size="Size.Large" UseAppbarColor="false" />
+                <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Primary" Size="Size.Large" />
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="4">
             <MudPaper Class="pa-4 glass-card d-flex align-center">
                 <div class="flex-grow-1">
-                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.ProposalStatus == "pending")</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.Status == "pending")</MudText>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Pending Proposals</MudText>
                 </div>
                 <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Warning" Size="Size.Large" />
@@ -47,7 +47,7 @@
         <MudItem xs="12" sm="4">
             <MudPaper Class="pa-4 glass-card d-flex align-center">
                 <div class="flex-grow-1">
-                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.ProposalStatus == "approved")</MudText>
+                    <MudText Typo="Typo.h4" Class="fw-bold">@projects.Count(p => p.Status == "approved")</MudText>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Approved Projects</MudText>
                 </div>
                 <MudIcon Icon="@Icons.Material.Filled.Stars" Color="Color.Success" Size="Size.Large" />
@@ -97,12 +97,12 @@
                     <MudCard Elevation="0" Class="glass-card h-100 project-card" @onclick="() => SelectProject(proj)">
                         <MudCardHeader>
                             <CardHeaderContent>
-                                <MudText Typo="Typo.subtitle1" Class="fw-bold line-clamp-2">@proj.Title</MudText>
-                                <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(proj.ProposalStatus)" Variant="Variant.Text">@proj.ProposalStatus</MudChip>
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold line-clamp-2">@proj.ProjectTitle</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@GetProposalColor(proj.Status)" Variant="Variant.Text">@proj.Status</MudChip>
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
-                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4 line-clamp-3">@proj.Description</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4 line-clamp-3">@proj.ProjectDescription</MudText>
                             <div class="d-flex align-center">
                                 <MudIcon Icon="@Icons.Material.Filled.Group" Size="Size.Small" Class="mr-2" />
                                 <MudText Typo="Typo.caption">Group Size: @GetGroupSize(proj.Id)</MudText>
@@ -132,8 +132,8 @@
         {
             <MudGrid>
                 <MudItem xs="12" md="8">
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">@selectedProject.Title</MudText>
-                    <MudText Typo="Typo.body2" Class="mb-6">@selectedProject.Description</MudText>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2">@selectedProject.ProjectTitle</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-6">@selectedProject.ProjectDescription</MudText>
                     
                     <MudDivider Class="mb-4" />
                     
@@ -156,7 +156,7 @@
                 <MudItem xs="12" md="4">
                     <MudPaper Elevation="0" Class="pa-4 mud-background-gray rounded-lg">
                         <MudText Typo="Typo.subtitle2" Class="fw-bold mb-4">Milestone Tracker</MudText>
-                        <MudTimeline TimelinePosition="TimelinePosition.Start" Dense="true">
+                        <MudTimeline TimelinePosition="TimelinePosition.Start">
                             <MudTimelineItem Color="Color.Success" Size="Size.Small">
                                 <MudText Typo="Typo.caption" Class="fw-bold">Proposal Submitted</MudText>
                             </MudTimelineItem>
@@ -174,7 +174,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => detailDialogVisible = false">Close</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => ApproveProposal(selectedProject!)" Disabled="@(selectedProject?.ProposalStatus == "approved")">Approve Proposal</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => ApproveProposal(selectedProject!)" Disabled="@(selectedProject?.Status == "approved")">Approve Proposal</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -185,10 +185,10 @@
     string? filterType;
     string? filterProposal;
 
-    List<ProjectEntity> projects = new();
-    List<ProjectMemberEntity> members = new();
-    ProjectEntity? selectedProject;
-    List<ProjectMemberEntity> selectedProjectMembers = new();
+    List<ProjectGroupEntity> projects = new();
+    List<GroupMemberEntity> members = new();
+    ProjectGroupEntity? selectedProject;
+    List<GroupMemberEntity> selectedProjectMembers = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -200,8 +200,8 @@
         isLoading = true;
         try
         {
-            projects = await Supabase.GetAll<ProjectEntity>();
-            members = await Supabase.GetAll<ProjectMemberEntity>();
+            projects = await Supabase.GetAll<ProjectGroupEntity>();
+            members = await Supabase.GetAll<GroupMemberEntity>();
         }
         catch (Exception ex)
         {
@@ -213,13 +213,13 @@
         }
     }
 
-    IEnumerable<ProjectEntity> filteredProjects => projects
-        .Where(p => (string.IsNullOrEmpty(filterType) || p.ProjectType == filterType) &&
-                    (string.IsNullOrEmpty(filterProposal) || p.ProposalStatus == filterProposal))
+    IEnumerable<ProjectGroupEntity> filteredProjects => projects
+        .Where(p => (string.IsNullOrEmpty(filterType) || p.ProjectTitle.Contains(filterType, StringComparison.OrdinalIgnoreCase)) && // Simplification for demo
+                    (string.IsNullOrEmpty(filterProposal) || p.Status == filterProposal))
         .Where(p => string.IsNullOrWhiteSpace(searchString) || 
-                    p.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+                    p.ProjectTitle.Contains(searchString, StringComparison.OrdinalIgnoreCase));
 
-    int GetGroupSize(string projectId) => members.Count(m => m.ProjectId == projectId);
+    int GetGroupSize(string projectId) => members.Count(m => m.GroupId == projectId);
 
     Color GetProposalColor(string status) => status switch
     {
@@ -229,18 +229,18 @@
         _ => Color.Default
     };
 
-    void SelectProject(ProjectEntity p)
+    void SelectProject(ProjectGroupEntity p)
     {
         selectedProject = p;
-        selectedProjectMembers = members.Where(m => m.ProjectId == p.Id).ToList();
+        selectedProjectMembers = members.Where(m => m.GroupId == p.Id).ToList();
         detailDialogVisible = true;
     }
 
     void OpenCreateDialog() => Snackbar.Add("Opening creation wizard...", Severity.Info);
 
-    async Task ApproveProposal(ProjectEntity p)
+    async Task ApproveProposal(ProjectGroupEntity p)
     {
-        p.ProposalStatus = "approved";
+        p.Status = "approved";
         Snackbar.Add("Proposal Approved Successfully!", Severity.Success);
         StateHasChanged();
     }
