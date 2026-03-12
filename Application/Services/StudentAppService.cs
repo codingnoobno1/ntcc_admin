@@ -6,7 +6,7 @@ namespace ntcc_admin_blazor.Application.Services
 {
     public interface IStudentAppService
     {
-        Task<List<StudentEntity>> GetStudentsByBatch(string batchId);
+        Task<List<StudentEntity>> GetStudentsByBatch(Guid batchId);
         Task<StudentEntity?> GetStudentById(string id);
         Task<bool> EnrollStudentInStage(string studentId, string stageId);
         Task<bool> UpdateProgressStatus(string progressId, string status);
@@ -24,7 +24,7 @@ namespace ntcc_admin_blazor.Application.Services
             _logger = logger;
         }
 
-        public async Task<List<StudentEntity>> GetStudentsByBatch(string batchId)
+        public async Task<List<StudentEntity>> GetStudentsByBatch(Guid batchId)
         {
             await _supabase.InitializeAsync();
             var result = await _supabase.Client.From<StudentEntity>()

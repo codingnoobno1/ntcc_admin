@@ -21,64 +21,71 @@
         </div>
     </div>
 
-    <MudGrid>
-        @foreach (var batch in _batches)
-        {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Elevation="1" Class="glass-card shadow-lg" Style="border-radius: 20px; overflow: hidden;">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <div class="d-flex justify-space-between align-center">
-                                <div>
-                                    <MudText Typo="Typo.h6" Class="fw-bold">Batch @batch.Name</MudText>
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@GetProgramName(batch.ProgramId)</MudText>
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var batch in _batches)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="1" Class="glass-card shadow-lg" Style="border-radius: 20px; overflow: hidden;">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <div class="d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.h6" Class="fw-bold">Batch @batch.Name</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@GetProgramName(batch.ProgramId)</MudText>
+                                    </div>
+                                    <div class="d-flex flex-column align-end">
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
+                                            @(batch.EndYear >= DateTime.Now.Year ? "ACTIVE" : "COMPLETED")
+                                        </MudChip>
+                                        <MudText Typo="Typo.h5" Class="fw-bold text-primary mb-0">@GetStudentCount(batch.Id)</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-disabled mt-n1">Students</MudText>
+                                    </div>
                                 </div>
-                                <div class="d-flex flex-column align-end">
-                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
-                                        @(batch.EndYear >= DateTime.Now.Year ? "ACTIVE" : "COMPLETED")
-                                    </MudChip>
-                                    <MudText Typo="Typo.h5" Class="fw-bold text-primary mb-0">@GetStudentCount(batch.Id)</MudText>
-                                    <MudText Typo="Typo.caption" Class="mud-text-disabled mt-n1">Students</MudText>
-                                </div>
-                            </div>
-                        </CardHeaderContent>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" /> @batch.StartYear - @batch.EndYear</MudText>
-                        
-                        <div class="mt-4">
-                            <div class="d-flex justify-space-between align-center mb-2">
-                                <MudText Typo="Typo.caption" Class="fw-bold">Academic Timeline</MudText>
-                                @{
-                                    int totalYears = batch.EndYear - batch.StartYear;
-                                    int currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
-                                    if (currentSem > 0 && currentSem <= totalYears * 2)
-                                    {
-                                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Label="true">Currently Sem @currentSem</MudChip>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" Class="mr-1" /> @batch.StartYear - @batch.EndYear</MudText>
+                            
+                            <div class="mt-4">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.caption" Class="fw-bold">Academic Timeline</MudText>
+                                    @{
+                                        int totalYears = batch.EndYear - batch.StartYear;
+                                        int currentSem = CalendarService.CalculateCurrentSemester(batch.StartYear, totalYears);
+                                        if (currentSem > 0 && currentSem <= totalYears * 2)
+                                        {
+                                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Label="true">Currently Sem @currentSem</MudChip>
+                                        }
                                     }
-                                }
+                                </div>
+                                <div class="d-flex gap-1 overflow-x-auto pb-2">
+                                    @for (int j = 1; j <= (batch.EndYear - batch.StartYear) * 2; j++)
+                                    {
+                                        int semIndex = j;
+                                        <MudTooltip Text="@($"Semester {semIndex}")">
+                                            <MudAvatar Color="@(semIndex == currentSem ? Color.Primary : semIndex < currentSem ? Color.Success : Color.Default)" 
+                                                       Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.7rem;">
+                                                @semIndex
+                                            </MudAvatar>
+                                        </MudTooltip>
+                                    }
+                                </div>
                             </div>
-                            <div class="d-flex gap-1 overflow-x-auto pb-2">
-                                @for (int j = 1; j <= (batch.EndYear - batch.StartYear) * 2; j++)
-                                {
-                                    int semIndex = j;
-                                    <MudTooltip Text="@($"Semester {semIndex}")">
-                                        <MudAvatar Color="@(semIndex == currentSem ? Color.Primary : semIndex < currentSem ? Color.Success : Color.Default)" 
-                                                   Size="Size.Small" Variant="Variant.Filled" Style="font-size: 0.7rem;">
-                                            @semIndex
-                                        </MudAvatar>
-                                    </MudTooltip>
-                                }
-                            </div>
-                        </div>
-                    </MudCardContent>
-                    <MudCardActions>
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" OnClick="() => ViewDetails(batch)">View Enrolled Students</MudButton>
-                    </MudCardActions>
-                </MudCard>
-            </MudItem>
-        }
-    </MudGrid>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" OnClick="() => ViewDetails(batch)">View Enrolled Students</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
 </MudContainer>
 
 <!-- Batch Details Dialog -->
@@ -127,21 +134,43 @@
             <HeaderContent>
                 <MudTh>Uni ID</MudTh>
                 <MudTh>Name</MudTh>
-                <MudTh>Email</MudTh>
+                <MudTh>Debug (Raw BatchId)</MudTh>
                 <MudTh>Action</MudTh>
             </HeaderContent>
             <RowTemplate>
                 <MudTd>@context.UniversityId</MudTd>
                 <MudTd>@context.FullName</MudTd>
-                <MudTd>@context.Email</MudTd>
                 <MudTd>
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => AssignBatch(context)">Assign Batch</MudButton>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">
+                        @(context.BatchId == null ? "NULL/EMPTY" : context.BatchId.ToString())
+                    </MudChip>
+                </MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => OpenAssignDialog(context)">Assign Batch</MudButton>
                 </MudTd>
             </RowTemplate>
         </MudTable>
     </DialogContent>
 </MudDialog>
 
+<!-- Quick Assign Dialog -->
+<MudDialog @bind-Visible="_assignDialogOpen" Options="_dialogOptions">
+    <TitleContent>Assign Batch to @_selectedStudent?.FullName</TitleContent>
+    <DialogContent>
+        <MudSelect T="Guid?" Label="Select Batch" @bind-Value="_batchToAssign">
+            @foreach (var b in _batches)
+            {
+                <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _assignDialogOpen = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="ConfirmAssignment">Confirm</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Create Batch Dialog -->
 <MudDialog @bind-Visible="_addBatchDialogOpen" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" /> Create New Batch</MudText>
@@ -156,10 +185,11 @@
                 }
             </MudSelect>
             <MudSelect T="int" Label="Program Duration" Value="_selectedDuration" ValueChanged="OnDurationChanged">
-                <MudSelectItem Value="4">B.Tech (4 Years)</MudSelectItem>
-                <MudSelectItem Value="3">BCA / BSc (3 Years)</MudSelectItem>
-                <MudSelectItem Value="2">MCA / M.Tech (2 Years)</MudSelectItem>
-                <MudSelectItem Value="5">Integrated (5 Years)</MudSelectItem>
+                <MudSelectItem Value="1">1 Year</MudSelectItem>
+                <MudSelectItem Value="2">2 Years</MudSelectItem>
+                <MudSelectItem Value="3">3 Years</MudSelectItem>
+                <MudSelectItem Value="4">4 Years</MudSelectItem>
+                <MudSelectItem Value="5">5 Years</MudSelectItem>
             </MudSelect>
             <div class="d-flex gap-4">
                 <MudNumericField Value="_newBatch.StartYear" Label="Start Year" 
@@ -178,9 +208,13 @@
 </MudDialog>
 
 @code {
+    private bool _isLoading = true;
     private bool _addBatchDialogOpen = false;
     private bool _batchDetailOpen = false;
     private bool _showUnassigned = false;
+    private bool _assignDialogOpen = false;
+    private Guid? _batchToAssign;
+    private StudentEntity? _selectedStudent;
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
     
     private List<BatchEntity> _batches = new();
@@ -199,7 +233,12 @@
     }
 
     private string GetProgramName(string? programId) => _programs.FirstOrDefault(p => p.Id == programId)?.Name ?? "Academic Program";
-    private int GetStudentCount(string batchId) => _allStudents.Count(s => s.BatchId == batchId);
+    
+    private int GetStudentCount(string batchId)
+    {
+        if (!Guid.TryParse(batchId, out var guid)) return 0;
+        return _allStudents.Count(s => s.BatchId == guid);
+    }
 
     private void OnProgramChanged(string programId)
     {
@@ -226,16 +265,21 @@
 
     private async Task LoadData()
     {
+        _isLoading = true;
         try
         {
             _batches = await Supabase.GetAll<BatchEntity>();
             _programs = await Supabase.GetAll<ProgramEntity>();
             _allStudents = await Supabase.GetAll<StudentEntity>();
-            _unassignedStudents = _allStudents.Where(s => string.IsNullOrEmpty(s.BatchId)).ToList();
+            _unassignedStudents = _allStudents.Where(s => s.BatchId == null).ToList();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 
@@ -243,14 +287,12 @@
     {
         try
         {
-             // Ensure program ID is set
             if (string.IsNullOrEmpty(_newBatch.ProgramId) && _programs.Any())
                 _newBatch.ProgramId = _programs.First().Id;
 
             var savedBatch = await Supabase.Insert(_newBatch);
             int totalYears = savedBatch.EndYear - savedBatch.StartYear;
             
-            // Auto-generate semesters
             var timeline = CalendarService.GenerateBatchTimeline(savedBatch.Id, savedBatch.StartYear, totalYears);
             foreach (var sem in timeline)
             {
@@ -270,20 +312,46 @@
     private async Task ViewDetails(BatchEntity batch)
     {
         _selectedBatch = batch;
-        _batchStudents = _allStudents.Where(s => s.BatchId == batch.Id).ToList();
+        if (Guid.TryParse(batch.Id, out var batchGuid))
+            _batchStudents = _allStudents.Where(s => s.BatchId == batchGuid).ToList();
+        else
+            _batchStudents = new List<StudentEntity>();
+
         _batchDetailOpen = true;
     }
 
-    private void AssignBatch(StudentEntity student)
+    private void OpenAssignDialog(StudentEntity student)
     {
-        // For now, redirect to students page with the student selected or 
-        // we could implement a quick assign here.
-        Snackbar.Add($"Assigning {student.FullName}...", Severity.Info);
-        // Navigate via JS or simply suggest using Students page for now if full UI not here
+        _selectedStudent = student;
+        _batchToAssign = null;
+        _assignDialogOpen = true;
+    }
+
+    private async Task ConfirmAssignment()
+    {
+        if (_selectedStudent == null || _batchToAssign == null) return;
+
+        try
+        {
+            _selectedStudent.BatchId = _batchToAssign;
+            await Supabase.Update(_selectedStudent);
+            Snackbar.Add($"Assigned {_selectedStudent.FullName} to batch!", Severity.Success);
+            _assignDialogOpen = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
     }
 }
 
 <style>
     .fw-bold { font-weight: 700; }
     .text-primary { color: #1976D2; }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
 </style>

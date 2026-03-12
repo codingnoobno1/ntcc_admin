@@ -16,7 +16,7 @@ namespace ntcc_admin_blazor.Domain.Entities
         public string Email { get; set; } = string.Empty;
 
         [Column("batch_id")]
-        public string BatchId { get; set; } = string.Empty;
+        public Guid? BatchId { get; set; }
 
         [Column("university_id")]
         public string? UniversityId { get; set; }

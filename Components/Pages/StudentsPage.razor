@@ -53,14 +53,14 @@
         <MudGrid>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="searchString" Placeholder="Search by Name or Roll No" Adornment="Adornment.Start" 
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
             </MudItem>
             <MudItem xs="12" sm="3">
-                <MudSelect T="string" Label="Batch" @bind-Value="filterBatch" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined" Dense="true">
-                    <MudSelectItem Value="@((string?)null)">All Batches</MudSelectItem>
+                <MudSelect T="Guid?" Label="Batch" Value="filterBatch" AnchorOrigin="Origin.BottomCenter" Variant="Variant.Outlined" Dense="true" ValueChanged="BatchFilterChanged">
+                    <MudSelectItem Value="@((Guid?)null)">All Batches</MudSelectItem>
                     @foreach (var b in batches)
                     {
-                        <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem>
+                        <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -99,7 +99,7 @@
                 </HeaderContent>
                 <RowTemplate>
                     @{
-                        var batch = batches.FirstOrDefault(b => b.Id == context.BatchId);
+                        var batch = batches.FirstOrDefault(b => b.Id == context.BatchId?.ToString());
                         int admissionYear = batch?.StartYear ?? context.EnrollmentYear;
                         int totalYears = (batch != null && batch.EndYear > batch.StartYear) ? (batch.EndYear - batch.StartYear) : 4;
                         int currentSem = CalendarService.CalculateCurrentSemester(admissionYear, totalYears);
@@ -171,10 +171,10 @@
         <MudTextField @bind-Value="editStudent.FullName" Label="Full Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
         <MudTextField @bind-Value="editStudent.RollNumber" Label="Roll Number" Variant="Variant.Outlined" Class="mb-3" />
         <MudTextField @bind-Value="editStudent.Email" Label="Email Address" Required="true" Variant="Variant.Outlined" Class="mb-3" />
-        <MudSelect T="string" Label="Batch" @bind-Value="editStudent.BatchId" Required="true" Variant="Variant.Outlined" Class="mb-3">
+        <MudSelect T="Guid?" Label="Batch" @bind-Value="editStudent.BatchId" Required="true" Variant="Variant.Outlined" Class="mb-3">
             @foreach (var b in batches)
             {
-                <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem>
+                <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
             }
         </MudSelect>
         <MudNumericField @bind-Value="editStudent.EnrollmentYear" Label="Enrollment Year" Variant="Variant.Outlined" Min="2010" Max="2030" Class="mb-3" />
@@ -229,7 +229,7 @@
     bool isEdit = false;
     bool progressDrawerVisible = false;
     string searchString = "";
-    string? filterBatch;
+    Guid? filterBatch;
     string? filterStatus;
 
     List<StudentEntity> students = new();
@@ -256,10 +256,10 @@
             stages = await StageService.GetAllStages();
             allStageRules = await Supabase.GetAll<AcademicStageRuleEntity>();
             
-            if (string.IsNullOrEmpty(filterBatch))
+            if (filterBatch == null)
                 students = await Supabase.GetAll<StudentEntity>();
             else
-                students = await StudentService.GetStudentsByBatch(filterBatch);
+                students = await StudentService.GetStudentsByBatch(filterBatch.Value);
 
             // Fetch Project Links (Simplified for now: find first project per student)
             var allProjects = await Supabase.GetAll<ProjectGroupEntity>();
@@ -281,7 +281,13 @@
         }
     }
 
-     AcademicStageRuleEntity? GetActiveRule(string programId, int semester) => 
+    async Task BatchFilterChanged(Guid? val)
+    {
+        filterBatch = val;
+        await LoadData();
+    }
+
+    AcademicStageRuleEntity? GetActiveRule(string programId, int semester) => 
         allStageRules.FirstOrDefault(r => r.ProgramId == programId && r.SemesterNumber == semester);
 
     string GetGDriveLink(string studentId) => projectLinks.GetValueOrDefault(studentId, "");
@@ -296,7 +302,7 @@
         (s.UniversityId?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
         (s.EnrollmentNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false);
 
-    string GetBatchName(string batchId) => batches.FirstOrDefault(b => b.Id == batchId)?.Name ?? "Unassigned";
+    string GetBatchName(Guid? batchId) => batches.FirstOrDefault(b => b.Id == batchId?.ToString())?.Name ?? "Unassigned";
 
     Color GetStatusColor(string status) => status switch
     {

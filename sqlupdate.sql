@@ -127,3 +127,27 @@ BEGIN
         ALTER TABLE academic_stage_rules ADD COLUMN stage_type TEXT DEFAULT 'Minor';
     END IF;
 END $$;
+
+-- 10. Synchronize Students Table
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'created_at') THEN
+        ALTER TABLE students ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'updated_at') THEN
+        ALTER TABLE students ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'batch_id') THEN
+        ALTER TABLE students ADD COLUMN batch_id TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'university_id') THEN
+        ALTER TABLE students ADD COLUMN university_id TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'enrollment_number') THEN
+        ALTER TABLE students ADD COLUMN enrollment_number TEXT;
+    END IF;
+END $$;
