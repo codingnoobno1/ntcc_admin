@@ -160,7 +160,7 @@
         <MudSelect T="Guid?" Label="Select Batch" @bind-Value="_batchToAssign">
             @foreach (var b in _batches)
             {
-                <MudSelectItem Value="@((Guid?)Guid.Parse(b.Id))">@b.Name</MudSelectItem>
+                <MudSelectItem Value="@((Guid?)b.Id)">@b.Name</MudSelectItem>
             }
         </MudSelect>
     </DialogContent>
@@ -234,10 +234,9 @@
 
     private string GetProgramName(string? programId) => _programs.FirstOrDefault(p => p.Id == programId)?.Name ?? "Academic Program";
     
-    private int GetStudentCount(string batchId)
+    private int GetStudentCount(Guid batchId)
     {
-        if (!Guid.TryParse(batchId, out var guid)) return 0;
-        return _allStudents.Count(s => s.BatchId == guid);
+        return _allStudents.Count(s => s.BatchId == batchId);
     }
 
     private void OnProgramChanged(string programId)
@@ -312,11 +311,7 @@
     private async Task ViewDetails(BatchEntity batch)
     {
         _selectedBatch = batch;
-        if (Guid.TryParse(batch.Id, out var batchGuid))
-            _batchStudents = _allStudents.Where(s => s.BatchId == batchGuid).ToList();
-        else
-            _batchStudents = new List<StudentEntity>();
-
+        _batchStudents = _allStudents.Where(s => s.BatchId == batch.Id).ToList();
         _batchDetailOpen = true;
     }
 

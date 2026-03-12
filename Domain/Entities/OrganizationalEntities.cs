@@ -23,7 +23,7 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class BatchEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("program_id")]
         public string? ProgramId { get; set; }
@@ -41,10 +41,10 @@ namespace ntcc_admin_blazor.Domain.Entities
     public class BatchSemesterEntity : DomainBase
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Column("batch_id")]
-        public string BatchId { get; set; } = string.Empty;
+        public Guid BatchId { get; set; }
 
         [Column("semester_number")]
         public int SemesterNumber { get; set; }

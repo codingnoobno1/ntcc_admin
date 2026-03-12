@@ -20,7 +20,7 @@ namespace ntcc_admin_blazor.Services
     public interface IAcademicCalendarService
     {
         int CalculateCurrentSemester(int startYear, int totalYears, AcademicConfig? config = null);
-        List<BatchSemesterEntity> GenerateBatchTimeline(string batchId, int startYear, int totalYears, AcademicConfig? config = null);
+        List<BatchSemesterEntity> GenerateBatchTimeline(Guid batchId, int startYear, int totalYears, AcademicConfig? config = null);
         (DateTime Start, DateTime End) GetSemesterDateRange(int startYear, int semesterNumber, AcademicConfig? config = null);
         Task<AcademicStageRuleEntity?> GetActiveStage(string programId, int semesterNumber);
         IEnumerable<(DateTime Start, DateTime End, string Type, int? SemNum)> GetFullTimeline(int startYear, int totalYears, AcademicConfig? config = null);
@@ -59,7 +59,7 @@ namespace ntcc_admin_blazor.Services
             return Math.Max(1, Math.Min(sem, totalYears * 2));
         }
 
-        public List<BatchSemesterEntity> GenerateBatchTimeline(string batchId, int startYear, int totalYears, AcademicConfig? config = null)
+        public List<BatchSemesterEntity> GenerateBatchTimeline(Guid batchId, int startYear, int totalYears, AcademicConfig? config = null)
         {
             config ??= new AcademicConfig();
             var timeline = new List<BatchSemesterEntity>();
@@ -70,7 +70,7 @@ namespace ntcc_admin_blazor.Services
                 var range = GetSemesterDateRange(startYear, sem, config);
                 timeline.Add(new BatchSemesterEntity
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = Guid.NewGuid(),
                     BatchId = batchId,
                     SemesterNumber = sem,
                     StartDate = range.Start,
