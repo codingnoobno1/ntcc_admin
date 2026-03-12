@@ -107,10 +107,10 @@ app.MapGet("/api/auth/login", async (HttpContext context, string email, string r
 });
 
 app.MapGet("/api/auth/logout", async (HttpContext context) =>
-{
-    Console.WriteLine("[COOKIE] Clearing session cookie.");
-    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    context.Response.Redirect("/");
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
 });
 
 // ─── Blazor Routes ─────────────────────────────────────

@@ -343,9 +343,32 @@
 
     async Task SaveStudent()
     {
-        // Implementation for Save/Update
-        dialogVisible = false;
-        Snackbar.Add("Action simulated in Enterprise Mode", Severity.Success);
+        if (string.IsNullOrWhiteSpace(editStudent.FullName) || string.IsNullOrWhiteSpace(editStudent.Email))
+        {
+            Snackbar.Add("Name and Email are required", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            if (isEdit)
+            {
+                await Supabase.Update(editStudent);
+                Snackbar.Add("Student updated successfully", Severity.Success);
+            }
+            else
+            {
+                await Supabase.Insert(editStudent);
+                Snackbar.Add("Student registered successfully", Severity.Success);
+            }
+            
+            dialogVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving student: {ex.Message}", Severity.Error);
+        }
     }
 }
 
