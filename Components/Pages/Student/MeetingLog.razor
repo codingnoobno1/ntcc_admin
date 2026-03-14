@@ -33,7 +33,7 @@
                         <div class="d-flex justify-space-between align-start">
                             <div>
                                 <div class="d-flex align-center gap-2 mb-1">
-                                    <MudText Typo="Typo.h6" Class="fw-bold">@(((DateTime)meeting.MeetingDate).ToString("MMMM dd, yyyy"))</MudText>
+                                    <MudText Typo="Typo.h6" Class="fw-bold">@((meeting.MeetingDate ?? DateTime.MinValue).ToString("MMMM dd, yyyy"))</MudText>
                                     <MudRating ReadOnly="true" SelectedValue="@meeting.ProgressScore" MaxValue="5" Size="Size.Small" Color="Color.Warning" />
                                 </div>
                                 <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">Supervisor: Prof. Amit Kumar</MudText>
@@ -81,7 +81,8 @@
 @code {
     private bool _isLoading = true;
     private List<SupervisorMeetingDto> _meetings = new();
-    private string _studentId = "stud-123";
+    // In real app, resolve from authenticated user; using demo GUID for now
+    private string _studentId = "00000000-0000-0000-0000-000000000001";
 
     // Dialog Logic
     private bool _logDialogVisible = false;
@@ -98,7 +99,7 @@
         _isLoading = true;
         try
         {
-            _meetings = await WorkflowService.GetStudentMeetingsAsync(_studentId);
+            _meetings = await WorkflowService.GetStudentMeetingsAsync(Guid.Parse(_studentId));
         }
         catch (Exception ex)
         {
@@ -119,7 +120,7 @@
 
     private void OpenLogMeetingDialog()
     {
-        _newMeeting = new SupervisorMeetingDto { MeetingDate = DateTime.Today, StudentId = _studentId, FacultyId = "fac-1" };
+        _newMeeting = new SupervisorMeetingDto { MeetingDate = DateTime.Today, StudentId = _studentId, FacultyId = "00000000-0000-0000-0000-000000000010" };
         _logDialogVisible = true;
     }
 

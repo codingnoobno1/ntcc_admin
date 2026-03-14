@@ -112,7 +112,7 @@
     <DialogContent>
         <MudGrid>
             <MudItem xs="12" sm="6">
-                <MudSelect T="string" @bind-Value="editItem.StudentId" Label="Student" Required="true" Variant="Variant.Outlined">
+                <MudSelect T="Guid" @bind-Value="editItem.StudentId" Label="Student" Required="true" Variant="Variant.Outlined">
                     @foreach (var s in students)
                     {
                         <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
@@ -194,7 +194,7 @@
         i.CompanyName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
         GetStudentName(i.StudentId).Contains(searchString, StringComparison.OrdinalIgnoreCase);
 
-    string GetStudentName(string id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
+    string GetStudentName(Guid id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
 
     Color GetStatusColor(string s) => s switch
     {

@@ -25,6 +25,7 @@ namespace ntcc_admin_blazor.Application.Services
 
         public async Task<CompanyEntity?> GetCompanyAsync(Guid id)
         {
+            // CompanyEntity.Id is stored as string; convert Guid → string for lookup
             var res = await _supabase.GetWhere<CompanyEntity>("id", id.ToString());
             return res.FirstOrDefault();
         }
@@ -32,7 +33,8 @@ namespace ntcc_admin_blazor.Application.Services
         public async Task<Guid> AddCompanyAsync(CompanyEntity company)
         {
             var created = await _supabase.Insert(company);
-            return created.Id;
+            // CompanyEntity.Id is string in the DB, API expects Guid
+            return Guid.Parse(created.Id);
         }
 
         public async Task<bool> UpdateCompanyAsync(CompanyEntity company)
@@ -49,12 +51,14 @@ namespace ntcc_admin_blazor.Application.Services
 
         public async Task<List<InternshipEntity>> GetStudentInternshipsAsync(Guid studentId)
         {
+            // InternshipEntity.StudentId is string; filter by Guid.ToString()
             var internships = await _supabase.GetWhere<InternshipEntity>("student_id", studentId.ToString());
             return internships.OrderByDescending(i => i.CreatedAt).ToList();
         }
 
         public async Task<InternshipEntity?> GetInternshipAsync(Guid id)
         {
+            // InternshipEntity.Id is string; convert Guid → string for lookup
             var res = await _supabase.GetWhere<InternshipEntity>("id", id.ToString());
             return res.FirstOrDefault();
         }
@@ -64,12 +68,13 @@ namespace ntcc_admin_blazor.Application.Services
             var created = await _supabase.Insert(internship);
 
             await _activityLog.LogActivityAsync(
-                internship.StudentId,
+                Guid.Parse(internship.StudentId),
                 "internship_applied",
                 $"{{\"internship_id\":\"{created.Id}\"}}"
             );
 
-            return created.Id;
+            // InternshipEntity.Id is string; API expects Guid
+            return Guid.Parse(created.Id);
         }
 
         public async Task<bool> UpdateInternshipStatusAsync(Guid internshipId, string newStatus)
@@ -82,7 +87,7 @@ namespace ntcc_admin_blazor.Application.Services
             await _supabase.Update(internship);
 
             await _activityLog.LogActivityAsync(
-                internship.StudentId,
+                Guid.Parse(internship.StudentId),
                 "internship_updated",
                 $"{{\"status\":\"{newStatus}\"}}"
             );

@@ -31,7 +31,7 @@
     <MudPaper Elevation="0" Class="pa-4 mb-6 glass-card">
         <MudGrid>
             <MudItem xs="12" sm="5">
-                <MudSelect T="string" Label="Active Stage" @bind-Value="selectedStageId" Variant="Variant.Outlined" Dense="true" Class="rounded-lg">
+                <MudSelect T="Guid?" Label="Active Stage" @bind-Value="selectedStageId" Variant="Variant.Outlined" Dense="true" Class="rounded-lg">
                     @foreach (var s in stages)
                     {
                         <MudSelectItem Value="@s.Id">@s.Name (@s.ProgramId)</MudSelectItem>
@@ -121,7 +121,7 @@
 @code {
     bool isLoading = false;
     bool scoringVisible = false;
-    string? selectedStageId;
+    Guid? selectedStageId;
     string? selectedCategoryId;
     
     List<StageTypeEntity> stages = new();
@@ -139,7 +139,7 @@
 
     async Task LoadEvaluationList()
     {
-        if (string.IsNullOrEmpty(selectedStageId))
+        if (!selectedStageId.HasValue || selectedStageId == Guid.Empty)
         {
             Snackbar.Add("Please select a stage", Severity.Warning);
             return;
@@ -162,7 +162,7 @@
         }
     }
 
-    decimal? GetMarks(string studentId) => scores.FirstOrDefault(s => s.StudentId == studentId)?.Marks;
+    decimal? GetMarks(Guid studentId) => scores.FirstOrDefault(s => s.StudentId == studentId)?.Marks;
 
     void OpenScoring(StudentMinDto s)
     {
@@ -180,8 +180,7 @@
             { 
                 StudentId = selectedStudent.Id, 
                 Marks = currentScore, 
-                Remarks = currentRemarks,
-                EvaluatorId = "faculty-1"
+                Remarks = currentRemarks
             };
             
             await Supabase.Upsert(eval);
@@ -193,9 +192,9 @@
 
     public class StudentMinDto
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Enrolment { get; set; }
+        public Guid Id { get; set; } = Guid.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Enrolment { get; set; } = string.Empty;
         public string FullName => Name;
         public string RollNumber => Enrolment;
     }

@@ -65,7 +65,7 @@
                             <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="ID">@context.Id.Substring(0,8)...</MudTd>
+                            <MudTd DataLabel="ID">@context.Id.ToString().Substring(0,8)...</MudTd>
                             <MudTd DataLabel="Title">
                                 <MudText Typo="Typo.body2" Class="fw-bold">@context.ProjectTitle</MudText>
                             </MudTd>
@@ -110,8 +110,9 @@
         isLoading = true;
         try
         {
-            // Hardcoded stageId for now; ideally fetched from active global config
-            groups = await ProjectFormationService.GetGroupsForStageAsync("active_stage_id");
+            // TODO: Replace Guid.Empty with an actual active stage id from configuration or selection.
+            Guid activeStageId = Guid.Empty;
+            groups = await ProjectFormationService.GetGroupsForStageAsync(activeStageId);
         }
         catch (Exception ex)
         {

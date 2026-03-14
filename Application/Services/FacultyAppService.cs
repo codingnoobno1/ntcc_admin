@@ -39,7 +39,7 @@ namespace ntcc_admin_blazor.Application.Services
                 var password = SupabaseService.GenerateStrongPassword();
                 var userId = await _supabase.CreateFacultyAccount(email, password, fullName, department, roles);
                 
-                if (string.IsNullOrEmpty(userId)) return false;
+                if (!userId.HasValue) return false;
 
                 // Log activity
                 await _supabase.Insert(new ActivityLogEntity

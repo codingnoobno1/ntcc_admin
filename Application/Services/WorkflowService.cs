@@ -14,7 +14,7 @@ namespace ntcc_admin_blazor.Application.Services
             _supabase = supabase;
         }
 
-        public async Task<StageDashboardDto?> GetStageDashboardAsync(string studentId, string programId, int semesterNumber)
+        public async Task<StageDashboardDto?> GetStageDashboardAsync(Guid studentId, Guid programId, int semesterNumber)
         {
             var dto = new StageDashboardDto();
             
@@ -28,7 +28,7 @@ namespace ntcc_admin_blazor.Application.Services
             var stageType = stageTypes.FirstOrDefault();
             if (stageType == null) return null;
 
-            dto.StageId = stageType.Id;
+            dto.StageId = stageType.Id.ToString();
             dto.StageName = stageType.Name;
 
             var requirements = await _supabase.GetWhere<StageRequirementEntity>("stage_type_id", stageType.Id);
@@ -60,7 +60,7 @@ namespace ntcc_admin_blazor.Application.Services
                     var progress = studentProgress.FirstOrDefault(p => p.WorkflowStepId == step.Id);
                     dto.Steps.Add(new WorkflowStepDto
                     {
-                        Id = step.Id,
+                        Id = step.Id.ToString(),
                         StepKey = step.StepKey,
                         Name = step.StepName,
                         OrderIndex = step.OrderIndex,
@@ -75,16 +75,16 @@ namespace ntcc_admin_blazor.Application.Services
             return dto;
         }
 
-        public async Task<List<SupervisorMeetingDto>> GetStudentMeetingsAsync(string studentId)
+        public async Task<List<SupervisorMeetingDto>> GetStudentMeetingsAsync(Guid studentId)
         {
             var entities = await _supabase.GetWhere<SupervisorMeetingEntity>("student_id", studentId);
             var reports = await _supabase.GetAll<MeetingReportEntity>(); // Optimization: filter properly in real app
 
             return entities.Select(e => new SupervisorMeetingDto
             {
-                Id = e.Id,
-                StudentId = e.StudentId,
-                FacultyId = e.FacultyId,
+                Id = e.Id.ToString(),
+                StudentId = e.StudentId.ToString(),
+                FacultyId = e.FacultyId.ToString(),
                 MeetingDate = e.MeetingDate,
                 Summary = e.Summary ?? string.Empty,
                 ProgressScore = e.ProgressScore,
@@ -96,8 +96,8 @@ namespace ntcc_admin_blazor.Application.Services
         {
             var entity = new SupervisorMeetingEntity
             {
-                StudentId = meeting.StudentId,
-                FacultyId = meeting.FacultyId,
+                StudentId = Guid.Parse(meeting.StudentId),
+                FacultyId = Guid.Parse(meeting.FacultyId),
                 MeetingDate = meeting.MeetingDate ?? DateTime.Now,
                 Summary = meeting.Summary,
                 ProgressScore = meeting.ProgressScore
@@ -115,7 +115,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<EvaluationRubricDto?> GetEvaluationRubricAsync(string stageTypeId, string examType)
+        public async Task<EvaluationRubricDto?> GetEvaluationRubricAsync(Guid stageTypeId, string examType)
         {
             var rubrics = await _supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", stageTypeId);
             var rubric = rubrics.FirstOrDefault(r => r.ExamType == examType);
@@ -125,26 +125,26 @@ namespace ntcc_admin_blazor.Application.Services
 
             return new EvaluationRubricDto
             {
-                Id = rubric.Id,
+                Id = rubric.Id.ToString(),
                 ExamType = rubric.ExamType,
                 TotalMarks = rubric.TotalMarks,
                 Components = components.Select(c => new RubricComponentDto
                 {
-                    Id = c.Id,
+                    Id = c.Id.ToString(),
                     ComponentName = c.ComponentName,
                     MaxMarks = c.MaxMarks
                 }).ToList()
             };
         }
 
-        public async Task<bool> SubmitEvaluationAsync(string studentId, string rubricId, List<RubricComponentDto> components, string evaluatorId)
+        public async Task<bool> SubmitEvaluationAsync(Guid studentId, Guid rubricId, List<RubricComponentDto> components, Guid evaluatorId)
         {
             foreach (var comp in components)
             {
                 var eval = new StudentEvaluationEntity
                 {
                     StudentId = studentId,
-                    RubricComponentId = comp.Id,
+                    RubricComponentId = Guid.Parse(comp.Id),
                     EvaluatorId = evaluatorId,
                     Marks = comp.MarksObtained,
                     Remarks = comp.Remarks
@@ -154,7 +154,7 @@ namespace ntcc_admin_blazor.Application.Services
             return true;
         }
 
-        public async Task<bool> SubmitStepArtefactAsync(string studentId, string stepId, string fileUrl, string gdriveLink)
+        public async Task<bool> SubmitStepArtefactAsync(Guid studentId, Guid stepId, string fileUrl, string gdriveLink)
         {
             var submission = new WorkflowSubmissionEntity
             {
@@ -169,7 +169,7 @@ namespace ntcc_admin_blazor.Application.Services
             return await UpdateStepStatusAsync(studentId, stepId, StepStatus.Submitted);
         }
 
-        public async Task<bool> UpdateStepStatusAsync(string studentId, string stepId, StepStatus status)
+        public async Task<bool> UpdateStepStatusAsync(Guid studentId, Guid stepId, StepStatus status)
         {
             var progress = new StudentWorkflowStepEntity
             {

@@ -22,7 +22,7 @@ namespace ntcc_admin_blazor.Application.Services
             {
                 var log = new StudentActivityLogEntity
                 {
-                    StudentId = studentId,
+                    StudentId = studentId.ToString(),
                     Action = action,
                     Metadata = metadata
                 };
@@ -38,7 +38,7 @@ namespace ntcc_admin_blazor.Application.Services
         {
             try
             {
-                var logs = await _supabase.GetWhere<StudentActivityLogEntity>("student_id", studentId);
+                var logs = await _supabase.GetWhere<StudentActivityLogEntity>("student_id", studentId.ToString());
                 return logs.OrderByDescending(l => l.CreatedAt).ToList();
             }
             catch (Exception ex)

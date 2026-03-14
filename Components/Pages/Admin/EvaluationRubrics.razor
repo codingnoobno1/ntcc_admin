@@ -167,14 +167,15 @@
         _isLoading = true;
         try
         {
-            var types = await Supabase.GetWhere<StageTypeEntity>("id", StageTypeId);
+            var stageTypeGuid = Guid.Parse(StageTypeId);
+            var types = await Supabase.GetWhere<StageTypeEntity>("id", stageTypeGuid);
             _stageType = types.FirstOrDefault();
             
-            _rubrics = await Supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", StageTypeId);
+            _rubrics = await Supabase.GetWhere<EvaluationRubricEntity>("stage_type_id", stageTypeGuid);
             _components = await Supabase.GetAll<RubricComponentEntity>(); // Optimization: fetch filtered in real app
 
-            var reqs = await Supabase.GetWhere<StageRequirementEntity>("stage_type_id", StageTypeId);
-            _requirement = reqs.FirstOrDefault() ?? new StageRequirementEntity { StageTypeId = StageTypeId };
+            var reqs = await Supabase.GetWhere<StageRequirementEntity>("stage_type_id", stageTypeGuid);
+            _requirement = reqs.FirstOrDefault() ?? new StageRequirementEntity { StageTypeId = stageTypeGuid };
         }
         catch (Exception ex)
         {
@@ -198,7 +199,7 @@
     private void OpenAddRubricDialog()
     {
         _isEditRubric = false;
-        _editRubric = new EvaluationRubricEntity { StageTypeId = StageTypeId };
+        _editRubric = new EvaluationRubricEntity { StageTypeId = Guid.Parse(StageTypeId) };
         _rubricDialogVisible = true;
     }
 

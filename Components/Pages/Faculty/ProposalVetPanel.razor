@@ -30,7 +30,7 @@
                 <MudItem xs="12" md="6" lg="4">
                     <MudPaper Class="pa-6 proposal-card d-flex flex-column" Elevation="2" Style="height: 100%;">
                         <div class="d-flex justify-space-between mb-2">
-                            <MudChip T="string" Color="Color.Default" Size="Size.Small">ID: @group.Id.Substring(0, 8)</MudChip>
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">ID: @group.Id.ToString().Substring(0, 8)</MudChip>
                             <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Text">Pending</MudChip>
                         </div>
                         
@@ -83,7 +83,9 @@
         isLoading = true;
         try
         {
-            var groups = await ProjectFormationService.GetGroupsForStageAsync("active_stage_id"); // Ideally fetched dynamically
+            // Ideally fetched dynamically from current workflow/stage context
+            Guid activeStageId = Guid.Empty;
+            var groups = await ProjectFormationService.GetGroupsForStageAsync(activeStageId);
             pendingGroups = groups.Where(g => g.Status == "pending").ToList();
         }
         catch (Exception ex)
@@ -96,12 +98,13 @@
         }
     }
 
-    async Task VetProposal(string groupId, bool approve)
+    async Task VetProposal(Guid groupId, bool approve)
     {
         try
         {
             // Simulated faculty ID injection normally grabbed from AuthState
-            var success = await ProjectFormationService.VetProposalAsync(groupId, "current_faculty_id", approve, approve ? "Looks good" : "Needs revision");
+            var facultyGuid = Guid.Empty; // TODO: replace with actual faculty Guid from auth context
+            var success = await ProjectFormationService.VetProposalAsync(groupId, facultyGuid, approve, approve ? "Looks good" : "Needs revision");
             if (success)
             {
                 Snackbar.Add($"Proposal {(approve ? "Approved" : "Rejected")}", approve ? Severity.Success : Severity.Warning);

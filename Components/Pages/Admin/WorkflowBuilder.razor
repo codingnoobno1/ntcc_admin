@@ -169,10 +169,11 @@
         _isLoading = true;
         try
         {
-            var types = await Supabase.GetWhere<StageTypeEntity>("id", StageTypeId);
+            var stageTypeGuid = Guid.Parse(StageTypeId);
+            var types = await Supabase.GetWhere<StageTypeEntity>("id", stageTypeGuid);
             _stageType = types.FirstOrDefault();
             
-            _stages = await Supabase.GetWhere<WorkflowStageEntity>("stage_type_id", StageTypeId);
+            _stages = await Supabase.GetWhere<WorkflowStageEntity>("stage_type_id", stageTypeGuid);
             _steps = await Supabase.GetAll<WorkflowStepEntity>(); // Optimization: fetch filtered in real app
         }
         catch (Exception ex)
@@ -196,7 +197,7 @@
     private void OpenAddStageDialog()
     {
         _isEditStage = false;
-        _editStage = new WorkflowStageEntity { StageTypeId = StageTypeId };
+        _editStage = new WorkflowStageEntity { StageTypeId = Guid.Parse(StageTypeId) };
         _stageDialogVisible = true;
     }
 

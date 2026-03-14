@@ -5,18 +5,18 @@ namespace ntcc_admin_blazor.Application.Services
 {
     public interface IWorkflowService
     {
-        Task<StageDashboardDto?> GetStageDashboardAsync(string studentId, string programId, int semesterNumber);
+        Task<StageDashboardDto?> GetStageDashboardAsync(Guid studentId, Guid programId, int semesterNumber);
         
         // Meetings
-        Task<List<SupervisorMeetingDto>> GetStudentMeetingsAsync(string studentId);
+        Task<List<SupervisorMeetingDto>> GetStudentMeetingsAsync(Guid studentId);
         Task<bool> LogMeetingAsync(SupervisorMeetingDto meeting);
         
         // Evaluations
-        Task<EvaluationRubricDto?> GetEvaluationRubricAsync(string stageTypeId, string examType);
-        Task<bool> SubmitEvaluationAsync(string studentId, string rubricId, List<RubricComponentDto> components, string evaluatorId);
+        Task<EvaluationRubricDto?> GetEvaluationRubricAsync(Guid stageTypeId, string examType);
+        Task<bool> SubmitEvaluationAsync(Guid studentId, Guid rubricId, List<RubricComponentDto> components, Guid evaluatorId);
         
         // Verification & Submissions
-        Task<bool> SubmitStepArtefactAsync(string studentId, string stepId, string fileUrl, string gdriveLink);
-        Task<bool> UpdateStepStatusAsync(string studentId, string stepId, StepStatus status);
+        Task<bool> SubmitStepArtefactAsync(Guid studentId, Guid stepId, string fileUrl, string gdriveLink);
+        Task<bool> UpdateStepStatusAsync(Guid studentId, Guid stepId, StepStatus status);
     }
 }

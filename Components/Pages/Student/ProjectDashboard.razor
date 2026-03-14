@@ -130,7 +130,8 @@
 @code {
     private bool _isLoading = true;
     private StageDashboardDto? _dashboard;
-    private string _studentId = "stud-123"; // Logic to get from Auth
+    // In real app, resolve from authenticated user; using demo GUIDs for now
+    private string _studentId = "00000000-0000-0000-0000-000000000001";
 
     // Submission Logic
     private bool _subDialogVisible = false;
@@ -149,7 +150,9 @@
         try
         {
             // Resolve program and sem from student profile (mocked)
-            _dashboard = await WorkflowService.GetStageDashboardAsync(_studentId, "prog-1", 6);
+            var studentGuid = Guid.Parse(_studentId);
+            var programGuid = Guid.Parse("00000000-0000-0000-0000-000000000002");
+            _dashboard = await WorkflowService.GetStageDashboardAsync(studentGuid, programGuid, 6);
         }
         catch (Exception ex)
         {
@@ -199,7 +202,7 @@
     {
         if (_selectedStep == null) return;
         
-        await WorkflowService.SubmitStepArtefactAsync(_studentId, _selectedStep.Id, _submissionUrl, "");
+        await WorkflowService.SubmitStepArtefactAsync(Guid.Parse(_studentId), Guid.Parse(_selectedStep.Id), _submissionUrl, "");
         Snackbar.Add("Submitted successfully!", Severity.Success);
         _subDialogVisible = false;
         await LoadData();

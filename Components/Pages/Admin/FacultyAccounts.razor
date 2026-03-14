@@ -1,5 +1,6 @@
 @page "/admin/faculty"
 @using Microsoft.AspNetCore.Authorization
+@using ntcc_admin_blazor.Application.Services
 @using MudBlazor
 @attribute [Authorize(Roles = "admin,master")]
 @inject IFacultyAppService FacultyService

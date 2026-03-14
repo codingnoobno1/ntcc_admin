@@ -93,29 +93,21 @@
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="4">
-            <MudSelect T="string" Label="Program" @bind-Value="_editRule.ProgramId" Required="true" AnchorOrigin="Origin.BottomCenter">
+            <MudSelect T="Guid?" Label="Program" @bind-Value="_editRule.ProgramId" Required="true" AnchorOrigin="Origin.BottomCenter">
                 @foreach (var p in _combinedPrograms)
                 {
                     <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
                 }
             </MudSelect>
-            @if (_editRule.ProgramId == "other")
-            {
-                <MudTextField @bind-Value="_customProgramName" Label="Custom Program Name" Required="true" />
-            }
 
             <MudNumericField @bind-Value="_editRule.SemesterNumber" Label="Semester Number" Min="1" Max="10" Required="true" />
 
-            <MudSelect T="string" Label="Stage Template" @bind-Value="_editRule.StageTypeId" Required="true" AnchorOrigin="Origin.BottomCenter">
+            <MudSelect T="Guid" Label="Stage Template" @bind-Value="_editRule.StageTypeId" Required="true" AnchorOrigin="Origin.BottomCenter">
                 @foreach (var st in _combinedStageTypes)
                 {
                     <MudSelectItem Value="@st.Id">@st.Name</MudSelectItem>
                 }
             </MudSelect>
-            @if (_editRule.StageTypeId == "other")
-            {
-                <MudTextField @bind-Value="_customStageTypeName" Label="Custom Template Name" Required="true" />
-            }
 
             <div class="d-flex align-center gap-4">
                 <MudSwitch @bind-Value="_editRule.IsVisible" Label="Visible to Students" Color="Color.Primary" />
@@ -159,28 +151,25 @@
     // Hard-coded defaults
     private List<ProgramEntity> _defaultPrograms = new()
     {
-        new ProgramEntity { Id = "78901234-5678-9012-3456-789012345678", Name = "B.Tech CSE" },
-        new ProgramEntity { Id = "89012345-6789-0123-4567-890123456789", Name = "B.Tech ECE" },
-        new ProgramEntity { Id = "90123456-7890-1234-5678-901234567890", Name = "M.Tech CSE" }
+        new ProgramEntity { Id = Guid.Parse("78901234-5678-9012-3456-789012345678"), Name = "B.Tech CSE" },
+        new ProgramEntity { Id = Guid.Parse("89012345-6789-0123-4567-890123456789"), Name = "B.Tech ECE" },
+        new ProgramEntity { Id = Guid.Parse("90123456-7890-1234-5678-901234567890"), Name = "M.Tech CSE" }
     };
 
     private List<StageTypeEntity> _defaultStageTypes = new()
     {
-        new StageTypeEntity { Id = "12345678-1234-1234-1234-123456789012", Name = "Minor Project", StageKey = "minor" },
-        new StageTypeEntity { Id = "23456789-2345-2345-2345-234567890123", Name = "Major Project", StageKey = "major" },
-        new StageTypeEntity { Id = "34567890-3456-3456-3456-345678901234", Name = "Internship", StageKey = "internship" }
+        new StageTypeEntity { Id = Guid.Parse("12345678-1234-1234-1234-123456789012"), Name = "Minor Project", StageKey = "minor", ProgramId = Guid.Empty },
+        new StageTypeEntity { Id = Guid.Parse("23456789-2345-2345-2345-234567890123"), Name = "Major Project", StageKey = "major", ProgramId = Guid.Empty },
+        new StageTypeEntity { Id = Guid.Parse("34567890-3456-3456-3456-345678901234"), Name = "Internship", StageKey = "internship", ProgramId = Guid.Empty }
     };
 
     private List<ProgramEntity> _combinedPrograms => _programs.Any() 
-        ? _programs.Concat(new[] { new ProgramEntity { Id = "other", Name = "Other" } }).ToList()
-        : _defaultPrograms.Concat(new[] { new ProgramEntity { Id = "other", Name = "Other" } }).ToList();
+        ? _programs
+        : _defaultPrograms;
 
     private List<StageTypeEntity> _combinedStageTypes => _stageTypes.Any()
-        ? _stageTypes.Concat(new[] { new StageTypeEntity { Id = "other", Name = "Other" } }).ToList()
-        : _defaultStageTypes.Concat(new[] { new StageTypeEntity { Id = "other", Name = "Other" } }).ToList();
-
-    private string? _customProgramName;
-    private string? _customStageTypeName;
+        ? _stageTypes
+        : _defaultStageTypes;
 
     // Rules State
     private bool _ruleDialogVisible = false;
@@ -218,26 +207,24 @@
         }
     }
 
-    private string GetProgramName(string? id) 
+    private string GetProgramName(Guid? id) 
     {
-        if (string.IsNullOrEmpty(id)) return "No Program";
-        var prog = _combinedPrograms.FirstOrDefault(p => p.Id == id);
-        return prog?.Name ?? id;
+        if (!id.HasValue) return "No Program";
+        var prog = _combinedPrograms.FirstOrDefault(p => p.Id == id.Value);
+        return prog?.Name ?? id.Value.ToString();
     }
 
-    private string GetStageTypeName(string id)
+    private string GetStageTypeName(Guid id)
     {
-        if (string.IsNullOrEmpty(id)) return "No Template";
+        if (id == Guid.Empty) return "No Template";
         var type = _combinedStageTypes.FirstOrDefault(st => st.Id == id);
-        return type?.Name ?? id;
+        return type?.Name ?? id.ToString();
     }
 
     private void OpenAddRuleDialog()
     {
         _isEdit = false;
         _editRule = new AcademicStageRuleEntity { Status = "active", IsVisible = true };
-        _customProgramName = null;
-        _customStageTypeName = null;
         _ruleDialogVisible = true;
     }
 
@@ -245,23 +232,6 @@
     {
         _isEdit = true;
         _editRule = rule;
-        
-        // Handle Program selection
-        if (_combinedPrograms.Take(_combinedPrograms.Count - 1).All(p => p.Id != rule.ProgramId))
-        {
-            _customProgramName = rule.ProgramId;
-            _editRule.ProgramId = "other";
-        }
-        else _customProgramName = null;
-
-        // Handle Stage Type selection
-        if (_combinedStageTypes.Take(_combinedStageTypes.Count - 1).All(st => st.Id != rule.StageTypeId))
-        {
-            _customStageTypeName = rule.StageTypeId;
-            _editRule.StageTypeId = "other";
-        }
-        else _customStageTypeName = null;
-
         _ruleDialogVisible = true;
     }
 
@@ -269,13 +239,6 @@
     {
         try
         {
-            // Prepare values if "Other" was selected
-            var finalProgramId = _editRule.ProgramId == "other" ? _customProgramName : _editRule.ProgramId;
-            var finalStageTypeId = _editRule.StageTypeId == "other" ? _customStageTypeName : _editRule.StageTypeId;
-
-            // Update the entity with final values before saving
-            _editRule.ProgramId = finalProgramId;
-            _editRule.StageTypeId = finalStageTypeId ?? _editRule.StageTypeId;
             _editRule.StageType = GetStageTypeName(_editRule.StageTypeId);
             _editRule.StageName = $"{GetProgramName(_editRule.ProgramId)} - {_editRule.StageType}";
 

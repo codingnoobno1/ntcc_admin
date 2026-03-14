@@ -154,7 +154,7 @@
                                         <FooterContent>
                                             <MudTFootRow>
                                                 <MudTd>
-                                                    <MudSelect T="string" @bind-Value="newSubRule.MilestoneId" Label="Milestone" Margin="Margin.Dense">
+                                                    <MudSelect T="Guid" @bind-Value="newSubRule.MilestoneId" Label="Milestone" Margin="Margin.Dense">
                                                         @foreach (var d in deadlines.Where(x => x.IsSubmissionRequired))
                                                         {
                                                             <MudSelectItem Value="@d.Id">@d.MilestoneName</MudSelectItem>
@@ -368,11 +368,13 @@
     async Task RefreshConfig()
     {
         if (selectedStage == null) return;
-        var config = await Supabase.GetStageConfiguration(selectedStage.Id);
-        deadlines = config.Deadlines.OrderBy(d => d.OrderIndex).ToList();
-        categories = config.Categories;
-        requirements = config.Requirements;
-        submissionRules = config.SubmissionRules;
+        var (stageDeadlines, stageCategories, stageRequirements, stageSubmissionRules) =
+            await Supabase.GetStageConfiguration(selectedStage.Id);
+
+        deadlines = stageDeadlines.OrderBy(d => d.OrderIndex).ToList();
+        categories = stageCategories;
+        requirements = stageRequirements;
+        submissionRules = stageSubmissionRules;
         allComponents = await Supabase.GetAll<EvaluationComponent>();
         StateHasChanged();
     }
@@ -389,7 +391,8 @@
             else await Supabase.Insert(editStage);
             stageDialogVisible = false;
             await LoadStages();
-            if (!string.IsNullOrEmpty(editStage.Id)) selectedStage = stages.Find(s => s.Id == editStage.Id);
+            if (editStage.Id != Guid.Empty)
+                selectedStage = stages.Find(s => s.Id == editStage.Id);
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
     }
@@ -415,7 +418,7 @@
     // ─── Submission Rules ─────────────────────────────
     async Task AddSubRule()
     {
-        if (string.IsNullOrEmpty(newSubRule.MilestoneId)) return;
+        if (newSubRule.MilestoneId == Guid.Empty) return;
         newSubRule.StageId = selectedStage!.Id;
         await Supabase.Insert(newSubRule);
         newSubRule = new StageSubmissionRule();
@@ -433,7 +436,7 @@
     }
     async Task DeleteCategory(EvaluationCategory c) { await Supabase.Delete(c); await RefreshConfig(); }
 
-    async Task AddComponent(string catId)
+    async Task AddComponent(Guid catId)
     {
         if (string.IsNullOrEmpty(newComponent.Name)) return;
         newComponent.CategoryId = catId;
@@ -454,7 +457,7 @@
     async Task DeleteRequirement(StageRequirement r) { await Supabase.Delete(r); await RefreshConfig(); }
 
     // ─── Helpers ──────────────────────────────────────
-    string GetMilestoneName(string id) => deadlines.FirstOrDefault(d => d.Id == id)?.MilestoneName ?? "Unknown";
+    string GetMilestoneName(Guid id) => deadlines.FirstOrDefault(d => d.Id == id)?.MilestoneName ?? "Unknown";
     string GetStageIcon(string type) => type switch {
         "internship" => Icons.Material.Filled.BusinessCenter,
         "project" => Icons.Material.Filled.DeveloperBoard,

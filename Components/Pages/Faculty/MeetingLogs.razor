@@ -139,12 +139,12 @@
     private async Task LoadStudents()
     {
         _isLoading = true;
-        // Mocking student list for demo
+        // Mocking student list for demo, using GUID string identifiers
         _students = new List<StudentMinDto>
         {
-            new() { Id = "stud-01", Name = "Rahul Sharma", Enrolment = "A2305221001" },
-            new() { Id = "stud-02", Name = "Priya V", Enrolment = "A2305221005" },
-            new() { Id = "stud-03", Name = "Aman Gupta", Enrolment = "A2305221009" }
+            new() { Id = "00000000-0000-0000-0000-000000000101", Name = "Rahul Sharma", Enrolment = "A2305221001" },
+            new() { Id = "00000000-0000-0000-0000-000000000102", Name = "Priya V", Enrolment = "A2305221005" },
+            new() { Id = "00000000-0000-0000-0000-000000000103", Name = "Aman Gupta", Enrolment = "A2305221009" }
         };
         _isLoading = false;
     }
@@ -155,7 +155,7 @@
         _isMeetingsLoading = true;
         try
         {
-            _meetings = await WorkflowService.GetStudentMeetingsAsync(studentId);
+            _meetings = await WorkflowService.GetStudentMeetingsAsync(Guid.Parse(studentId));
         }
         finally
         {
@@ -167,7 +167,7 @@
 
     private void OpenAddMeetingDialog()
     {
-        _newMeeting = new SupervisorMeetingDto() { MeetingDate = DateTime.Today, StudentId = _selectedStudentId, FacultyId = "fac-1" };
+        _newMeeting = new SupervisorMeetingDto() { MeetingDate = DateTime.Today, StudentId = _selectedStudentId, FacultyId = "00000000-0000-0000-0000-000000000010" };
         _dialogVisible = true;
     }
 

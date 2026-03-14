@@ -141,10 +141,11 @@
                     <MudPaper Elevation="0" Outlined="true" Class="pa-2 mb-6">
                         @foreach (var member in selectedProjectMembers)
                         {
+                            var studentName = GetStudentName(member.StudentId);
                             <div class="d-flex align-center pa-2">
-                                <MudAvatar Size="Size.Small" Color="Color.Info" Class="mr-3">@member.StudentId[0].ToString().ToUpper()</MudAvatar>
+                                <MudAvatar Size="Size.Small" Color="Color.Info" Class="mr-3">@studentName.FirstOrDefault().ToString().ToUpper()</MudAvatar>
                                 <div>
-                                    <MudText Typo="Typo.body2" Class="fw-bold">@member.StudentId</MudText>
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@studentName</MudText>
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">@member.Role</MudText>
                                 </div>
                                 <MudSpacer />
@@ -187,6 +188,7 @@
 
     List<ProjectGroupEntity> projects = new();
     List<GroupMemberEntity> members = new();
+    List<StudentEntity> students = new();
     ProjectGroupEntity? selectedProject;
     List<GroupMemberEntity> selectedProjectMembers = new();
 
@@ -202,6 +204,7 @@
         {
             projects = await Supabase.GetAll<ProjectGroupEntity>();
             members = await Supabase.GetAll<GroupMemberEntity>();
+            students = await Supabase.GetAll<StudentEntity>();
         }
         catch (Exception ex)
         {
@@ -219,7 +222,9 @@
         .Where(p => string.IsNullOrWhiteSpace(searchString) || 
                     p.ProjectTitle.Contains(searchString, StringComparison.OrdinalIgnoreCase));
 
-    int GetGroupSize(string projectId) => members.Count(m => m.GroupId == projectId);
+    int GetGroupSize(Guid projectId) => members.Count(m => m.GroupId == projectId);
+
+    string GetStudentName(Guid studentId) => students.FirstOrDefault(s => s.Id == studentId)?.FullName ?? "Unknown";
 
     Color GetProposalColor(string status) => status switch
     {

@@ -213,10 +213,16 @@
         {
             var password = SupabaseService.GenerateStrongPassword();
             var roles = roleMatrix.GetSelectedRoles();
-            
-            var userId = await Supabase.CreateFacultyAccount(newFaculty.Email, password, newFaculty.FullName, newFaculty.Department, roles);
-            
-            if (!string.IsNullOrEmpty(userId))
+
+            Guid? userId = await Supabase.CreateFacultyAccount(
+                newFaculty.Email,
+                password,
+                newFaculty.FullName,
+                newFaculty.Department,
+                roles
+            );
+
+            if (userId != null)
             {
                 generatedPassword = password;
                 Snackbar.Add("Faculty account provisioned!", Severity.Success);

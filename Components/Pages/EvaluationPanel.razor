@@ -23,8 +23,12 @@
         <MudText Typo="Typo.h6" Class="fw-bold mb-3">1. Select Stage</MudText>
         <MudGrid>
             <MudItem xs="12" sm="6">
-                <MudSelect T="string" Value="selectedStageId" Label="NTCC Stage" Variant="Variant.Outlined"
-                           ValueChanged="OnStageChanged">
+                <MudSelect T="Guid"
+                           Value="selectedStageId"
+                           ValueChanged="OnStageChanged"
+                           ValueExpression="() => selectedStageId"
+                           Label="NTCC Stage"
+                           Variant="Variant.Outlined">
                     @foreach (var stage in stages)
                     {
                         <MudSelectItem Value="@stage.Id">@stage.Name — Sem @stage.Semester (@stage.Batch)</MudSelectItem>
@@ -32,7 +36,7 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudSelect T="string" @bind-Value="selectedStudentId" Label="Student" Variant="Variant.Outlined" Disabled="@(string.IsNullOrEmpty(selectedStageId))">
+                <MudSelect T="Guid" @bind-Value="selectedStudentId" Label="Student" Variant="Variant.Outlined" Disabled="@(selectedStageId == Guid.Empty)">
                     @foreach (var s in students)
                     {
                         <MudSelectItem Value="@s.Id">@s.FullName (@s.RollNumber)</MudSelectItem>
@@ -43,11 +47,11 @@
     </MudPaper>
 
     <!-- Step 2: Rubric Scoring -->
-    @if (!string.IsNullOrEmpty(selectedStageId) && categories.Any())
+    @if (selectedStageId != Guid.Empty && categories.Any())
     {
         <MudPaper Elevation="2" Class="pa-5 mb-4" Style="border-radius:12px;">
             <MudText Typo="Typo.h6" Class="fw-bold mb-3">2. Score by Rubric</MudText>
-            @if (string.IsNullOrEmpty(selectedStudentId))
+            @if (selectedStudentId == Guid.Empty)
             {
                 <MudAlert Severity="Severity.Info">Select a student above to enter scores.</MudAlert>
             }
@@ -92,7 +96,7 @@
             }
         </MudPaper>
     }
-    else if (!string.IsNullOrEmpty(selectedStageId) && !categories.Any())
+    else if (selectedStageId != Guid.Empty && !categories.Any())
     {
         <MudAlert Severity="Severity.Warning" Class="mb-4">
             No evaluation categories defined for this stage. Configure them in Stage Config Engine first.
@@ -140,15 +144,15 @@
 
 @code {
     bool isSaving = false;
-    string selectedStageId = "";
-    string selectedStudentId = "";
+    Guid selectedStageId = Guid.Empty;
+    Guid selectedStudentId = Guid.Empty;
 
     List<NtccStage> stages = new();
     List<ntcc_admin_blazor.Models.Student> students = new();
     List<EvaluationCategory> categories = new();
     List<EvaluationScore> allScores = new();
 
-    Dictionary<string, ScoreEntry> scoreEntries = new();
+    Dictionary<Guid, ScoreEntry> scoreEntries = new();
     List<ScoreboardRow> scoreboardRows = new();
 
     class ScoreEntry { public decimal Score { get; set; } public string Remarks { get; set; } = ""; }
@@ -173,10 +177,10 @@
         catch (Exception ex) { Console.WriteLine($"[EVAL] Load error: {ex.Message}"); }
     }
 
-    async Task OnStageChanged(string stageId)
+    async Task OnStageChanged(Guid stageId)
     {
         selectedStageId = stageId;
-        selectedStudentId = "";
+        selectedStudentId = Guid.Empty;
         scoreEntries.Clear();
 
         try
@@ -205,7 +209,7 @@
 
     async Task SaveScores()
     {
-        if (string.IsNullOrEmpty(selectedStudentId)) return;
+        if (selectedStudentId == Guid.Empty) return;
         isSaving = true;
         try
         {

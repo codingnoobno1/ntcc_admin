@@ -105,9 +105,9 @@
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out var userGuid))
             {
-                myInternships = await InternshipService.GetStudentInternshipsAsync(userId);
+                myInternships = await InternshipService.GetStudentInternshipsAsync(userGuid);
             }
         }
         catch (Exception ex)

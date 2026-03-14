@@ -180,9 +180,13 @@
             _studentName = "Rahul Sharma"; 
             
             // Assuming we determine program/sem from student state, hardcoding for demo
-            _dashboard = await WorkflowService.GetStageDashboardAsync(StudentId, "prog-1", 6);
-            _meetings = await WorkflowService.GetStudentMeetingsAsync(StudentId);
-            _rubric = await WorkflowService.GetEvaluationRubricAsync(StageTypeId, "midterm");
+            var studentGuid = Guid.Parse(StudentId);
+            var programGuid = Guid.Parse("00000000-0000-0000-0000-000000000002");
+            var stageTypeGuid = Guid.Parse(StageTypeId);
+
+            _dashboard = await WorkflowService.GetStageDashboardAsync(studentGuid, programGuid, 6);
+            _meetings = await WorkflowService.GetStudentMeetingsAsync(studentGuid);
+            _rubric = await WorkflowService.GetEvaluationRubricAsync(stageTypeGuid, "midterm");
         }
         catch (Exception ex)
         {
@@ -208,7 +212,10 @@
             
             // Verify if components sum up correctly or check for missing marks
             // For now, just submit
-            await WorkflowService.SubmitEvaluationAsync(StudentId, _rubric.Id, _rubric.Components, "faculty-1");
+            var studentGuid = Guid.Parse(StudentId);
+            var rubricGuid = Guid.Parse(_rubric.Id);
+            var evaluatorGuid = Guid.Empty; // TODO: resolve from authenticated faculty context
+            await WorkflowService.SubmitEvaluationAsync(studentGuid, rubricGuid, _rubric.Components, evaluatorGuid);
             Snackbar.Add("Evaluation submitted successfully!", Severity.Success);
         }
         catch (Exception ex)

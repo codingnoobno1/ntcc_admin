@@ -115,8 +115,8 @@
         <MudSelect T="int" @bind-Value="editProject.Semester" Label="Semester" Variant="Variant.Outlined" Class="mb-3">
             @for (int i = 1; i <= 8; i++) { <MudSelectItem Value="@i">Semester @i</MudSelectItem> }
         </MudSelect>
-        <MudSelect T="Guid?" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
-            @foreach (var b in batches) { <MudSelectItem Value="@((Guid?)b.Id)">@b.Name</MudSelectItem> }
+        <MudSelect T="Guid" @bind-Value="editProject.BatchId" Label="Batch" Variant="Variant.Outlined" Class="mb-3">
+            @foreach (var b in batches) { <MudSelectItem Value="@b.Id">@b.Name</MudSelectItem> }
         </MudSelect>
         <MudSelect T="string" @bind-Value="editProject.Status" Label="Proposal Status" Variant="Variant.Outlined" Class="mb-3">
             <MudSelectItem Value="@("draft")">Draft</MudSelectItem>

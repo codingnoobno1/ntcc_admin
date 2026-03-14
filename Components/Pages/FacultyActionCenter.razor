@@ -159,7 +159,7 @@
 
 @code {
     bool isLoading = true;
-    string currentUserId = "";
+    Guid currentUserId;
 
     List<NtccStage> myStages = new();
     List<ntcc_admin_blazor.Models.Student> students = new();
@@ -171,7 +171,8 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        var userIdStr = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Guid.TryParse(userIdStr, out currentUserId);
         
         // System-level role (admin/master/faculty)
         var systemRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
@@ -208,7 +209,7 @@
         finally { isLoading = false; }
     }
 
-    string GetStudentName(string id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
+    string GetStudentName(Guid id) => students.FirstOrDefault(s => s.Id == id)?.FullName ?? "—";
 }
 
 <style>
